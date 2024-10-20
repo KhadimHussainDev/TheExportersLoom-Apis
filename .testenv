@@ -1,0 +1,17 @@
+# .env
+JWT_SECRET_KEY=your_secret_key
+JWT_EXPIRES_IN=time  # Optional: You can adjust the expiration time
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_client_scret_key
+GOOGLE_CALLBACK_URL=url
+
+# PostgreSQL Database Connection
+DB_TYPE=type
+DB_HOST=host
+DB_PORT=port
+DB_USERNAME=username
+DB_PASSWORD=db_password
+DB_DATABASE=your_DB_name
+
+# TypeORM Synchronization (true for development, false for production)
+DB_SYNCHRONIZE=true/false
