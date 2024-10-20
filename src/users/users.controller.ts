@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersController {
     constructor(private usersService: UsersService) {}
 
+
     @Post('signup')
     async signUp(@Body() createUserDto: CreateUserDto): Promise<any> {
         console.log('Sign-up request received', createUserDto);
@@ -22,3 +23,4 @@ export class UsersController {
         }
     }
 }
+
