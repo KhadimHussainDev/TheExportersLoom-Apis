@@ -1,5 +1,4 @@
-// src/users/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
 
@@ -22,6 +21,12 @@ export class User {
 
     @Column({ default: false })
     profile_verified: boolean;
+
+    @Column({ default: false })
+    googleAuth: boolean;  // Mark Google OAuth users
+
+    @Column({ nullable: true })
+    picture: string;  // Google profile picture (optional)
 
     // One-to-Many relationship with UserAuthentication
     @OneToMany(() => UserAuthentication, userAuth => userAuth.user)

@@ -28,6 +28,9 @@ export class UserProfile {
     @Column({ nullable: true })
     profile_picture: string;
 
+    @Column({ default: false })
+    googleAuth: boolean;  
+
     // Foreign key linking to the User table
     @ManyToOne(() => User, user => user.userProfiles)
     @JoinColumn({ name: 'user_id' })  // user_id foreign key
