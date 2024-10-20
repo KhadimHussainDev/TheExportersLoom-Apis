@@ -8,7 +8,7 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Post('signup')
-  async signUp(@Body() createUserDto: CreateUserDto): Promise<any> {
+  async signUp(@Body() createUserDto: CreateUserDto) {
     console.log('Sign-up request received', createUserDto); // Log the incoming data
     await this.usersService.create(createUserDto);
     return { success: true, message: 'User registered successfully' };
