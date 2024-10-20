@@ -12,13 +12,12 @@ import { ResetToken } from './entities/reset-token.entity';
 import { AuthModule } from '../auth/auth.module';  // Import AuthModule
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User, UserProfile, UserAuthentication]),ResetToken,
-        forwardRef(() => AuthModule), // Import AuthModule which provides JwtService
-    ],
-    controllers: [UsersController],
-    providers: [UsersService],
-    exports: [UsersService],
-
+  imports: [
+    TypeOrmModule.forFeature([User, UserProfile, UserAuthentication,ResetToken]),
+    forwardRef(() => AuthModule), // Import AuthModule which provides JwtService
+  ],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}
