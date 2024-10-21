@@ -1,0 +1,36 @@
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-google-oauth20';
+import { AuthService } from './auth.service';
+
+@Injectable()
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+    constructor(private readonly authService: AuthService) {
+      super({
+        clientID: process.env.GOOGLE_CLIENT_ID,        // from your .env file
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET, // from your .env file
+        callbackURL: process.env.GOOGLE_REDIRECT_URL,   // from your .env file
+        scope: ['email', 'profile'],                    // <-- Add the required scopes here
+      });
+    }
+
+    async validate(accessToken: string, refreshToken: string, profile: any, done: Function) {
+      try {
+        const { emails } = profile;
+        let user = await this.authService.validateGoogleLogin(emails[0].value);
+        
+        // If user does not exist, create a new user
+        if (!user) {
+          user = await this.authService.registerGoogleUser(profile);
+        }
+    
+        done(null, user);
+      } catch (error) {
+        console.error('Error during Google authentication:', error);
+        done(error, false);
+      }
+    }
+    
+    
+  
+}

@@ -1,22 +1,32 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module'; // Assuming you have an auth module
+import { ConfigModule } from '@nestjs/config';  // Ensure ConfigModule is imported
+import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from './auth/auth.module';
+import { AppController } from './app.controller';  // Import AppController
+import { AppService } from './app.service';  // Import AppService
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,  // Makes the configuration globally available
+    }),
+  
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres', // Your PostgreSQL username
-      password: 'laiP1911844', // Your PostgreSQL password
-      database: 'ExportersLoom', // Your PostgreSQL database
-      entities: [__dirname + '/**/*.entity{.ts,.js}'], // Path to your entities
+      password: 'August5,2002', // Your PostgreSQL password
+      database: 'Exporters Loom',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true, // Automatically synchronize your database with entities (use false in production)
     }),
-    UsersModule,  // Include your UsersModule
-    AuthModule,   // Include any other necessary modules
+    UsersModule,
+    AuthModule,
   ],
+  controllers: [AppController],  // Ensure AppController is listed
+  providers: [AppService],  // Ensure AppService is listed
 })
 export class AppModule {}
