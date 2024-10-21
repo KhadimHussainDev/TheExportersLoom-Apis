@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -8,6 +8,7 @@ export class UsersController {
 
 
     @Post('signup')
+    
     async signUp(@Body() createUserDto: CreateUserDto): Promise<any> {
         console.log('Sign-up request received', createUserDto);
         try {

@@ -1,32 +1,39 @@
 // src/users/dto/create-user.dto.ts
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsNumberString } from 'class-validator';
 
 export class CreateUserDto {
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty({ message: 'username must not be empty' })
+    @IsString({ message: 'username must be a string' })
     username: string;
 
-    @IsEmail()
+    @IsEmail({}, { message: 'email must be a valid email address' })
     email: string;
 
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'password must not be empty' })
+    @MinLength(6, { message: 'password must be at least 6 characters long' })
     password: string;
 
-    @IsString()
+    @IsString({ message: 'userType must be a string' })
+    @IsNotEmpty({ message: 'userType must not be empty' })
     userType: string;
 
-    @IsString()
-    name: string;
+    @IsString({ message: 'name must be a string' })
+    @IsOptional()  // Optional field
+    name?: string;
 
-    @IsString()
-    companyName: string;
+    @IsString({ message: 'companyName must be a string' })
+    @IsOptional()  // Optional field
+    companyName?: string;
 
-    @IsString()
-    phone: string;
+    @IsNumberString({},{ message: 'phone must be a string' })
+    @IsOptional()  // Optional field
+    phone?: string;
 
-    @IsString()
-    cnic: string;
+    @IsString({ message: 'cnic must be a string' })
+    @IsOptional()  // Optional field
+    cnic?: string;
 
-    @IsString()
-    address: string;
+    @IsString({ message: 'address must be a string' })
+    @IsOptional()  // Optional field
+    address?: string;
 }
