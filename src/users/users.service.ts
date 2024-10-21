@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { UserProfile } from './entities/user-profile.entity'; // Add UserProfile entity
+import { UserProfile } from './entities/user-profile.entity'; 
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -12,14 +12,13 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    @InjectRepository(UserProfile) // Add UserProfile Repository
-    private readonly userProfileRepository: Repository<UserProfile>,  // This fixes the error
+    @InjectRepository(UserProfile) 
+    private readonly userProfileRepository: Repository<UserProfile>,  
 
     @InjectRepository(UserAuthentication)
     private readonly userAuthRepository: Repository<UserAuthentication>,
   ) {}
 
-  // Signup process (Create User, UserProfile, and UserAuthentication)
   async create(createUserDto: CreateUserDto): Promise<any> {
     const existingUser = await this.userRepository.findOne({ 
         where: [{ email: createUserDto.email }, { username: createUserDto.username }]

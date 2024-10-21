@@ -24,7 +24,7 @@ export class User {
 
   // One-to-one relationship with UserProfile
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()  // This tells TypeORM which table holds the foreign key
+  @JoinColumn()  
   profile: UserProfile;
 
   // One-to-Many relationship with UserAuthentication

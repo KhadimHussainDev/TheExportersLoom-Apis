@@ -31,7 +31,7 @@ export class UserAuthentication {
     @Column({ nullable: true })
     PasswordResetToken: string;
 
-    @ManyToOne(() => User, (user) => user.userAuth)  // Foreign key to User
-    @JoinColumn({ name: 'user_id' }) // Explicit foreign key column
+    @ManyToOne(() => User, (user) => user.userAuth)  
+    @JoinColumn({ name: 'user_id' }) 
     user: User;
 }

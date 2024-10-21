@@ -28,6 +28,6 @@ export class UserProfile {
   profile_picture: string;
 
    // Foreign key reference to User
-   @OneToOne(() => User, user => user.profile)  // Inverse side of the relationship
+   @OneToOne(() => User, user => user.profile)  
   user: User;
 }

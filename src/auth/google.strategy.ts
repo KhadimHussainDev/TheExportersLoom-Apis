@@ -7,10 +7,10 @@ import { AuthService } from './auth.service';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     constructor(private readonly authService: AuthService) {
       super({
-        clientID: process.env.GOOGLE_CLIENT_ID,        // from your .env file
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET, // from your .env file
-        callbackURL: process.env.GOOGLE_REDIRECT_URL,   // from your .env file
-        scope: ['email', 'profile'],                    // <-- Add the required scopes here
+        clientID: process.env.GOOGLE_CLIENT_ID,        
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET, 
+        callbackURL: process.env.GOOGLE_REDIRECT_URL,   
+        scope: ['email', 'profile'],                    
       });
     }
 

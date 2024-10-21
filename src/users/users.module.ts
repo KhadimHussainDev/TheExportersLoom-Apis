@@ -7,9 +7,9 @@ import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserProfile, UserAuthentication])],  // Add all entities needed here
+  imports: [TypeOrmModule.forFeature([User, UserProfile, UserAuthentication])], 
   providers: [UsersService],
   controllers: [UsersController],
-  exports: [UsersService],  // Make sure UsersService is exported
+  exports: [UsersService],  
 })
 export class UsersModule {}

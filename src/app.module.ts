@@ -26,7 +26,7 @@ import { AppService } from './app.service';  // Import AppService
     UsersModule,
     AuthModule,
   ],
-  controllers: [AppController],  // Ensure AppController is listed
-  providers: [AppService],  // Ensure AppService is listed
+  controllers: [AppController],  
+  providers: [AppService],  
 })
 export class AppModule {}

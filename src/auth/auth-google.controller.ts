@@ -9,7 +9,7 @@ export class AuthGoogleController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
-    // Initiates Google OAuth flow
+
   }
 
   @Get('google/callback')

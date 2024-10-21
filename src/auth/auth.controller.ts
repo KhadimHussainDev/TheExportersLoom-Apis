@@ -21,7 +21,7 @@ export class AuthController {
 
     return {
       message: 'Login successful',
-      ...token, // Spread token object to include access_token
+      ...token, 
     };
   }
 }
