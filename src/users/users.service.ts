@@ -5,67 +5,156 @@ import { User } from './entities/user.entity';
 import { UserProfile } from './entities/user-profile.entity'; 
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
+import { nanoid } from 'nanoid';
+import { randomBytes } from 'crypto';
+import { ResetToken } from './entities/reset-token.entity';
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-
-    @InjectRepository(UserProfile) 
-    private readonly userProfileRepository: Repository<UserProfile>,  
-
+    
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
+    
     @InjectRepository(UserAuthentication)
     private readonly userAuthRepository: Repository<UserAuthentication>,
-  ) {}
-
-  async create(createUserDto: CreateUserDto): Promise<any> {
-    const existingUser = await this.userRepository.findOne({ 
-        where: [{ email: createUserDto.email }, { username: createUserDto.username }]
-      });
     
-    if (existingUser) {
-      throw new Error('User with this email or username already exists');
-    }
-
-    // Step 1: Create the User
-    const newUser = this.userRepository.create({
-      username: createUserDto.username,
-      email: createUserDto.email,
-      userType: createUserDto.userType,
-    });
-    const savedUser = await this.userRepository.save(newUser);
-
-    // Step 2: Create the UserProfile and link it to the created User
-    const userProfile = this.userProfileRepository.create({
-      user: savedUser,  // Link to the saved User
-      name: createUserDto.name,
-      company_name: createUserDto.companyName,
-      phone_number: createUserDto.phone,
-      cnic: createUserDto.cnic,
-      address: createUserDto.address,
-    });
-    await this.userProfileRepository.save(userProfile);  // Save UserProfile
-
-    // Step 3: Create the UserAuthentication and link it to the created User
-    const userAuth = this.userAuthRepository.create({
-      user: savedUser,
-      passwordHash: createUserDto.password,  // IMPORTANT: Hash the password in production
-      TwoFactorEnabled: false,
-      isEmailVerified: false,
-      isPhoneVerified: false,
-    });
-    await this.userAuthRepository.save(userAuth);
-
-    return { success: true, message: 'User, profile, and authentication created successfully' };
-  }
+    @InjectRepository(ResetToken)
+    private resetTokenRepo: Repository<ResetToken>,
+    
+    private jwtService: JwtService,
+    private dataSource: DataSource,
+  ) {}
 
   // Find user by email
   async findByEmail(email: string): Promise<User> {
     return await this.userRepository.findOne({ where: { email } });
   }
 
-  // Method to find all users and include their profiles
+
+
+
+  // Method for creating a regular user
+  async create(createUserDto: CreateUserDto): Promise<any> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Step 1: Create User
+      const newUser = this.userRepository.create({
+        username: createUserDto.username,
+        email: createUserDto.email,
+        userType: createUserDto.userType,
+      });
+      const savedUser = await queryRunner.manager.save(newUser);
+
+      // Step 2: Create UserProfile
+      const userProfile = this.userProfileRepository.create({
+        user: savedUser,
+        name: createUserDto.name,
+        company_name: createUserDto.companyName,
+        phone_number: createUserDto.phone,
+        cnic: createUserDto.cnic,
+        address: createUserDto.address,
+      });
+      await queryRunner.manager.save(userProfile);
+
+      // Step 3: Hash Password
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+
+      // Step 4: Create UserAuthentication
+      const userAuth = this.userAuthRepository.create({
+        user: savedUser,
+        passwordHash: hashedPassword,
+        TwoFactorEnabled: false,
+        isEmailVerified: false,
+        isPhoneVerified: false,
+      });
+      await queryRunner.manager.save(userAuth);
+
+      // Step 5: Generate JWT Tokens
+      const payload = { username: savedUser.username, sub: savedUser.user_id };
+      const accessToken = this.jwtService.sign(payload);
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      // Commit the transaction
+      await queryRunner.commitTransaction();
+
+      return {
+        message: 'User created successfully',
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Transaction failed: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // Method to handle forgot password and generate a reset token
+  async forgotPassword(email: string) {
+    const existingUser = await this.findUserByEmail(email);
+    if (existingUser) {
+      const resetToken = randomBytes(64).toString('hex');
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 1); // Expires in 1 hour
+
+      let resetTokenObj = await this.resetTokenRepo.findOne({
+        where: { userId: existingUser.user_id },
+      });
+
+      if (resetTokenObj) {
+        resetTokenObj.token = resetToken;
+        resetTokenObj.expiryDate = expiryDate;
+      } else {
+        resetTokenObj = this.resetTokenRepo.create({
+          token: resetToken,
+          userId: existingUser.user_id,
+          expiryDate,
+        });
+      }
+
+      await this.resetTokenRepo.save(resetTokenObj);
+      // Send the email link (integration with email service required)
+      // await this.mailService.sendPasswordResetEmail(email, resetToken);
+    }
+  }
+
+  // Create user from Google OAuth
+  async createUserFromGoogle(googleUser: any): Promise<User> {
+    try {
+      const newUser = this.userRepository.create({
+        email: googleUser.email,
+        username: `${googleUser.firstName} ${googleUser.lastName}`,
+        userType: 'Google',
+        googleAuth: true,
+        picture: googleUser.picture,
+      });
+      return await this.userRepository.save(newUser);
+    } catch (error) {
+      throw new Error('Error saving user to database: ' + error.message);
+    }
+  }
+
+  // Find user by email
+  async findUserByEmail(email: string): Promise<User | undefined> {
+    return await this.userRepository.findOne({ where: { email } });
+  }
+
+  // Add method to find UserAuthentication by user ID
+  async findAuthByUserId(userId: number): Promise<UserAuthentication> {
+    return await this.userAuthRepository.findOne({ where: { user: { user_id: userId } } });
+  }
+
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
       relations: ['profile'],  // Make sure 'profile' exists in the User entity
@@ -80,14 +169,6 @@ export class UsersService {
     });
   }
 
-  // Method to find user by email in UserRepository
-  async findUserByEmail(email: string): Promise<User | undefined> {
-    return await this.userRepository.findOne({ where: { email } });
-  }
-  // Add a method to find UserAuthentication by user_id
-async findAuthByUserId(userId: number): Promise<UserAuthentication> {
-  return await this.userAuthRepository.findOne({ where: { user: { user_id: userId } } });
-}
 
 
   // Create new Google user

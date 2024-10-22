@@ -1,32 +1,37 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { ConfigModule } from '@nestjs/config';  // Ensure ConfigModule is imported
-import { JwtModule } from '@nestjs/jwt';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module';  // Assuming you have an auth module
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';  // Import AppController
 import { AppService } from './app.service';  // Import AppService
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,  // Makes the configuration globally available
+      isGlobal: true,  // Makes the config service available globally
     }),
-  
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres', // Your PostgreSQL username
-      password: 'August5,2002', // Your PostgreSQL password
-      database: 'Exporters Loom',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Automatically synchronize your database with entities (use false in production)
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: configService.get<string>('DB_TYPE') as 'postgres',  // Use config service for dynamic configuration
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],  // Your entity paths
+        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  // Use synchronize from config
+        logging: true,
+      }),
     }),
+
     UsersModule,
     AuthModule,
   ],
-  controllers: [AppController],  
-  providers: [AppService],  
+  controllers: [AppController],  // Include AppController
+  providers: [AppService],  // Include AppService
 })
 export class AppModule {}

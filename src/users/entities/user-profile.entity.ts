@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
@@ -27,7 +27,11 @@ export class UserProfile {
   @Column({ nullable: true })
   profile_picture: string;
 
-   // Foreign key reference to User
-   @OneToOne(() => User, user => user.profile)  
-  user: User;
+    @Column({ default: false })
+    googleAuth: boolean;  
+
+    // Foreign key linking to the User table
+    @OneToOne(() => User, user => user.profile)
+    @JoinColumn({ name: 'user_id' })  // user_id foreign key
+    user: User;
 }

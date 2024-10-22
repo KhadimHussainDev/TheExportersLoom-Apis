@@ -22,12 +22,18 @@ export class User {
   @Column({ default: false })
   profile_verified: boolean;
 
-  // One-to-one relationship with UserProfile
-  @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()  
-  profile: UserProfile;
+  @Column({ default: false })
+  googleAuth: boolean;  // Mark Google OAuth users
+
+  @Column({ nullable: true })
+  picture: string;  // Google profile picture (optional)
+
+  // One-to-One relationship with UserProfile
+  @OneToOne(() => UserProfile, (userProfile) => userProfile.user, { cascade: true })
+  @JoinColumn()  // Join user with profile
+  profile: UserProfile;  // Correct the property name to 'profile'
 
   // One-to-Many relationship with UserAuthentication
-  @OneToMany(() => UserAuthentication, userAuth => userAuth.user)
+  @OneToMany(() => UserAuthentication, (userAuth) => userAuth.user)
   userAuth: UserAuthentication[];
 }
