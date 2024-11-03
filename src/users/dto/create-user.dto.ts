@@ -25,7 +25,7 @@ export class CreateUserDto {
     @IsOptional()  // Optional field
     companyName?: string;
 
-    @IsNumberString({},{ message: 'phone must be a string' })
+    @IsNumberString({}, { message: 'phone must be a valid phone number' })
     @IsOptional()  // Optional field
     phone?: string;
 
