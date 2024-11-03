@@ -9,16 +9,16 @@ export class UserProfile {
   @Column()
   name: string;
 
-  @Column()
+  @Column({nullable: true})
   company_name: string;
 
-  @Column()
+  @Column({nullable: true})
   phone_number: string;
 
-  @Column()
+  @Column({nullable: true})
   cnic: string;
 
-  @Column()
+  @Column({nullable: true})
   address: string;
 
   @Column({ type: 'float', nullable: true })

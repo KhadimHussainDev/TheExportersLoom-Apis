@@ -2,50 +2,50 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { UserProfile } from './entities/user-profile.entity'; 
+import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
-import { nanoid } from 'nanoid';
 import { randomBytes } from 'crypto';
 import { ResetToken } from './entities/reset-token.entity';
+import { UnauthorizedException } from '@nestjs/common';
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    
+
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
-    
+
     @InjectRepository(UserAuthentication)
     private readonly userAuthRepository: Repository<UserAuthentication>,
-    
+
     @InjectRepository(ResetToken)
     private resetTokenRepo: Repository<ResetToken>,
-    
+
     private jwtService: JwtService,
     private dataSource: DataSource,
+
   ) {}
 
-  // Find user by email
-  async findByEmail(email: string): Promise<User> {
-    return await this.userRepository.findOne({ where: { email } });
-  }
-
-
-
-
-  // Method for creating a regular user
+  // Creating regular user/regular signup
   async create(createUserDto: CreateUserDto): Promise<any> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Step 1: Create User
+      //Check if the user already exists by email
+      const existingUser = await this.findUserByEmail(createUserDto.email);
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+
+      // Create User
       const newUser = this.userRepository.create({
         username: createUserDto.username,
         email: createUserDto.email,
@@ -53,7 +53,7 @@ export class UsersService {
       });
       const savedUser = await queryRunner.manager.save(newUser);
 
-      // Step 2: Create UserProfile
+      // Create UserProfile
       const userProfile = this.userProfileRepository.create({
         user: savedUser,
         name: createUserDto.name,
@@ -64,11 +64,11 @@ export class UsersService {
       });
       await queryRunner.manager.save(userProfile);
 
-      // Step 3: Hash Password
+      // Hash Password
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
 
-      // Step 4: Create UserAuthentication
+      // Create UserAuthentication
       const userAuth = this.userAuthRepository.create({
         user: savedUser,
         passwordHash: hashedPassword,
@@ -78,12 +78,10 @@ export class UsersService {
       });
       await queryRunner.manager.save(userAuth);
 
-      // Step 5: Generate JWT Tokens
+      // Generate JWT Tokens
       const payload = { username: savedUser.username, sub: savedUser.user_id };
       const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-      // Commit the transaction
       await queryRunner.commitTransaction();
 
       return {
@@ -93,6 +91,7 @@ export class UsersService {
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
+      console.error('Transaction failed: ', error.message);
       throw new Error('Transaction failed: ' + error.message);
     } finally {
       await queryRunner.release();
@@ -123,24 +122,6 @@ export class UsersService {
       }
 
       await this.resetTokenRepo.save(resetTokenObj);
-      // Send the email link (integration with email service required)
-      // await this.mailService.sendPasswordResetEmail(email, resetToken);
-    }
-  }
-
-  // Create user from Google OAuth
-  async createUserFromGoogle(googleUser: any): Promise<User> {
-    try {
-      const newUser = this.userRepository.create({
-        email: googleUser.email,
-        username: `${googleUser.firstName} ${googleUser.lastName}`,
-        userType: 'Google',
-        googleAuth: true,
-        picture: googleUser.picture,
-      });
-      return await this.userRepository.save(newUser);
-    } catch (error) {
-      throw new Error('Error saving user to database: ' + error.message);
     }
   }
 
@@ -148,16 +129,36 @@ export class UsersService {
   async findUserByEmail(email: string): Promise<User | undefined> {
     return await this.userRepository.findOne({ where: { email } });
   }
+  
+  // Validate user credentials for regular login
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.findByEmailWithAuth(email); 
 
-  // Add method to find UserAuthentication by user ID
-  async findAuthByUserId(userId: number): Promise<UserAuthentication> {
-    return await this.userAuthRepository.findOne({ where: { user: { user_id: userId } } });
+    if (!user || !user.userAuth || user.userAuth.length === 0) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const userAuth = user.userAuth[0];  
+    const isPasswordValid = await bcrypt.compare(password, userAuth.passwordHash);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const { passwordHash, ...result } = userAuth;
+    return result;
   }
-
+ 
+  // Generate JWT token after successful login
+  async login(user: any) {
+    const payload = { username: user.username, sub: user.user_id };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
-      relations: ['profile'],  // Make sure 'profile' exists in the User entity
+      relations: ['profile'], 
     });
   }
 
@@ -165,44 +166,8 @@ export class UsersService {
   async findByEmailWithAuth(email: string): Promise<User> {
     return await this.userRepository.findOne({
       where: { email },
-      relations: ['userAuth'],  // Load the UserAuthentication relationship for authentication purposes
+      relations: ['userAuth'], 
     });
   }
 
-
-
-  // Create new Google user
-  async createGoogleUser(email: string): Promise<User> {
-    const newUser = this.userRepository.create({
-      email,
-      username: email.split('@')[0],  // Create username from email prefix
-      userType: 'google',  // Optional: specify the user type for Google users
-    });
-
-    return await this.userRepository.save(newUser);  // Ensure it saves a User entity
-  }
-
-  // Optionally, you can add a method to create a new user with authentication data for simple signup
-  async createUserWithAuth(
-    email: string, 
-    username: string, 
-    passwordHash: string
-  ): Promise<User> {
-    const newUser = this.userRepository.create({
-      email,
-      username,
-      userType: 'local',  // Optional: specify the user type for local users
-    });
-
-    const savedUser = await this.userRepository.save(newUser);
-
-    // Create UserAuthentication record with the hashed password
-    const userAuth = new UserAuthentication();
-    userAuth.user = savedUser;
-    userAuth.passwordHash = passwordHash;
-    // Save UserAuthentication data
-    await this.userAuthRepository.save(userAuth);
-
-    return savedUser;
-  }
 }

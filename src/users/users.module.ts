@@ -5,17 +5,16 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
-import { ResetToken } from './entities/reset-token.entity';  // Import ResetToken entity
-
-import { AuthModule } from '../auth/auth.module';  // Import AuthModule
+import { ResetToken } from './entities/reset-token.entity';  
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserProfile, UserAuthentication, ResetToken]),  // Include ResetToken
-    forwardRef(() => AuthModule),  // Import AuthModule which provides JwtService
+    TypeOrmModule.forFeature([User, UserProfile, UserAuthentication, ResetToken]),  
+    forwardRef(() => AuthModule),  
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  exports: [UsersService],  // Export UsersService for use in other modules
+  exports: [UsersService],  
 })
 export class UsersModule {}

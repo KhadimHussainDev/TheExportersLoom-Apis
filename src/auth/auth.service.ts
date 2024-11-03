@@ -1,89 +1,76 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserAuthentication } from '../auth/entities/auth.entity';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';  // Ensure UsersService is properly imported
+import { UnauthorizedException } from '@nestjs/common';
+import { UserProfile } from '../users/entities/user-profile.entity';
 import { User } from '../users/entities/user.entity';
-import * as bcrypt from 'bcrypt';  // Import bcrypt for password comparison
+
+interface JwtUserPayload {
+  email: string;
+  id: number; 
+}
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
+
+    @InjectRepository(UserAuthentication)
+    private readonly userAuthRepository: Repository<UserAuthentication>,
+
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  // Validate user credentials for regular login
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmailWithAuth(email); // Get user along with authentication info
-
-    if (!user || !user.userAuth || user.userAuth.length === 0) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const userAuth = user.userAuth[0];  // Assuming there is only one userAuth record
-
-    // Compare the hashed password from the database with the plain text password
-    const isPasswordValid = await bcrypt.compare(password, userAuth.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Return the user object without the passwordHash
-    const { passwordHash, ...result } = userAuth;
-    return result;
-  }
-
   // Generates JWT token for a user
-  async generateJwt(user: any): Promise<{ accessToken: string; refreshToken?: string }> {
+  async generateJwt(user: JwtUserPayload): Promise<{ accessToken: string; refreshToken?: string }> {
     const payload = { username: user.email, sub: user.id }; // Adjust payload structure to fit your user entity
-
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
     return { accessToken, refreshToken };
   }
 
-  // Generate JWT token after successful login
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.user_id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
-  }
-
-  // Google OAuth login handler
-  async googleLogin(req: any): Promise<any> {
-    if (!req.user) {
-      throw new UnauthorizedException('No user from Google');
+  // Create user from Google OAuth
+  async createGoogleUser(googleUser: any): Promise<User> {
+    const existingUser = await this.usersService.findUserByEmail(googleUser.email);
+    if (existingUser) {
+      throw new Error('User with this email already exists');
     }
 
-    const user = await this.usersService.findByEmail(req.user.email);
-    if (!user) {
-      throw new UnauthorizedException('User not registered');
-    }
+    // Create new user if not found
+    const newUser = this.userRepository.create({
+      email: googleUser.email,
+      username: `${googleUser.firstName} ${googleUser.lastName}`,
+      userType: 'Google',
+      googleAuth: true,
+      picture: googleUser.picture,
+    });
 
-    const payload = { email: user.email, sub: user.user_id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user,
-    };
-  }
+    const savedUser = await this.userRepository.save(newUser);
 
-  // Validate Google login
-  async validateGoogleLogin(email: string): Promise<User> {
-    const user = await this.usersService.findByEmail(email);
+    // Create UserProfile entry
+    const userProfile = this.userProfileRepository.create({
+      user: savedUser,
+      name: googleUser.firstName + ' ' + googleUser.lastName,
+    });
+    await this.userProfileRepository.save(userProfile);
 
-    if (!user) {
-      throw new UnauthorizedException('User not registered');
-    }
+    // Create UserAuthentication entry
+    const userAuth = this.userAuthRepository.create({
+      user: savedUser,
+      passwordHash: '',
+      TwoFactorEnabled: false,
+      isEmailVerified: true,
+    });
+    await this.userAuthRepository.save(userAuth);
 
-    return user;  // Return user if found
-  }
-
-  // Register Google user
-  async registerGoogleUser(profile: any): Promise<User> {
-    const email = profile.emails[0].value;
-    const newUser = await this.usersService.createGoogleUser(email);
-    return newUser;
+    return savedUser;
   }
 }

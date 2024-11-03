@@ -1,11 +1,16 @@
 import { Controller, Post, Body, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private readonly authService: AuthService,
+  )  {}
 
   // Signup route to register a new user
   @Post('signup')
@@ -22,6 +27,24 @@ export class UsersController {
         error: error.message || 'Unknown error occurred',
       }, HttpStatus.BAD_REQUEST);
     }
+  }
+  // Regular login with email and password
+  @Post('login')
+  async login(@Body() loginUserDto: LoginUserDto) {
+    const user = await this.usersService.validateUser(
+      loginUserDto.email,
+      loginUserDto.password,
+    );
+
+    if (!user) {
+      return { message: 'Invalid credentials' };
+    }
+    const token = await this.usersService.login(user); 
+
+    return {
+      message: 'Login successful',
+      ...token,
+    };
   }
 
   // Get all users route
