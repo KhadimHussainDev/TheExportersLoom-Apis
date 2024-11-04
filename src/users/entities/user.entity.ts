@@ -1,19 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
+import { Machine } from 'src/machines/entities/machine.entity';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   user_id: number;
 
-  @Column({ unique: true })
+  @Column()
   username: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ default: 'exporter', nullable: false })  
   userType: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -23,17 +24,21 @@ export class User {
   profile_verified: boolean;
 
   @Column({ default: false })
-  googleAuth: boolean;  // Mark Google OAuth users
+  googleAuth: boolean;  
 
   @Column({ nullable: true })
-  picture: string;  // Google profile picture (optional)
+  picture: string;  
 
   // One-to-One relationship with UserProfile
   @OneToOne(() => UserProfile, (userProfile) => userProfile.user, { cascade: true })
-  @JoinColumn()  // Join user with profile
-  profile: UserProfile;  // Correct the property name to 'profile'
+  @JoinColumn()  
+  profile: UserProfile;  
 
   // One-to-Many relationship with UserAuthentication
   @OneToMany(() => UserAuthentication, (userAuth) => userAuth.user)
   userAuth: UserAuthentication[];
+
+  @OneToMany(() => Machine, (machine) => machine.machine_owner)
+  machines: Machine[];
+  
 }

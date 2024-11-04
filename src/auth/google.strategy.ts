@@ -38,7 +38,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       // Issue a JWT token for the user (whether signing up or signing in)
       const jwt = await this.authService.generateJwt({
         email: existingUser.email,
-        id: existingUser.user_id,
+        user_id: existingUser.user_id,
+        userType:existingUser.userType,
       });
 
       done(null, { user: existingUser, jwt });

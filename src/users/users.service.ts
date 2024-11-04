@@ -51,6 +51,7 @@ export class UsersService {
         email: createUserDto.email,
         userType: createUserDto.userType,
       });
+      console.log('New user created with userType:', newUser.userType);
       const savedUser = await queryRunner.manager.save(newUser);
 
       // Create UserProfile
@@ -132,25 +133,28 @@ export class UsersService {
   
   // Validate user credentials for regular login
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.findByEmailWithAuth(email); 
-
+    const user = await this.findByEmailWithAuth(email);
     if (!user || !user.userAuth || user.userAuth.length === 0) {
-      throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException('Invalid credentials');
     }
-
-    const userAuth = user.userAuth[0];  
+    const userAuth = user.userAuth[0];
     const isPasswordValid = await bcrypt.compare(password, userAuth.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException('Invalid credentials');
     }
-    const { passwordHash, ...result } = userAuth;
-    return result;
+    return user; 
   }
+
  
   // Generate JWT token after successful login
   async login(user: any) {
-    const payload = { username: user.username, sub: user.user_id };
+    const payload = { 
+      username: user.username, 
+      sub: user.user_id, 
+      userType: user.userType 
+    };
+    console.log('Payload during login:', payload);
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -162,7 +166,7 @@ export class UsersService {
     });
   }
 
-  // Method to find user by email in UserRepository with UserAuthentication relation
+  // find user by email in UserRepository with UserAuthentication relation
   async findByEmailWithAuth(email: string): Promise<User> {
     return await this.userRepository.findOne({
       where: { email },

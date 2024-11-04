@@ -10,7 +10,8 @@ import { User } from '../users/entities/user.entity';
 
 interface JwtUserPayload {
   email: string;
-  id: number; 
+  user_id: number; 
+  userType:string;
 }
 
 @Injectable()
@@ -31,11 +32,18 @@ export class AuthService {
 
   // Generates JWT token for a user
   async generateJwt(user: JwtUserPayload): Promise<{ accessToken: string; refreshToken?: string }> {
-    const payload = { username: user.email, sub: user.id }; // Adjust payload structure to fit your user entity
+    const payload = { 
+        sub: user.user_id, 
+        username: user.email, 
+        userType: user.userType 
+    };
+    console.log('Generating JWT with payload:', payload); // Add this line
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
-  }
+}
+
+
 
   // Create user from Google OAuth
   async createGoogleUser(googleUser: any): Promise<User> {

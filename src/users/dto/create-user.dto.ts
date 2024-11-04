@@ -18,22 +18,22 @@ export class CreateUserDto {
     userType: string;
 
     @IsString({ message: 'name must be a string' })
-    @IsOptional()  // Optional field
+    @IsOptional()  
     name?: string;
 
     @IsString({ message: 'companyName must be a string' })
-    @IsOptional()  // Optional field
+    @IsOptional()  
     companyName?: string;
 
     @IsNumberString({}, { message: 'phone must be a valid phone number' })
-    @IsOptional()  // Optional field
+    @IsOptional()  
     phone?: string;
 
     @IsString({ message: 'cnic must be a string' })
-    @IsOptional()  // Optional field
+    @IsOptional() 
     cnic?: string;
 
     @IsString({ message: 'address must be a string' })
-    @IsOptional()  // Optional field
+    @IsOptional()  
     address?: string;
 }
