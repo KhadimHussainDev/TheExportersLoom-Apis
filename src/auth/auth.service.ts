@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
@@ -28,6 +28,7 @@ export class AuthService {
 
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   // Generates JWT token for a user
@@ -37,7 +38,6 @@ export class AuthService {
         username: user.email, 
         userType: user.userType 
     };
-    console.log('Generating JWT with payload:', payload); // Add this line
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
@@ -47,38 +47,60 @@ export class AuthService {
 
   // Create user from Google OAuth
   async createGoogleUser(googleUser: any): Promise<User> {
-    const existingUser = await this.usersService.findUserByEmail(googleUser.email);
-    if (existingUser) {
-      throw new Error('User with this email already exists');
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Check if user already exists
+      const existingUser = await this.usersService.findUserByEmail(googleUser.email);
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+
+      // Create User instance
+      const newUser = this.userRepository.create({
+        email: googleUser.email,
+        username: `${googleUser.firstName} ${googleUser.lastName}`,
+        userType: 'Google',
+        googleAuth: true,
+        picture: googleUser.picture,
+      });
+
+      // Save the User instance
+      const savedUser = await queryRunner.manager.save(newUser);
+
+      // Create UserProfile instance
+      const userProfile = this.userProfileRepository.create({
+        user: savedUser,
+        name: `${googleUser.firstName} ${googleUser.lastName}`,
+        googleAuth: true,
+        profile_picture: googleUser.picture,
+      });
+      const savedProfile = await queryRunner.manager.save(userProfile);
+
+      // Link UserProfile to User
+      savedUser.profile = savedProfile;
+      await queryRunner.manager.save(savedUser);
+
+      // Create UserAuthentication entry with Google-specific defaults
+      const userAuth = this.userAuthRepository.create({
+        user: savedUser,
+        passwordHash: '',  // No password for Google-authenticated users
+        TwoFactorEnabled: false,
+        isEmailVerified: true,
+      });
+      await queryRunner.manager.save(userAuth);
+
+      // Commit the transaction
+      await queryRunner.commitTransaction();
+
+      return savedUser;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Transaction failed: ' + error.message);
+    } finally {
+      await queryRunner.release();
     }
-
-    // Create new user if not found
-    const newUser = this.userRepository.create({
-      email: googleUser.email,
-      username: `${googleUser.firstName} ${googleUser.lastName}`,
-      userType: 'Google',
-      googleAuth: true,
-      picture: googleUser.picture,
-    });
-
-    const savedUser = await this.userRepository.save(newUser);
-
-    // Create UserProfile entry
-    const userProfile = this.userProfileRepository.create({
-      user: savedUser,
-      name: googleUser.firstName + ' ' + googleUser.lastName,
-    });
-    await this.userProfileRepository.save(userProfile);
-
-    // Create UserAuthentication entry
-    const userAuth = this.userAuthRepository.create({
-      user: savedUser,
-      passwordHash: '',
-      TwoFactorEnabled: false,
-      isEmailVerified: true,
-    });
-    await this.userAuthRepository.save(userAuth);
-
-    return savedUser;
   }
 }

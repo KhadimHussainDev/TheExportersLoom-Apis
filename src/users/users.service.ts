@@ -10,7 +10,8 @@ import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { ResetToken } from './entities/reset-token.entity';
-import { UnauthorizedException } from '@nestjs/common';
+import { UpdateUserDto } from './dto/update-users.dto';
+import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -32,44 +33,47 @@ export class UsersService {
 
   ) {}
 
-  // Creating regular user/regular signup
   async create(createUserDto: CreateUserDto): Promise<any> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
+  
     try {
-      //Check if the user already exists by email
+      // Check if the user already exists by email
       const existingUser = await this.findUserByEmail(createUserDto.email);
       if (existingUser) {
         throw new Error('User with this email already exists');
       }
-
-      // Create User
+  
+      // Create User instance
       const newUser = this.userRepository.create({
         username: createUserDto.username,
         email: createUserDto.email,
         userType: createUserDto.userType,
       });
-      console.log('New user created with userType:', newUser.userType);
+  
+      // Save User to get the user_id
       const savedUser = await queryRunner.manager.save(newUser);
-
-      // Create UserProfile
+  
+      // Create and save UserProfile, linking it to the saved User
       const userProfile = this.userProfileRepository.create({
-        user: savedUser,
+        user: savedUser, // Link the profile to the saved user
         name: createUserDto.name,
         company_name: createUserDto.companyName,
         phone_number: createUserDto.phone,
         cnic: createUserDto.cnic,
         address: createUserDto.address,
       });
-      await queryRunner.manager.save(userProfile);
-
-      // Hash Password
+      const savedProfile = await queryRunner.manager.save(userProfile);
+  
+      // Update User to reference the saved UserProfile
+      savedUser.profile = savedProfile;
+      await queryRunner.manager.save(savedUser);
+  
+      // Hash Password and create UserAuthentication entry
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
-
-      // Create UserAuthentication
+  
       const userAuth = this.userAuthRepository.create({
         user: savedUser,
         passwordHash: hashedPassword,
@@ -78,13 +82,14 @@ export class UsersService {
         isPhoneVerified: false,
       });
       await queryRunner.manager.save(userAuth);
-
+  
       // Generate JWT Tokens
       const payload = { username: savedUser.username, sub: savedUser.user_id };
       const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+  
       await queryRunner.commitTransaction();
-
+  
       return {
         message: 'User created successfully',
         accessToken,
@@ -92,12 +97,13 @@ export class UsersService {
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error('Transaction failed: ', error.message);
       throw new Error('Transaction failed: ' + error.message);
     } finally {
       await queryRunner.release();
     }
   }
+  
+
 
   // Method to handle forgot password and generate a reset token
   async forgotPassword(email: string) {
@@ -154,15 +160,23 @@ export class UsersService {
       sub: user.user_id, 
       userType: user.userType 
     };
-    console.log('Payload during login:', payload);
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
+  //get all users
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
       relations: ['profile'], 
+    });
+  }
+
+  //get user by id
+  async findOneById(id: number): Promise<User | undefined> {
+    return await this.userRepository.findOne({
+      where: { user_id: id },
+      relations: ['profile'],
     });
   }
 
@@ -174,4 +188,58 @@ export class UsersService {
     });
   }
 
+  async deleteUserById(id: number): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { user_id: id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    user.isActive = false;
+    await this.userRepository.save(user);
+    return { message: 'User status set to inactive successfully' };
+  }
+
+  async updateUser(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+  
+    try {
+      // Find the existing user
+      const user = await this.userRepository.findOne({
+        where: { user_id: userId },
+        relations: ['profile'],
+      });
+  
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+  
+      // Update User fields
+      if (updateUserDto.username) user.username = updateUserDto.username;
+      if (updateUserDto.email) user.email = updateUserDto.email;
+  
+      // Update UserProfile fields
+      if (user.profile) {
+        if (updateUserDto.name) user.profile.name = updateUserDto.name;
+        if (updateUserDto.company_name) user.profile.company_name = updateUserDto.company_name;
+        if (updateUserDto.phone_number) user.profile.phone_number = updateUserDto.phone_number;
+        if (updateUserDto.cnic) user.profile.cnic = updateUserDto.cnic;
+        if (updateUserDto.address) user.profile.address = updateUserDto.address;
+  
+        // Save updated profile
+        await queryRunner.manager.save(user.profile);
+      }
+  
+      // Save the updated User entity
+      const updatedUser = await queryRunner.manager.save(user);
+  
+      await queryRunner.commitTransaction();
+      return updatedUser;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Transaction failed: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
