@@ -1,16 +1,21 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UserProfile } from './entities/user-profile.entity';
+import * as bcrypt from 'bcrypt';
+import { randomInt } from 'crypto';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { DataSource } from 'typeorm';
-import { randomBytes } from 'crypto';
+import { EmailVerificationToken } from './entities/email-verification.entity';
 import { ResetToken } from './entities/reset-token.entity';
-import { UnauthorizedException } from '@nestjs/common';
+import { UserProfile } from './entities/user-profile.entity';
+import { User } from './entities/user.entity';
+import { MailService } from './services/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -26,9 +31,12 @@ export class UsersService {
 
     @InjectRepository(ResetToken)
     private resetTokenRepo: Repository<ResetToken>,
+    @InjectRepository(EmailVerificationToken)
+    private emailVerificationTokenRepo: Repository<EmailVerificationToken>,
 
     private jwtService: JwtService,
     private dataSource: DataSource,
+    private readonly mailService: MailService,
   ) {}
 
   // Creating regular user/regular signup
@@ -102,51 +110,64 @@ export class UsersService {
     return this.userRepository.findOneBy({ user_id: id });
   }
   // Method to handle forgot password and generate a reset token
+
   async forgotPassword(email: string) {
     const existingUser = await this.findUserByEmail(email);
     if (existingUser) {
-      const resetToken = randomBytes(64).toString('hex');
+      // Generate a 6-digit reset code
+      const resetCode = randomInt(100000, 999999).toString();
       const expiryDate = new Date();
       expiryDate.setHours(expiryDate.getHours() + 1); // Expires in 1 hour
 
+      // Check if there's an existing reset code entry for the user
       let resetTokenObj = await this.resetTokenRepo.findOne({
         where: { userId: existingUser.user_id },
       });
 
       if (resetTokenObj) {
-        resetTokenObj.token = resetToken;
+        resetTokenObj.token = resetCode;
         resetTokenObj.expiryDate = expiryDate;
       } else {
         resetTokenObj = this.resetTokenRepo.create({
-          token: resetToken,
+          token: resetCode,
           userId: existingUser.user_id,
           expiryDate,
         });
       }
 
       await this.resetTokenRepo.save(resetTokenObj);
-      //Send the email link
-      // await this.mailService.sendPasswordResetEmail(email, resetToken);
+
+      // Send the email with the reset code
+      this.mailService.sendMail(
+        existingUser.email,
+        'Password Reset Code',
+        `Your password reset code is: ${resetCode} \n\nThis code will expire in 1 hour`,
+      );
 
       return {
-        message: 'Reset password link sent to respected email',
-        resetToken,
+        message: 'Reset password code sent to the specified email',
+        resetCode,
       };
+    } else {
+      throw new Error('User with this email does not exist');
     }
   }
-  async resetPassword(resetToken: string, newPassword: string) {
+  async resetPassword(email: string, resetToken: string, newPassword: string) {
     const token = await this.resetTokenRepo.findOne({
       where: { token: resetToken, expiryDate: MoreThan(new Date()) },
     });
 
     if (!token) {
-      throw new UnauthorizedException('Invalid Link');
+      throw new UnauthorizedException('Invalid Code or Code Expired!!');
     }
     this.resetTokenRepo.remove(token);
 
     const existingUser = await this.findOne(token.userId);
     if (!existingUser) {
-      throw new InternalServerErrorException();
+      throw new NotFoundException('User not found');
+    }
+    if (existingUser.email !== email) {
+      throw new UnauthorizedException('Invalid Email');
     }
     const authUser = await this.userAuthRepository.findOne({
       where: { user: { user_id: existingUser.user_id } },
@@ -159,6 +180,89 @@ export class UsersService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
     return hashedPassword;
+  }
+  async requestEmailVerification(email: string) {
+    const existingUser = await this.findUserByEmail(email);
+    if (!existingUser) {
+      throw new UnauthorizedException('Invalid Email');
+    }
+
+    // Generate a 6-digit random number for verification
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+    const expiryDate = new Date();
+    expiryDate.setMinutes(expiryDate.getMinutes() + 10);
+
+    // Save or update the verification code with expiry in the database
+    const existingToken = await this.emailVerificationTokenRepo.findOne({
+      where: { userId: existingUser.user_id },
+    });
+
+    if (existingToken) {
+      // Update existing token
+      existingToken.token = verificationCode;
+      existingToken.expiryDate = expiryDate;
+      await this.emailVerificationTokenRepo.save(existingToken);
+    } else {
+      // Create a new token entry
+      await this.emailVerificationTokenRepo.save({
+        token: verificationCode,
+        userId: existingUser.user_id,
+        expiryDate,
+      });
+    }
+
+    // Send the verification code via email
+    this.mailService.sendMail(
+      existingUser.email,
+      'Email Verification',
+      `Your verification code is: ${verificationCode}\n\nThis code will expire in 10 minutes.`,
+    );
+
+    return {
+      message: 'Verification code sent to the specified email',
+      verificationCode,
+    };
+  }
+  async verifyEmail(email: string, verificationCode: string) {
+    // Find the user by email
+    const user = await this.findUserByEmail(email);
+    if (!user) {
+      throw new BadRequestException('Invalid email address');
+    }
+
+    // Retrieve the verification code entry for the user
+    const verificationEntry = await this.emailVerificationTokenRepo.findOne({
+      where: { userId: user.user_id },
+    });
+
+    if (!verificationEntry) {
+      throw new UnauthorizedException('Verification code not found');
+    }
+
+    // Check if the code matches and is still valid
+    if (verificationEntry.token !== verificationCode) {
+      throw new UnauthorizedException('Invalid verification code');
+    }
+
+    if (verificationEntry.expiryDate < new Date()) {
+      throw new UnauthorizedException('Verification code has expired');
+    }
+
+    const authUser = await this.userAuthRepository.findOne({
+      where: { user: { user_id: user.user_id } },
+    });
+    if (!authUser) {
+      throw new UnauthorizedException('User not found');
+    }
+    authUser.isEmailVerified = true;
+    await this.userAuthRepository.save(authUser);
+
+    // Delete the verification entry from the database
+    await this.emailVerificationTokenRepo.delete({ userId: user.user_id });
+
+    return { message: 'Email verified successfully' };
   }
 
   // Find user by email

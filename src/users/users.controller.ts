@@ -6,6 +6,7 @@ import { User } from './entities/user.entity';
 import { AuthService } from '../auth/auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email-token.dto';
 
 @Controller('users')
 export class UsersController {
@@ -66,8 +67,20 @@ export class UsersController {
   @Post('reset-password')
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.usersService.resetPassword(
+      resetPasswordDto.email,
       resetPasswordDto.resetToken,
       resetPasswordDto.newPassword,
+    );
+  }
+  @Post('request-email-verification')
+  requestEmailVerification(@Body() { email }: ForgotPasswordDto) {
+    return this.usersService.requestEmailVerification(email);
+  }
+  @Post('verify-email')
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return await this.usersService.verifyEmail(
+      verifyEmailDto.email,
+      verifyEmailDto.code,
     );
   }
 }

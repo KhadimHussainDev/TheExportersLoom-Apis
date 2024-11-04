@@ -7,14 +7,22 @@ import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { ResetToken } from './entities/reset-token.entity';  
 import { AuthModule } from '../auth/auth.module';
+import { MailService } from './services/mail.service';
+import { EmailVerificationToken } from './entities/email-verification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserProfile, UserAuthentication, ResetToken]),  
-    forwardRef(() => AuthModule),  
+    TypeOrmModule.forFeature([
+      User,
+      UserProfile,
+      UserAuthentication,
+      ResetToken,
+      EmailVerificationToken
+    ]),
+    forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService],  
+  providers: [UsersService, MailService],
+  exports: [UsersService],
 })
 export class UsersModule {}
