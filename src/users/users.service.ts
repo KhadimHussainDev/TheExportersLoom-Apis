@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
@@ -29,7 +29,6 @@ export class UsersService {
 
     private jwtService: JwtService,
     private dataSource: DataSource,
-
   ) {}
 
   // Creating regular user/regular signup
@@ -98,7 +97,10 @@ export class UsersService {
       await queryRunner.release();
     }
   }
-
+  findOne(id: number) {
+    if (!id) return null;
+    return this.userRepository.findOneBy({ user_id: id });
+  }
   // Method to handle forgot password and generate a reset token
   async forgotPassword(email: string) {
     const existingUser = await this.findUserByEmail(email);
@@ -123,36 +125,71 @@ export class UsersService {
       }
 
       await this.resetTokenRepo.save(resetTokenObj);
+      //Send the email link
+      // await this.mailService.sendPasswordResetEmail(email, resetToken);
+
+      return {
+        message: 'Reset password link sent to respected email',
+        resetToken,
+      };
     }
+  }
+  async resetPassword(resetToken: string, newPassword: string) {
+    const token = await this.resetTokenRepo.findOne({
+      where: { token: resetToken, expiryDate: MoreThan(new Date()) },
+    });
+
+    if (!token) {
+      throw new UnauthorizedException('Invalid Link');
+    }
+    this.resetTokenRepo.remove(token);
+
+    const existingUser = await this.findOne(token.userId);
+    if (!existingUser) {
+      throw new InternalServerErrorException();
+    }
+    const authUser = await this.userAuthRepository.findOne({
+      where: { user: { user_id: existingUser.user_id } },
+    });
+    authUser.passwordHash = await this.encrypt(newPassword);
+    await this.userAuthRepository.save(authUser);
+    return { message: 'Password has been changed!!' };
+  }
+  async encrypt(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+    return hashedPassword;
   }
 
   // Find user by email
   async findUserByEmail(email: string): Promise<User | undefined> {
     return await this.userRepository.findOne({ where: { email } });
   }
-  
+
   // Validate user credentials for regular login
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.findByEmailWithAuth(email);
     if (!user || !user.userAuth || user.userAuth.length === 0) {
-        throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
     const userAuth = user.userAuth[0];
-    const isPasswordValid = await bcrypt.compare(password, userAuth.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      userAuth.passwordHash,
+    );
 
     if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
-    return user; 
+    return user;
   }
 
- 
   // Generate JWT token after successful login
   async login(user: any) {
-    const payload = { 
-      username: user.username, 
-      sub: user.user_id, 
-      userType: user.userType 
+    const payload = {
+      username: user.username,
+      sub: user.user_id,
+      userType: user.userType,
     };
     console.log('Payload during login:', payload);
     return {
@@ -162,7 +199,7 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
-      relations: ['profile'], 
+      relations: ['profile'],
     });
   }
 
@@ -170,8 +207,7 @@ export class UsersService {
   async findByEmailWithAuth(email: string): Promise<User> {
     return await this.userRepository.findOne({
       where: { email },
-      relations: ['userAuth'], 
+      relations: ['userAuth'],
     });
   }
-
 }
