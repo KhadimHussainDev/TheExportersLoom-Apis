@@ -29,8 +29,11 @@ export class User {
   @Column({ nullable: true })
   picture: string;  
 
+  @Column({ default: true })
+  isActive: boolean;
+
   // One-to-One relationship with UserProfile
-  @OneToOne(() => UserProfile, (userProfile) => userProfile.user, { cascade: true })
+  @OneToOne(() => UserProfile, (userProfile) => userProfile.user)
   @JoinColumn()  
   profile: UserProfile;  
 

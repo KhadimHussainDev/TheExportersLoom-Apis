@@ -9,16 +9,16 @@ export class UserProfile {
   @Column()
   name: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   company_name: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   phone_number: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   cnic: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   address: string;
 
   @Column({ type: 'float', nullable: true })
@@ -27,11 +27,11 @@ export class UserProfile {
   @Column({ nullable: true })
   profile_picture: string;
 
-    @Column({ default: false })
-    googleAuth: boolean;  
+  @Column({ default: false })
+  googleAuth: boolean;
 
-    // Foreign key linking to the User table
-    @OneToOne(() => User, user => user.profile)
-    @JoinColumn({ name: 'user_id' })  // user_id foreign key
-    user: User;
+  // Foreign key linking to the User table
+  @OneToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

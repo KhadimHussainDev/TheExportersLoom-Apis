@@ -1,4 +1,17 @@
-import { Controller, Post, Body, Get, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Delete,
+  Put,
+  Body,
+  Req,
+  Get,
+  HttpException,
+  ParseIntPipe,
+  HttpStatus,
+  Param,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -7,6 +20,8 @@ import { AuthService } from '../auth/auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email-token.dto';
+import { UpdateUserDto } from './dto/update-users.dto';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -18,7 +33,6 @@ export class UsersController {
   // Signup route to register a new user
   @Post('signup')
   async signUp(@Body() createUserDto: CreateUserDto): Promise<any> {
-    console.log('Sign-up request received', createUserDto);
     try {
       const result = await this.usersService.create(createUserDto);
       return { success: true, ...result };
@@ -57,6 +71,41 @@ export class UsersController {
   @Get()
   getAllUsers(): Promise<User[]> {
     return this.usersService.findAll();
+  }
+  // Get user by ID
+  @Get(':id')
+  async getUserById(@Param('id') id: number): Promise<User> {
+    const user = await this.usersService.findOneById(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
+  }
+
+  // Mark a user as inactive (soft delete)
+  @Delete(':id')
+  async deleteUser(
+    @Req() req: Request,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
+    const result = await this.usersService.deleteUserById(id);
+    if (!result) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return { message: 'User status set to inactive successfully' };
+  }
+
+  @Put(':id')
+  async updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<{ message: string; user: User }> {
+    const updatedUser = await this.usersService.updateUser(id, updateUserDto);
+
+    return {
+      message: 'User updated successfully',
+      user: updatedUser,
+    };
   }
 
   @Post('forgot-password')
