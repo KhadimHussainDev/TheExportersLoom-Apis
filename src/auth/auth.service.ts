@@ -34,7 +34,7 @@ export class AuthService {
   // Generates JWT token for a user
   async generateJwt(user: JwtUserPayload): Promise<{ accessToken: string; refreshToken?: string }> {
     const payload = { 
-        sub: user.user_id, 
+        user_id: user.user_id, 
         username: user.email, 
         userType: user.userType 
     };
