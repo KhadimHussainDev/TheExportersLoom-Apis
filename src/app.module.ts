@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';  
 import { AppService } from './app.service';  
 import { MachineModule } from './machines/machine.module';
+import { ProjectModule } from './project/project.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MachineModule } from './machines/machine.module';
     UsersModule,
     AuthModule,
     MachineModule,
+    ProjectModule,
   ],
   controllers: [AppController],  
   providers: [AppService],  
