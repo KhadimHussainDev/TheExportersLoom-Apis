@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
 import { Machine } from 'src/machines/entities/machine.entity';
+import { Project } from 'src/project/entities/project.entity';
 
 @Entity()
 export class User {
@@ -43,5 +44,8 @@ export class User {
 
   @OneToMany(() => Machine, (machine) => machine.machine_owner)
   machines: Machine[];
+
+  @OneToMany(() => Project, (project) => project.user)
+  projects: Project[];
   
 }
