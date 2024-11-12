@@ -1,0 +1,195 @@
+1. Cotton
+Cotton Jersey:
+Low GSM: PKR 1200 per kg (Lightweight, breathable, often used for summer T-shirts)
+High GSM: PKR 1600 per kg (Heavier, more durable, often used for winter wear)
+Cotton Flannel:
+Low GSM: PKR 1400 per kg (Lightweight flannel shirts)
+High GSM: PKR 1800 per kg (Heavier, warmer flannel shirts)
+Cotton Denim:
+Low GSM: PKR 1500 per kg (Lightweight denim shirts)
+High GSM: PKR 2000 per kg (Heavier denim shirts)
+Egyptian Cotton: PKR 2500 per kg
+Pima Cotton: PKR 2200 per kg
+Organic Cotton: PKR 2000 per kg
+Brushed Cotton: PKR 1800 per kg
+Cotton Lawn: PKR 1300 per kg
+Cotton Poplin: PKR 1400 per kg
+Cotton Twill: PKR 1600 per kg
+Cotton Chambray: PKR 1500 per kg
+Cotton Sateen: PKR 1700 per kg
+Cotton Voile: PKR 1400 per kg
+Cotton Broadcloth: PKR 1500 per kg
+Cotton Madras: PKR 1600 per kg
+2. Cotton-Polyester Blend
+50/50 Blend:
+Low GSM: PKR 1000 per kg (Lightweight, often used for T-shirts)
+High GSM: PKR 1400 per kg (Heavier, more durable, often used for sweatshirts)
+65/35 Blend: PKR 1200 per kg
+80/20 Blend: PKR 1300 per kg
+3. Mesh
+Categories:
+1-Cut Mesh: PKR 800 per kg (Typically low GSM)
+2-Cut Mesh: PKR 1000 per kg (Medium GSM)
+3-Cut Mesh: PKR 1200 per kg (High GSM)
+4. Lycra (Spandex)
+Types:
+Lycra Cotton Blend: PKR 1800 per kg
+Lycra Polyester Blend: PKR 1600 per kg
+Lycra Nylon Blend: PKR 1700 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+5. Spandex
+Types:
+Spandex Cotton Blend: PKR 1800 per kg
+Spandex Polyester Blend: PKR 1600 per kg
+Spandex Nylon Blend: PKR 1700 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+6. Polyester
+Polyester Fleece:
+Low GSM: PKR 1000 per kg (Lightweight fleece)
+High GSM: PKR 1400 per kg (Heavier, warmer fleece)
+Microfiber Polyester: PKR 1200 per kg
+Polyester Mesh: PKR 1000 per kg
+Polyester Satin: PKR 1300 per kg
+Polyester Chiffon: PKR 1200 per kg
+7. Linen
+Pure Linen:
+Low GSM: PKR 2000 per kg (Lightweight, breathable, often used for summer shirts)
+High GSM: PKR 2500 per kg (Heavier, more durable, often used for more structured garments)
+Linen-Cotton Blend: PKR 1800 per kg
+Linen-Viscose Blend: PKR 1900 per kg
+8. Silk
+Types:
+Mulberry Silk: PKR 3000 per kg
+Tussah Silk: PKR 2800 per kg
+Eri Silk: PKR 2700 per kg
+Dupioni Silk: PKR 3200 per kg
+Charmeuse Silk: PKR 3100 per kg
+Silk Satin: PKR 3300 per kg
+Silk Chiffon: PKR 2900 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+9. Wool
+Wool Flannel:
+Low GSM: PKR 2500 per kg (Lightweight wool flannel shirts)
+High GSM: PKR 3000 per kg (Heavier, warmer wool flannel shirts)
+Merino Wool: PKR 3500 per kg
+Cashmere: PKR 4000 per kg
+Lambswool: PKR 3200 per kg
+Shetland Wool: PKR 3400 per kg
+Worsted Wool: PKR 3600 per kg
+10. Hemp
+Types:
+Pure Hemp: PKR 2200 per kg
+Hemp-Cotton Blend: PKR 2000 per kg
+Hemp-Viscose Blend: PKR 2100 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+11. Nylon
+Types:
+Ripstop Nylon: PKR 1800 per kg
+Ballistic Nylon: PKR 2000 per kg
+Nylon Mesh: PKR 1500 per kg
+Nylon Spandex Blend: PKR 1900 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+12. Acrylic
+Types:
+Acrylic Wool Blend: PKR 1600 per kg
+Acrylic Cotton Blend: PKR 1400 per kg
+Acrylic Polyester Blend: PKR 1500 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+13. Rayon
+Types:
+Viscose Rayon: PKR 1300 per kg
+Modal Rayon: PKR 1400 per kg
+Lyocell (Tencel) Rayon: PKR 1600 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+14. Modal
+Types:
+Pure Modal: PKR 1500 per kg
+Modal Cotton Blend: PKR 1400 per kg
+Modal Polyester Blend: PKR 1300 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+15. Viscose
+Types:
+Pure Viscose: PKR 1200 per kg
+Viscose Cotton Blend: PKR 1300 per kg
+Viscose Linen Blend: PKR 1400 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+16. Tri-blend
+Types:
+Cotton-Polyester-Rayon Blend: PKR 1500 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+17. Polyester-Spandex Blend
+Types:
+85/15 Blend: PKR 1600 per kg
+90/10 Blend: PKR 1700 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+18. Cotton-Linen Blend
+Types:
+50/50 Blend: PKR 1800 per kg
+70/30 Blend: PKR 1900 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+19. Bamboo
+Types:
+Bamboo Cotton Blend: PKR 2000 per kg
+Bamboo Viscose: PKR 2100 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+20. Tencel (Lyocell)
+Types:
+Pure Tencel: PKR 2200 per kg
+Tencel Cotton Blend: PKR 2000 per kg
+Tencel Linen Blend: PKR 2100 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+21. Microfiber
+Types:
+Polyester Microfiber: PKR 1200 per kg
+Nylon Microfiber: PKR 1300 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+22. Oxford Cloth
+Types:
+Pinpoint Oxford: PKR 1500 per kg
+Royal Oxford: PKR 1600 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+23. Poplin
+Types:
+Cotton Poplin: PKR 1400 per kg
+Polyester Poplin: PKR 1300 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+24. Twill
+Types:
+Gabardine: PKR 1700 per kg
+Herringbone: PKR 1600 per kg
+Denim: PKR 2000 per kg
+Houndstooth: PKR 1800 per kg
+Cavalry Twill: PKR 1900 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+25. Flannel
+Cotton Flannel:
+Low GSM: PKR 1400 per kg (Lightweight flannel shirts)
+High GSM: PKR 1800 per kg (Heavier, warmer flannel shirts)
+Wool Flannel:
+Low GSM: PKR 2500 per kg (Lightweight wool flannel shirts)
+High GSM: PKR 3000 per kg (Heavier, warmer wool flannel shirts)
+26. Chambray
+Types:
+Cotton Chambray: PKR 1500 per kg
+Linen Chambray: PKR 1600 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+27. Pique Knit
+Types:
+Cotton Pique: PKR 1400 per kg
+Polyester Pique: PKR 1300 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+28. Chiffon
+Types:
+Silk Chiffon: PKR 2900 per kg
+Polyester Chiffon: PKR 1200 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.
+29. Fleece
+Polyester Fleece:
+Low GSM: PKR 1000 per kg (Lightweight fleece)
+High GSM: PKR 1400 per kg (Heavier, warmer fleece)
+Cotton Fleece: PKR 1600 per kg
+30. Synthetic Blends
+Types:
+Polyester-Nylon Blend: PKR 1500 per kg
+Polyester-Acrylic Blend: PKR 1400 per kg
+Generally comes in a single GSM range, not typically divided into high and low GSM.

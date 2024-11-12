@@ -1,7 +1,7 @@
 {
   "name": "the-exporters-loom",
   "version": "0.0.1",
-  "description": "",
+  "description": "<p align=\"center\">\r   <a href=\"http://nestjs.com/\" target=\"blank\"><img src=\"https://nestjs.com/img/logo-small.svg\" width=\"200\" alt=\"Nest Logo\" /></a>\r </p>",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -31,6 +31,7 @@
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "csv-parser": "^3.0.0",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.7",
@@ -39,10 +40,11 @@
     "passport-google-oauth2": "^0.2.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
-    "pg": "^8.13.0",
+    "pg": "^8.13.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -85,5 +87,18 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  }
+  },
+  "main": ".eslintrc.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KhadimHussainDev/TheExportersLoom-Apis.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/KhadimHussainDev/TheExportersLoom-Apis/issues"
+  },
+  "homepage": "https://github.com/KhadimHussainDev/TheExportersLoom-Apis#readme"
 }

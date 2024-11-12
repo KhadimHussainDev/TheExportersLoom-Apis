@@ -7,7 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';  
 import { MachineModule } from './machines/machine.module';
 import { ProjectModule } from './project/project.module';
-
+import { SeederModule } from './scripts/seeder.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,9 +23,9 @@ import { ProjectModule } from './project/project.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],  
+        entities: [__dirname + '/entities/*.entity{.ts,.js}'],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  
-        logging: true,
+        // logging: true,
       }),
     }),
 
@@ -33,6 +33,7 @@ import { ProjectModule } from './project/project.module';
     AuthModule,
     MachineModule,
     ProjectModule,
+    SeederModule,
   ],
   controllers: [AppController],  
   providers: [AppService],  
