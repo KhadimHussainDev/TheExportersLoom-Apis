@@ -94,7 +94,7 @@ export class UsersService {
       await queryRunner.manager.save(userAuth);
   
       // Generate JWT Tokens
-      const payload = { username: savedUser.username, sub: savedUser.user_id };
+      const payload = { username: savedUser.username, user_id: savedUser.user_id };
       const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
   
@@ -302,8 +302,8 @@ export class UsersService {
   // Generate JWT token after successful login
   async login(user: any) {
     const payload = {
+      user_id: user.user_id,
       username: user.username,
-      sub: user.user_id,
       userType: user.userType,
     };
     return {

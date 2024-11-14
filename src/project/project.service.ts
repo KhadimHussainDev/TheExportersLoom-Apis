@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
@@ -13,23 +13,37 @@ export class ProjectService {
   constructor(
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
+
+    @InjectRepository(User)
+    private userRepository: Repository<User>,  // Inject UserRepository
+    
     @InjectRepository(Module)
     private moduleRepository: Repository<Module>,
   ) {}
 
-  async createProject(createProjectDto: CreateProjectDto, user: User): Promise<Project> {
-    const project = this.projectRepository.create({ ...createProjectDto, user });
-    return this.projectRepository.save(project);
+  async createProject(createProjectDto: CreateProjectDto, user_id: number): Promise<Project> {
+    try {
+      const newProject = this.projectRepository.create({
+        ...createProjectDto,
+        user: { user_id } as User, // Set user relation based on User entity
+      });
+      return await this.projectRepository.save(newProject);
+    } catch (error) {
+      throw new HttpException('Error creating project', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   findAllProjectsForUser(userId: number): Promise<Project[]> {
+    console.log(`Finding project with ID: ${userId} for user ID: ${userId}`);
     return this.projectRepository.find({
       where: { user: { user_id: userId } },
       relations: ['modules'],
     });
   }
 
+  
   async findProjectByIdForUser(id: number, userId: number): Promise<Project> {
+    console.log(`Service - Finding project with ID: ${id} for user ID: ${userId}`);
     const project = await this.projectRepository.findOne({
       where: { id, user: { user_id: userId } },
       relations: ['modules'],
@@ -37,7 +51,6 @@ export class ProjectService {
     if (!project) throw new NotFoundException('Project not found');
     return project;
   }
-
   async updateProject(id: number, updateProjectDto: UpdateProjectDto, userId: number): Promise<Project> {
     const project = await this.findProjectByIdForUser(id, userId);
     Object.assign(project, updateProjectDto);

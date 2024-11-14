@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Module } from './module.entity';
 
@@ -22,8 +22,10 @@ export class Project {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.projects, { onDelete: 'CASCADE' })
-  user: User;  // Link to the User who owns the project
+  
+  @ManyToOne(() => User, (user) => user.projects)
+@JoinColumn({ name: 'user_id' })
+user: User;
 
   @OneToMany(() => Module, (module) => module.project, { cascade: true })
   modules: Module[];
