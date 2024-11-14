@@ -15,6 +15,11 @@ lerna-debug.log*
 # OS
 .DS_Store
 
+
+#excel files
+~$*.xlsx
+
+
 # Tests
 /coverage
 /.nyc_output

@@ -1,8 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
-import { Machine } from 'src/machines/entities/machine.entity';
-import { Project } from 'src/project/entities/project.entity';
+// import { Machine } from 'src/machines/entities/machine.entity';
+// import { Project } from 'src/project/entities/project.entity';
+import { Machine } from '../../machines/entities/machine.entity';
+import { Project } from '../../project/entities/project.entity';
 
 @Entity()
 export class User {
