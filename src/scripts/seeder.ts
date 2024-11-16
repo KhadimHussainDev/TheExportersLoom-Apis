@@ -20,6 +20,8 @@ import {
   Sleeves,
   UpperBack,
 } from '../entities';
+import * as dotenv from 'dotenv';
+dotenv.config(); // Load environment variables from .env file
 
 async function populateData() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -44,22 +46,22 @@ async function populateData() {
   };
 
   const filePaths = {
-    fabricSizeFile: './data/Shirts/Fabric Size Calculation.xlsx',
-    fabricPricingFile: './data/Shirts/Fabric Pricing.xlsx',
-    logoSizesFile: './data/Shirts/Logo Sizes.xlsx',
-    packagingBagsFile: './data/Shirts/Packging Bags.xlsx',
-    regularCuttingFile: './data/Shirts/Regular Cutting of Shirts.xlsx',
-    shirtTypesFile: './data/Shirts/Shirt Types.xlsx',
-    stitchingFile: './data/Shirts/Stitching.xlsx',
-    sublimationCuttingFile: './data/Shirts/Sublimation Cutting of Shirts.xlsx',
-    bottomHemFile: './data/Shirts/Logo Pricing/Bottom Hem.xlsx',
-    centerChestFile: './data/Shirts/Logo Pricing/Center Chest.xlsx',
-    fullBackFile: './data/Shirts/Logo Pricing/Full Back.xlsx',
-    fullFrontFile: './data/Shirts/Logo Pricing/Full Front.xlsx',
-    leftChestFile: './data/Shirts/Logo Pricing/Left Chest.xlsx',
-    oversizedFrontFile: './data/Shirts/Logo Pricing/Oversized Front.xlsx',
-    sleevesFile: './data/Shirts/Logo Pricing/Sleeves.xlsx',
-    upperBackFile: './data/Shirts/Logo Pricing/Upper Back.xlsx',
+    fabricSizeFile: process.env.FABRIC_SIZE_FILE_PATH || './data/Shirts/Fabric Size Calculation.xlsx',
+    fabricPricingFile: process.env.FABRIC_PRICING_FILE_PATH || './data/Shirts/Fabric Pricing.xlsx',
+    logoSizesFile: process.env.LOGO_SIZES_FILE_PATH || './data/Shirts/Logo Sizes.xlsx',
+    packagingBagsFile: process.env.PACKAGING_BAGS_FILE_PATH || './data/Shirts/Packging Bags.xlsx',
+    regularCuttingFile: process.env.REGULAR_CUTTING_FILE_PATH || './data/Shirts/Regular Cutting of Shirts.xlsx',
+    shirtTypesFile: process.env.SHIRT_TYPES_FILE_PATH || './data/Shirts/Shirt Types.xlsx',
+    stitchingFile: process.env.STITCHING_FILE_PATH || './data/Shirts/Stitching.xlsx',
+    sublimationCuttingFile: process.env.SUBLIMATION_CUTTING_FILE_PATH || './data/Shirts/Sublimation Cutting of Shirts.xlsx',
+    bottomHemFile: process.env.BOTTOM_HEM_FILE_PATH || './data/Shirts/Logo Pricing/Bottom Hem.xlsx',
+    centerChestFile: process.env.CENTER_CHEST_FILE_PATH || './data/Shirts/Logo Pricing/Center Chest.xlsx',
+    fullBackFile: process.env.FULL_BACK_FILE_PATH || './data/Shirts/Logo Pricing/Full Back.xlsx',
+    fullFrontFile: process.env.FULL_FRONT_FILE_PATH || './data/Shirts/Logo Pricing/Full Front.xlsx',
+    leftChestFile: process.env.LEFT_CHEST_FILE_PATH || './data/Shirts/Logo Pricing/Left Chest.xlsx',
+    oversizedFrontFile: process.env.OVERSIZED_FRONT_FILE_PATH || './data/Shirts/Logo Pricing/Oversized Front.xlsx',
+    sleevesFile: process.env.SLEEVES_FILE_PATH || './data/Shirts/Logo Pricing/Sleeves.xlsx',
+    upperBackFile: process.env.UPPER_BACK_FILE_PATH || './data/Shirts/Logo Pricing/Upper Back.xlsx',
   };
 
   function loadSheetData(filePath: string): any[] {
@@ -127,7 +129,7 @@ async function populateData() {
     repositories.regularCuttingRepo,
     loadSheetData(filePaths.regularCuttingFile).map(row => ({
       quantityOfShirts: row['Quantity of Shirts']?.trim(),
-      ratePerShirt: row['Rate per Shirt (PKR)']?.trim(),
+      ratePerShirt: parseFloat(String(row['Rate per Shirt (PKR)'])?.trim()),
       totalCost: row['Total Cost (PKR)']?.trim(),
     })),
     'Regular Cutting'
@@ -145,7 +147,7 @@ async function populateData() {
     repositories.stitchingRepo,
     loadSheetData(filePaths.stitchingFile).map(row => ({
       quantityOfShirts: row['Quantity of Shirts']?.trim(),
-      ratePerShirt: row['Rate per Shirt (PKR)']?.trim(),
+      ratePerShirt: parseFloat(String(row['Rate per Shirt (PKR)'])?.trim()),
       totalCost: row['Total Cost (PKR)']?.trim(),
     })),
     'Stitching'
@@ -155,7 +157,7 @@ async function populateData() {
     repositories.sublimationCuttingRepo,
     loadSheetData(filePaths.sublimationCuttingFile).map(row => ({
       quantityOfShirts: row['Quantity of Shirts']?.trim(),
-      ratePerShirt: row['Rate per Shirt (PKR)']?.trim(),
+      ratePerShirt: parseFloat(String(row['Rate per Shirt (PKR)'])?.trim()),
       totalCost: row['Total Cost (PKR)']?.trim(),
     })),
     'Sublimation Cutting'
@@ -164,7 +166,7 @@ async function populateData() {
   await saveData(
     repositories.bottomHemRepo,
     loadSheetData(filePaths.bottomHemFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size2_5x2_5: row['2.5 x 2.5 inches (PKR)']?.trim(),
       size3x3: row['3 x 3 inches (PKR)']?.trim(),
       size3_5x3_5: row['3.5 x 3.5 inches (PKR)']?.trim(),
@@ -176,7 +178,7 @@ async function populateData() {
   await saveData(
     repositories.centerChestRepo,
     loadSheetData(filePaths.centerChestFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size5x5: row['5 x 5 inches (PKR)']?.trim(),
       size6x6: row['6 x 6 inches (PKR)']?.trim(),
       size7x7: row['7 x 7 inches (PKR)']?.trim(),
@@ -188,7 +190,7 @@ async function populateData() {
   await saveData(
     repositories.fullBackRepo,
     loadSheetData(filePaths.fullBackFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size8x10: row['8 x 10 inches (PKR)']?.trim(),
       size10x12: row['10 x 12 inches (PKR)']?.trim(),
       size12x14: row['12 x 14 inches (PKR)']?.trim(),
@@ -200,7 +202,7 @@ async function populateData() {
   await saveData(
     repositories.fullFrontRepo,
     loadSheetData(filePaths.fullFrontFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size8x10: row['8 x 10 inches (PKR)']?.trim(),
       size10x12: row['10 x 12 inches (PKR)']?.trim(),
       size12x14: row['12 x 14 inches (PKR)']?.trim(),
@@ -212,7 +214,7 @@ async function populateData() {
   await saveData(
     repositories.leftChestRepo,
     loadSheetData(filePaths.leftChestFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size2_5x2_5: row['2.5 x 2.5 inches (PKR)']?.trim(),
       size3x3: row['3 x 3 inches (PKR)']?.trim(),
       size3_5x3_5: row['3.5 x 3.5 inches (PKR)']?.trim(),
@@ -224,7 +226,7 @@ async function populateData() {
   await saveData(
     repositories.oversizedFrontRepo,
     loadSheetData(filePaths.oversizedFrontFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size10x12: row['10 x 12 inches (PKR)']?.trim(),
       size12x14: row['12 x 14 inches (PKR)']?.trim(),
       size14x16: row['14 x 16 inches (PKR)']?.trim(),
@@ -236,7 +238,7 @@ async function populateData() {
   await saveData(
     repositories.sleevesRepo,
     loadSheetData(filePaths.sleevesFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size2_5x2_5: row['2.5 x 2.5 inches (PKR)']?.trim(),
       size3x3: row['3 x 3 inches (PKR)']?.trim(),
       size3_5x3_5: row['3.5 x 3.5 inches (PKR)']?.trim(),
@@ -248,7 +250,7 @@ async function populateData() {
   await saveData(
     repositories.upperBackRepo,
     loadSheetData(filePaths.upperBackFile).map(row => ({
-      logoPosition: row['Logo Position']?.trim(),
+      printingMethod: row['Printing Method']?.trim(),
       size5x5: row['5 x 5 inches (PKR)']?.trim(),
       size6x6: row['6 x 6 inches (PKR)']?.trim(),
       size7x7: row['7 x 7 inches (PKR)']?.trim(),

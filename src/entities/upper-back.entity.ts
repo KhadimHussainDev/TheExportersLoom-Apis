@@ -6,7 +6,7 @@ export class UpperBack {
   id: number;
 
   @Column({ type: 'varchar', length: 255 })
-  logoPosition: string;
+  printingMethod: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   size5x5: string;

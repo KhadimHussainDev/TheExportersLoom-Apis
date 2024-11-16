@@ -47,7 +47,7 @@ export class User {
   @OneToMany(() => Machine, (machine) => machine.machine_owner)
   machines: Machine[];
 
-  @OneToMany(() => Project, (project) => project.user)
+  @OneToMany(() => Project, (project) => project.user_id)
   projects: Project[];
   
 }

@@ -1,5 +1,5 @@
 export class CreateOversizedFrontDto {
-  logoPosition: string;
+  printingMethod: string;
   size10x12?: string;
   size12x14?: string;
   size14x16?: string;

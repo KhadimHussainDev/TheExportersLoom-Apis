@@ -8,8 +8,9 @@ export class RegularCutting {
   @Column({ type: 'varchar', length: 50 })
   quantityOfShirts: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  ratePerShirt: string;
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  ratePerShirt: number;
+
 
   @Column({ type: 'varchar', length: 100 })
   totalCost: string;

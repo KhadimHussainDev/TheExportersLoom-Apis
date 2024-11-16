@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';  
 import { AppService } from './app.service';  
 import { MachineModule } from './machines/machine.module';
-import { ProjectModule } from './project/project.module';
+// import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { SeederModule } from './scripts/seeder.module';
     UsersModule,
     AuthModule,
     MachineModule,
-    ProjectModule,
+    // ProjectModule,
     SeederModule,
   ],
   controllers: [AppController],  
