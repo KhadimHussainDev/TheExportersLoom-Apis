@@ -1,32 +1,32 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';  
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';  
-import { AppService } from './app.service';  
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { MachineModule } from './machines/machine.module';
+import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
-import { MessagesModule } from './messages/messages.module';
-import { Message } from './messages/message.entity';
+import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,  
+      isGlobal: true,
     }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE') as 'postgres',  
+        type: configService.get<string>('DB_TYPE') as 'postgres',
         port: configService.get<number>('DB_PORT'),
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [__dirname + '/entities/*.entity{.ts,.js}',Message],
-        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
         // logging: true,
       }),
     }),
@@ -37,8 +37,9 @@ import { Message } from './messages/message.entity';
     ProjectModule,
     SeederModule,
     MessagesModule,
+    NotificationsModule,
   ],
-  controllers: [AppController],  
-  providers: [AppService],  
+  controllers: [AppController],
+  providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
