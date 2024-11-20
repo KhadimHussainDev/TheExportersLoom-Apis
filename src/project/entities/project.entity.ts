@@ -1,12 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { FabricPricing } from '../../modules/fabric-price module/entities/fabric-pricing.entity';
+import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity';
+import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
+import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-printing.entity';
+import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { PackagingModule } from '../../modules/packaging module/entities/packaging.entity';
-import { Stitching } from '../../modules/stitching module/entities/stitching.entity'; 
-import { FabricQuantityModule } from 'src/modules/fabric-quantity module/fabric-quantity.module';
-import { FabricQuantity } from 'src/modules/fabric-quantity module/entities/fabric-quantity.entity';
-import { CuttingModule } from 'src/modules/cutting module/cutting.controller';
-import { Cutting } from 'src/modules/cutting module/entities/cutting.entity';
-import { LogoPrintingModule } from 'src/modules/logo-printing module/logo-printing.module';
+import {Module} from './module.entity';
 
 @Entity('projects')
 export class Project {
@@ -49,27 +48,26 @@ export class Project {
   @Column()
   quantity: number;
 
+  @OneToMany(() => Module, (module) => module.project)
+modules: Module[];
+
+
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
 
-
-  // Relationship with FabricQuantity
-  @OneToMany(() => FabricQuantity, (fabricQuantity) => fabricQuantity.project)
-  fabricQuantities: FabricQuantity[];
-
-  @OneToMany(() => FabricPricing, (fabricPricing) => fabricPricing.project)
+  @OneToMany(() => FabricPricing, (module) => module.project)
   fabricPriceModules: FabricPricing[];
 
-  @OneToMany(() => FabricPricing, (module) => module.project)
-  fabricPricingModule: FabricPricing[];
+  @OneToMany(() => FabricQuantity, (module) => module.project)
+  fabricQuantities: FabricQuantity[];
 
-  @OneToMany(() => LogoPrintingModule, (logoPrintingModule) => logoPrintingModule.project)
-  logoPrintingModules: LogoPrintingModule[];
-  
-  @OneToMany(() => Cutting, (cutting) => cutting.project) 
+  @OneToMany(() => Cutting, (module) => module.project)
   cuttings: Cutting[];
 
-  @OneToMany(() => Stitching, (stitching) => stitching.project) 
+  @OneToMany(() => LogoPrinting, (module) => module.project)
+  logoPrintingModules: LogoPrinting[];
+
+  @OneToMany(() => Stitching, (module) => module.project)
   stitchingModules: Stitching[];
 
   @OneToMany(() => PackagingModule, (module) => module.project)

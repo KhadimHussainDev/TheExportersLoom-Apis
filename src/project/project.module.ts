@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectController } from './project.controller';
 import { ProjectService } from './project.service';
 import { Project } from './entities/project.entity';
-import { FabricQuantityModule } from '../modules/fabric-quantity module/fabric-quantity.module';
+import { FabricQuantityModule } from '../modules/fabric-quantity-module/fabric-quantity.module';
 import { FabricPricingModule } from '../modules/fabric-price module/fabric-pricing.module';
 import { LogoPrintingModule } from '../modules/logo-printing module/logo-printing.module';
 import { CuttingModule } from '../modules/cutting module/cutting.module';

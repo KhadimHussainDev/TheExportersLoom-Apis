@@ -21,10 +21,15 @@ import {
   UpperBack,
 } from '../entities';
 import * as dotenv from 'dotenv';
-dotenv.config(); // Load environment variables from .env file
+dotenv.config(); // Load environment variables from .env
+
+console.log('JWT_SECRET from dotenv:', process.env.JWT_SECRET);
+console.log('Environment Variables:', process.env);
 
 async function populateData() {
   const app = await NestFactory.createApplicationContext(AppModule);
+  console.log('Loaded JWT_SECRET:', process.env.JWT_SECRET);
+
 
   const repositories = {
     fabricSizeRepo: app.get<Repository<FabricSizeCalculation>>('FabricSizeCalculationRepository'),

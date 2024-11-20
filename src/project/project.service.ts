@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { ProjectDto } from './dto/create-project.dto';
-import { FabricQuantityService } from '../modules/fabric-quantity module/fabric-quantity.service';
-import { FabricPriceService } from '../modules/fabric-price module/fabric-pricing.service';
+import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
+import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
 import { LogoPrintingService } from '../modules/logo-printing module/logo-printing.service';
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { StitchingService } from '../modules/stitching module/stitching.service';
@@ -13,39 +13,75 @@ import { PackagingService } from '../modules/packaging module/packaging.service'
 @Injectable()
 export class ProjectService {
   constructor(
-    @InjectRepository(Project) private projectRepository: Repository<Project>,
+    @InjectRepository(Project)
+    private projectRepository: Repository<Project>,
     private fabricQuantityService: FabricQuantityService,
-    private fabricPriceService: FabricPriceService,
+    private fabricPriceService: FabricPricingService,
     private logoPrintingService: LogoPrintingService,
     private cuttingService: CuttingService,
     private stitchingService: StitchingService,
     private packagingService: PackagingService,
+    private dataSource: DataSource,
   ) {}
 
   async createProject(createProjectDto: ProjectDto): Promise<Project> {
-    // Step 1: Create Project entity and save it
-    const project = this.projectRepository.create(createProjectDto);
-    project.totalEstimatedCost = 0;
-    const savedProject = await this.projectRepository.save(project);
+    return await this.dataSource.transaction(async (manager) => {
+      const project = this.projectRepository.create(createProjectDto);
+      project.totalEstimatedCost = 0;
 
-    // Step 2: Create related modules and calculate costs
-    await this.fabricQuantityService.createFabricQuantityModule(savedProject);
-    await this.fabricPriceService.createFabricPriceModule(savedProject);
-    await this.logoPrintingService.createLogoPrintingModule(savedProject);
-    await this.cuttingService.createCuttingModule(savedProject);
-    await this.stitchingService.createStitchingModule(savedProject);
+      const savedProject = await manager.save(project);
 
-    // Updated packaging module creation with projectId and quantity
-    await this.packagingService.createPackagingModule(savedProject.id, savedProject.quantity);
+      await this.fabricQuantityService.createFabricQuantityModule(
+        {
+          projectId: savedProject.id,
+          status: 'draft',
+          categoryType: createProjectDto.fabricCategory,
+          shirtType: createProjectDto.shirtType,
+          fabricSize: createProjectDto.fabricSize,
+          quantityRequired: createProjectDto.quantity,
+        },
+        manager,
+      );
 
-    // Step 3: Calculate the total cost
-    const totalCost = await this.calculateTotalCost(savedProject.id);
-    savedProject.totalEstimatedCost = totalCost;
-    return await this.projectRepository.save(savedProject);
+      await this.fabricPriceService.createFabricPricing(savedProject.id, {
+        category: createProjectDto.fabricCategory,
+        subCategory: createProjectDto.fabricSubCategory,
+      });
+
+      await this.logoPrintingService.createLogoPrintingModule(savedProject.id, {
+        projectId: savedProject.id,
+        logoPosition: createProjectDto.logoPosition,
+        printingMethod: createProjectDto.printingStyle,
+        logoSize: createProjectDto.logoSize,
+      });
+
+      await this.cuttingService.createCuttingModule({
+        projectId: savedProject.id,
+        cuttingStyle: createProjectDto.cuttingStyle as 'regular' | 'sublimation',
+        quantity: createProjectDto.quantity,
+      });
+
+      await this.stitchingService.createStitching({
+        projectId: savedProject.id,
+        quantity: createProjectDto.quantity,
+        status: 'active',
+        ratePerShirt: 0, // Default; will calculate dynamically
+        cost: 0,
+      });
+
+      await this.packagingService.createPackagingModule(
+        savedProject.id,
+        createProjectDto.quantity,
+      );
+
+      const totalCost = await this.calculateTotalCost(savedProject.id);
+      savedProject.totalEstimatedCost = totalCost;
+
+      return manager.save(savedProject);
+    });
   }
 
   private async calculateTotalCost(projectId: number): Promise<number> {
-    // Calculate the total cost by summing up the costs of each module for the project
     const fabricQuantityCost = await this.fabricQuantityService.getModuleCost(projectId);
     const fabricPriceCost = await this.fabricPriceService.getModuleCost(projectId);
     const logoPrintingCost = await this.logoPrintingService.getModuleCost(projectId);
@@ -53,11 +89,13 @@ export class ProjectService {
     const stitchingCost = await this.stitchingService.getModuleCost(projectId);
     const packagingCost = await this.packagingService.getModuleCost(projectId);
 
-    return fabricQuantityCost + fabricPriceCost + logoPrintingCost + cuttingCost + stitchingCost + packagingCost;
-  }
-
-
-  async findOne(projectId: number): Promise<Project> {
-    return this.projectRepository.findOne({ where: { id: projectId } });
+    return (
+      fabricQuantityCost +
+      fabricPriceCost +
+      logoPrintingCost +
+      cuttingCost +
+      stitchingCost +
+      packagingCost
+    );
   }
 }

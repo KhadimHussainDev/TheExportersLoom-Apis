@@ -8,7 +8,8 @@ export class FabricPricingController {
 
   @Post()
   async createFabricPricing(@Body() dto: CreateFabricPricingDto) {
-    return this.fabricPricingService.createFabricPricing(dto);
+    const { projectId } = dto; // Extract projectId from the request body
+    return this.fabricPricingService.createFabricPricing(projectId, dto);
   }
 
   @Get('/calculate-cost/:projectId')
