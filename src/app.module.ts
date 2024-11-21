@@ -6,8 +6,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';  
 import { AppService } from './app.service';  
 import { MachineModule } from './machines/machine.module';
-// import { ProjectModule } from './project/project.module';
+import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
+import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
+import { CuttingModule } from './modules/cutting module/cutting.module';
+import { StitchingModule } from './modules/stitching module/stitching.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,7 +36,10 @@ import { SeederModule } from './scripts/seeder.module';
     UsersModule,
     AuthModule,
     MachineModule,
-    // ProjectModule,
+    ProjectModule,
+    LogoPrintingModule,
+    CuttingModule,
+    StitchingModule,
     SeederModule,
   ],
   controllers: [AppController],  

@@ -41,8 +41,32 @@ export class FabricPricingService {
     return cost;
   }
 
-  async createFabricPricing(dto: CreateFabricPricingDto): Promise<FabricPricing> {
-    const fabricPricing = this.fabricPricingRepository.create(dto);
-    return this.fabricPricingRepository.save(fabricPricing);
+  async createFabricPricing(
+    projectId: number,
+    dto: Partial<CreateFabricPricingDto>,
+  ): Promise<FabricPricing> {
+    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+
+    if (!project) {
+      throw new Error(`Project with ID ${projectId} not found.`);
+    }
+
+    // Create and save the fabric pricing entry
+    const fabricPricing = this.fabricPricingRepository.create({
+      project,
+      category: dto.category,
+      subCategory: dto.subCategory || null,
+      price: dto.price,
+      description: dto.description || null,
+    });
+
+    return await this.fabricPricingRepository.save(fabricPricing);
+  }
+
+  // Get total cost of all FabricPricing modules linked to a project
+  async getModuleCost(projectId: number): Promise<number> {
+    const fabricPricings = await this.fabricPricingRepository.find({ where: { project: { id: projectId } } });
+
+    return fabricPricings.reduce((total, pricing) => total + Number(pricing.price), 0);
   }
 }

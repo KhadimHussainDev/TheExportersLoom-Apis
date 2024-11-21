@@ -8,5 +8,6 @@ import { RegularCutting, SublimationCutting } from 'src/entities';
 @Module({
   imports: [TypeOrmModule.forFeature([Cutting, RegularCutting, SublimationCutting])],
   providers: [CuttingService],
+  exports: [CuttingService],
 })
 export class CuttingModule {}

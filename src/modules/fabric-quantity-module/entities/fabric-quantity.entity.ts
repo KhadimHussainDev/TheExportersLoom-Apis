@@ -29,7 +29,7 @@ export class FabricQuantity {
   fabricQuantityCost: number;
 
   // Relationship to Project
-  @ManyToOne(() => Project, (project) => project.fabricQuantities)
+  @ManyToOne(() => Project, (project) => project.fabricQuantities, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'projectId' })
   project: Project;
 }

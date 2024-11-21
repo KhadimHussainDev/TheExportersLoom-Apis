@@ -51,4 +51,13 @@ export class StitchingService {
 
     return stitchingFile.ratePerShirt;
   }
+
+  async getModuleCost(projectId: number): Promise<number> {
+    const stitchingModules = await this.stitchingRepository.find({
+      where: { project: { id: projectId } },
+    });
+  
+    return stitchingModules.reduce((total, module) => total + Number(module.cost), 0);
+  }
+  
 }

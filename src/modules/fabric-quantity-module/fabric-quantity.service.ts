@@ -5,31 +5,31 @@ import { Repository } from 'typeorm';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
 import { FabricSizeCalculation } from 'src/entities';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class FabricQuantityService {
   constructor(
     @InjectRepository(FabricQuantity)
-    private readonly fabricQuantityRepository: Repository<FabricQuantity>,
-
+    private fabricQuantityRepository: Repository<FabricQuantity>,
     @InjectRepository(FabricSizeCalculation)
-    private readonly fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
+    private fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
   ) {}
 
-  // Create Fabric Quantity module and calculate the cost dynamically
-  async createFabricQuantityModule(createFabricQuantityDto: CreateFabricQuantityDto): Promise<FabricQuantity> {
-    const { shirtType, fabricSize, categoryType, projectId, quantityRequired } = createFabricQuantityDto;
-
-    // Fetch the fabric size calculation based on shirtType and categoryType (fabricType)
+  async createFabricQuantityModule(
+    dto: CreateFabricQuantityDto,
+    manager?: EntityManager,
+  ): Promise<FabricQuantity> {
+    const { shirtType, fabricSize, categoryType, projectId, quantityRequired } = dto;
+  
     const fabricSizeCalculation = await this.fabricSizeCalculationRepository.findOne({
       where: { shirtType, fabricType: categoryType },
     });
-
+  
     if (!fabricSizeCalculation) {
-      throw new NotFoundException('Fabric size calculation not found for this shirt type and fabric category');
+      throw new NotFoundException('Fabric size calculation not found for this type.');
     }
-
-    // Calculate the fabric cost based on the fabric size
+  
     let fabricSizeCost = 0;
     switch (fabricSize.toLowerCase()) {
       case 'small':
@@ -47,13 +47,11 @@ export class FabricQuantityService {
       default:
         throw new Error('Invalid fabric size');
     }
-
-    // Calculate the total fabric quantity cost
+  
     const fabricQuantityCost = fabricSizeCost * quantityRequired;
-
-    // Create a new FabricQuantity record
+  
     const fabricQuantity = this.fabricQuantityRepository.create({
-      status: 'Active',  // Assuming status is 'Active' for now
+      status: 'draft',
       projectId,
       categoryType,
       shirtType,
@@ -61,8 +59,15 @@ export class FabricQuantityService {
       quantityRequired,
       fabricQuantityCost,
     });
+  
+    return manager
+      ? await manager.save(fabricQuantity)
+      : await this.fabricQuantityRepository.save(fabricQuantity);
+  }
+  
 
-    // Save the new fabric quantity entry to the database
-    return await this.fabricQuantityRepository.save(fabricQuantity);
+  async getModuleCost(projectId: number): Promise<number> {
+    const modules = await this.fabricQuantityRepository.find({ where: { projectId } });
+    return modules.reduce((total, item) => total + Number(item.fabricQuantityCost), 0);
   }
 }

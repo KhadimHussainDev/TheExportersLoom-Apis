@@ -10,5 +10,6 @@ import { FabricSizeCalculation } from 'src/entities';
   imports: [TypeOrmModule.forFeature([FabricQuantity, FabricSizeCalculation])],
   controllers: [FabricQuantityController],
   providers: [FabricQuantityService],
+  exports: [FabricQuantityService],
 })
 export class FabricQuantityModule {}

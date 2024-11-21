@@ -1,19 +1,22 @@
-// src/modules/logo-printing-module/dto/create-logo-pricing.dto.ts
-import { IsString, IsNotEmpty, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsIn, IsInt } from 'class-validator';
 
 export class CreateLogoPrintingDto {
+  @IsInt()
+  @IsNotEmpty()
+  projectId: number; // Include the projectId to associate this module with a specific project
+
   @IsString()
   @IsNotEmpty()
   @IsIn([
-    'bottom_hem',
-    'center_chest',
-    'full_back',
-    'full_front',
-    'left_chest',
-    'oversized_front',
-    'sleeves',
-    'upper_back',
-  ])
+    'Bottom Hem',
+    'Center Chest',
+    'Full Back',
+    'Full Front',
+    'Left Chest',
+    'Oversized Front',
+    'Sleeves',
+    'Upper Back',
+  ]) // Use human-readable names matching the user input
   logoPosition: string;
 
   @IsString()

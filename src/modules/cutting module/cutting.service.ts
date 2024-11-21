@@ -59,4 +59,19 @@ export class CuttingService {
 
     return await this.cuttingRepository.save(cutting);
   }
+  async getModuleCost(projectId: number): Promise<number> {
+    // Retrieve all cutting records associated with the given projectId
+    const cuttingModules = await this.cuttingRepository.find({
+      where: { projectId },
+    });
+
+    if (!cuttingModules || cuttingModules.length === 0) {
+      throw new NotFoundException(`No cutting modules found for projectId: ${projectId}`);
+    }
+
+    // Calculate the total cost by summing up the cost of each module
+    const totalCost = cuttingModules.reduce((sum, module) => sum + module.cost, 0);
+
+    return totalCost;
+  }
 }
