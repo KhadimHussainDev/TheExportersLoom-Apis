@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { FabricPricing } from '../../modules/fabric-price module/entities/fabric-pricing.entity';
 import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
@@ -6,21 +6,27 @@ import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-p
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { PackagingModule } from '../../modules/packaging module/entities/packaging.entity';
 import {Module} from './module.entity';
+import { User } from 'users/entities/user.entity';
 
 @Entity('project')
 export class Project {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  userId: number;
+  // @Column()
+  // userId: number;
+  @ManyToOne(() => User, (user) => user.projects, { nullable: true })
+  user: User;
 
   @Column({ nullable: true })
   responseId: number;
 
-  @Column()
-  status: string;
+  // @Column()
+  // status: string;
 
+  @Column({ type: 'varchar', length: 50, default: 'pending' })
+  status: string; 
+  
   @Column()
   shirtType: string;
 

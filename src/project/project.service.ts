@@ -22,15 +22,32 @@ export class ProjectService {
     private stitchingService: StitchingService,
     private packagingService: PackagingService,
     private dataSource: DataSource,
-  ) {}
+  ) {
+    console.log('ProjectRepository initialized:', this.projectRepository);
+    console.log('Project metadata:', this.projectRepository.metadata);
+  }
 
   async createProject(createProjectDto: ProjectDto): Promise<Project> {
     return await this.dataSource.transaction(async (manager) => {
       const project = this.projectRepository.create(createProjectDto);
       project.totalEstimatedCost = 0;
+      
+      console.log("Project entity created:", project); // Log the created entity
+      
+       // Step 2: Check if a project with the same responseId exists (or any other unique identifier)
+    if (createProjectDto.responseId) {
+      const existingProject = await this.projectRepository.findOne({
+        where: { responseId: createProjectDto.responseId },
+      });
 
+      if (existingProject) {
+        throw new Error(`Project with responseId ${createProjectDto.responseId} already exists.`);
+      }
+    }
       const savedProject = await manager.save(project);
-
+      console.log("Saved project:", savedProject); // Log the saved project
+     
+      
       await this.fabricQuantityService.createFabricQuantityModule(
         {
           projectId: savedProject.id,
@@ -43,11 +60,13 @@ export class ProjectService {
         manager,
       );
 
+      console.log("Creating fabric pricing...");
       await this.fabricPriceService.createFabricPricing(savedProject.id, {
         category: createProjectDto.fabricCategory,
         subCategory: createProjectDto.fabricSubCategory,
       });
 
+      console.log("Creating logo printing module...");
       await this.logoPrintingService.createLogoPrintingModule(savedProject.id, {
         projectId: savedProject.id,
         logoPosition: createProjectDto.logoPosition,
@@ -55,12 +74,15 @@ export class ProjectService {
         logoSize: createProjectDto.logoSize,
       });
 
+
+      console.log("Creating cutting module...");
       await this.cuttingService.createCuttingModule({
         projectId: savedProject.id,
         cuttingStyle: createProjectDto.cuttingStyle as 'regular' | 'sublimation',
         quantity: createProjectDto.quantity,
       });
 
+      console.log("Creating stitching module...");
       await this.stitchingService.createStitching({
         projectId: savedProject.id,
         quantity: createProjectDto.quantity,
@@ -69,12 +91,14 @@ export class ProjectService {
         cost: 0,
       });
 
+      console.log("Creating packaging module...");
       await this.packagingService.createPackagingModule(
         savedProject.id,
         createProjectDto.quantity,
       );
 
       const totalCost = await this.calculateTotalCost(savedProject.id);
+      console.log("Calculated total cost:", totalCost);
       savedProject.totalEstimatedCost = totalCost;
 
       return manager.save(savedProject);

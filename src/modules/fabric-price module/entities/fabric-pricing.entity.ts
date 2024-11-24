@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 
-@Entity('fabric_pricing')
+@Entity('fabric_pricing_module')
 export class FabricPricing {
   @PrimaryGeneratedColumn()
   id: number;

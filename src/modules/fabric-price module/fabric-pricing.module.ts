@@ -4,7 +4,7 @@ import { FabricPricingService } from './fabric-pricing.service';
 import { FabricPricingController } from './fabric-pricing.controller';
 import { FabricPricing } from './entities/fabric-pricing.entity';
 import { ProjectModule } from '../../project/project.module'; // Correct import path
-import { Project } from 'src/project/entities/project.entity';
+import { Project } from 'project/entities/project.entity';
 
 @Module({
   imports: [

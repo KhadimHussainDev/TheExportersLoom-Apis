@@ -21,18 +21,24 @@ import { StitchingModule } from './modules/stitching module/stitching.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE') as 'postgres',  
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        entities: [__dirname + '/entities/*.entity{.ts,.js}'],
-        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  
-        // logging: true,
-      }),
-    }),
+      useFactory: async (configService: ConfigService) => {
+        const entities = [
+          __dirname + '/**/*.entity{.ts,.js}',
+        ];
+        console.log('Entities being loaded:', entities);
 
+        return {
+          type: configService.get<string>('DB_TYPE') as 'postgres',  
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          entities,  
+          synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  
+          // logging: true,
+        };
+      },
+    }),
     UsersModule,
     AuthModule,
     MachineModule,

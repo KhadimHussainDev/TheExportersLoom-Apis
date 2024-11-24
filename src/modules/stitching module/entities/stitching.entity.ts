@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 
-@Entity('stitching')
+@Entity('stitching_module')
 export class Stitching {
   @PrimaryGeneratedColumn()
   id: number;

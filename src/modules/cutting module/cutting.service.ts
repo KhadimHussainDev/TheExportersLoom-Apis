@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cutting } from './entities/cutting.entity';
 import { CreateCuttingDto } from './dto/create-cutting.dto';
-import { RegularCutting, SublimationCutting } from 'src/entities';
+import { RegularCutting, SublimationCutting } from 'entities';
 
 @Injectable()
 export class CuttingService {

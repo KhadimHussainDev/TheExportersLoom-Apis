@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 
-@Entity('packaging_bags')
+@Entity('packaging_bags_module')
 export class PackagingModule {
   @PrimaryGeneratedColumn()
   id: number;
