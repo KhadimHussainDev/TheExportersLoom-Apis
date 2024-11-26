@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
@@ -17,19 +17,16 @@ export class FabricQuantityService {
   async createFabricQuantityModule(
     dto: CreateFabricQuantityDto,
     manager?: EntityManager,
-  ): Promise<FabricQuantity> {
+  ): Promise<{ fabricQuantityEntity: FabricQuantity; fabricQuantityCost: number }> {
     console.log('Step 1: Received DTO:', dto);
-
+  
     const { shirtType, fabricSize, categoryType, projectId, quantityRequired } = dto;
-
-    // Fix the case-sensitive query
+  
+    // Retrieve the fabric size calculation
     const fabricSizeCalculation = await this.fabricSizeCalculationRepository.findOne({
-      where: {
-        shirtType,
-        fabricType: categoryType,
-      },
+      where: { shirtType, fabricType: categoryType },
     });
-
+  
     if (!fabricSizeCalculation) {
       console.error('Step 2: Fabric size calculation not found for:', {
         shirtType,
@@ -37,9 +34,10 @@ export class FabricQuantityService {
       });
       throw new NotFoundException('Fabric size calculation not found for this type.');
     }
-
+  
     console.log('Step 2: Retrieved Fabric Size Calculation:', fabricSizeCalculation);
-
+  
+    // Calculate the fabric size cost
     let fabricSizeCost = 0;
     switch (fabricSize.toLowerCase()) {
       case 'small':
@@ -56,46 +54,67 @@ export class FabricQuantityService {
         break;
       default:
         console.error('Step 3: Invalid fabric size:', fabricSize);
-        throw new Error('Invalid fabric size');
+        throw new BadRequestException('Invalid fabric size provided.');
     }
-
+  
     const fabricQuantityCost = fabricSizeCost * quantityRequired;
-
+  
     console.log('Step 4: Calculated Fabric Quantity Cost:', fabricQuantityCost);
-
+  
+    // Create the FabricQuantity entity
     const fabricQuantity = this.fabricQuantityRepository.create({
       status: 'draft',
       projectId,
       categoryType,
       shirtType,
       fabricSize,
-      quantityRequired,
+      quantityRequired, 
       fabricQuantityCost,
     });
-
+  
     console.log('Step 5: Saving Fabric Quantity Entity:', fabricQuantity);
-
-
-    // Save the FabricQuantity entity using the transaction-scoped EntityManager or the repository
-    if (manager) {
-      return await manager.save(fabricQuantity);
-    } else {
-      return await this.fabricQuantityRepository.save(fabricQuantity);
-    }
-    // return manager
-    //   ? await manager.save(fabricQuantity)
-    //   : await this.fabricQuantityRepository.save(fabricQuantity);
+  
+    // Save the FabricQuantity entity
+    const savedFabricQuantity = manager
+      ? await manager.save(fabricQuantity)
+      : await this.fabricQuantityRepository.save(fabricQuantity);
+  
+    console.log('Step 6: Saved Fabric Quantity Entity:', savedFabricQuantity);
+  
+    return {
+      fabricQuantityEntity: savedFabricQuantity,
+      fabricQuantityCost,
+    };
   }
+  
 
   async getModuleCost(projectId: number): Promise<number> {
-    console.log('Step 6: Fetching Module Costs for Project ID:', projectId);
+    console.log('Step 7: Fetching Fabric Quantity Cost for Project ID:', projectId);
 
-    const modules = await this.fabricQuantityRepository.find({ where: { projectId } });
+    // Define the expected shape of the query result
+    type QueryResult = { fabricQuantityCost: number };
 
-    const totalCost = modules.reduce((total, item) => total + Number(item.fabricQuantityCost), 0);
+    // Log raw query for debugging
+    const rawQuery = this.fabricQuantityRepository
+      .createQueryBuilder('fabricQuantity')
+      .select('fabricQuantity.fabricQuantityCost', 'fabricQuantityCost')
+      .where('fabricQuantity.projectId = :projectId', { projectId })
+      .getQuery();
+    console.log('Executing raw query:', rawQuery);
 
-    console.log('Step 7: Calculated Total Module Cost:', totalCost);
+    // Execute the query
+    const result: QueryResult | undefined = await this.fabricQuantityRepository
+      .createQueryBuilder('fabricQuantity')
+      .select('fabricQuantity.fabricQuantityCost', 'fabricQuantityCost')
+      .where('fabricQuantity.projectId = :projectId', { projectId })
+      .getRawOne();
 
-    return totalCost;
+    console.log('Raw query result:', result);
+
+    const fabricQuantityCost = Number(result?.fabricQuantityCost) || 0;
+
+    console.log('Step 8: Retrieved Fabric Quantity Cost:', fabricQuantityCost);
+
+    return fabricQuantityCost;
   }
 }

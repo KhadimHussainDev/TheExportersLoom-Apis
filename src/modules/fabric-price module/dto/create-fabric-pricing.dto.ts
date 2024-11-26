@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsDecimal,IsInt } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsDecimal,IsInt,IsNumber } from 'class-validator';
 
 export class CreateFabricPricingDto {
   @IsNotEmpty()
@@ -20,4 +20,7 @@ export class CreateFabricPricingDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @IsNumber()
+  fabricQuantityCost: number;
 }

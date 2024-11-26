@@ -124,7 +124,7 @@ async function populateData() {
   await saveData(
     repositories.packagingBagsRepo,
     loadSheetData(filePaths.packagingBagsFile).map(row => ({
-      numberOfShirts: parseInt(row['Number of Shirts']) || null,
+      numberOfShirts: row['Number of Shirts'] || null,
       packagingCost: parseInt(row['Packaging Cost (PKR)']) || null,
     })),
     'Packaging Bags'

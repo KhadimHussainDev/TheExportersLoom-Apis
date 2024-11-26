@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Project } from '../../../project/entities/project.entity';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('fabric_pricing_module')
+@Entity('fabric_pricing') // Source table for pricing data
 export class FabricPricing {
   @PrimaryGeneratedColumn()
   id: number;
@@ -12,12 +11,9 @@ export class FabricPricing {
   @Column({ type: 'varchar', length: 255, nullable: true })
   subCategory: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  price: number;
+  @Column({ type: 'varchar', length: 100 })
+  price: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  @ManyToOne(() => Project, (project) => project.fabricPriceModules)
-  project: Project;
 }

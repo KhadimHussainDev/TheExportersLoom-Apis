@@ -23,8 +23,8 @@ export class ProjectService {
     private packagingService: PackagingService,
     private dataSource: DataSource,
   ) {
-    console.log('ProjectRepository initialized:', this.projectRepository);
-    console.log('Project metadata:', this.projectRepository.metadata);
+    // console.log('ProjectRepository initialized:', this.projectRepository);
+    // console.log('Project metadata:', this.projectRepository.metadata);
   }
 
   async createProject(createProjectDto: ProjectDto): Promise<Project> {
@@ -48,7 +48,7 @@ export class ProjectService {
       console.log("Saved project:", savedProject); // Log the saved project
      
       
-      await this.fabricQuantityService.createFabricQuantityModule(
+      const { fabricQuantityCost } = await this.fabricQuantityService.createFabricQuantityModule(
         {
           projectId: savedProject.id,
           status: 'draft',
@@ -59,37 +59,53 @@ export class ProjectService {
         },
         manager,
       );
-
+      console.log("Fabric Quantity Cost:", fabricQuantityCost);
       console.log("Creating fabric pricing...");
-      await this.fabricPriceService.createFabricPricing(savedProject.id, {
-        category: createProjectDto.fabricCategory,
-        subCategory: createProjectDto.fabricSubCategory,
-      });
+      await this.fabricPriceService.createFabricPricing(
+        savedProject,
+        {
+          category: createProjectDto.fabricCategory,
+          subCategory: createProjectDto.fabricSubCategory,
+          fabricQuantityCost,
+        },
+        manager,
+      );
+      
 
       console.log("Creating logo printing module...");
-      await this.logoPrintingService.createLogoPrintingModule(savedProject.id, {
-        projectId: savedProject.id,
-        logoPosition: createProjectDto.logoPosition,
-        printingMethod: createProjectDto.printingStyle,
-        logoSize: createProjectDto.logoSize,
-      });
+      await this.logoPrintingService.createLogoPrintingModule(
+        savedProject.id,
+        {
+          projectId: savedProject.id,
+          logoPosition: createProjectDto.logoPosition,
+          printingMethod: createProjectDto.printingStyle,
+          logoSize: createProjectDto.logoSize,
+        },
+        manager, // Pass the transaction EntityManager
+      );
 
 
       console.log("Creating cutting module...");
-      await this.cuttingService.createCuttingModule({
-        projectId: savedProject.id,
-        cuttingStyle: createProjectDto.cuttingStyle as 'regular' | 'sublimation',
-        quantity: createProjectDto.quantity,
-      });
+      await this.cuttingService.createCuttingModule(
+        {
+          projectId: savedProject.id,
+          cuttingStyle: createProjectDto.cuttingStyle as 'regular' | 'sublimation',
+          quantity: createProjectDto.quantity,
+        },
+        manager, // Pass EntityManager to CuttingService
+      );
 
       console.log("Creating stitching module...");
-      await this.stitchingService.createStitching({
-        projectId: savedProject.id,
-        quantity: createProjectDto.quantity,
-        status: 'active',
-        ratePerShirt: 0, // Default; will calculate dynamically
-        cost: 0,
-      });
+      await this.stitchingService.createStitching(
+        manager, // Pass the transaction EntityManager
+        {
+          projectId: savedProject.id,
+          quantity: createProjectDto.quantity,
+          status: 'active',
+          ratePerShirt: 0, // Default; will calculate dynamically
+          cost: 0,
+        },
+      );
 
       console.log("Creating packaging module...");
       await this.packagingService.createPackagingModule(

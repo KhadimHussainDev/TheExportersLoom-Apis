@@ -18,4 +18,6 @@ export class CreateFabricQuantityDto {
 
   @IsDecimal()
   quantityRequired: number; // Quantity of fabric required for the project
+
+  
 }

@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
-import { FabricPricing } from '../../modules/fabric-price module/entities/fabric-pricing.entity';
+import { FabricPricingModule } from '../../modules/fabric-price module/entities/fabric-pricing-module.entity';
 import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
 import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-printing.entity';
@@ -61,8 +61,8 @@ modules: Module[];
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
 
-  @OneToMany(() => FabricPricing, (module) => module.project)
-  fabricPriceModules: FabricPricing[];
+  @OneToMany(() => FabricPricingModule, (module) => module.project)
+  fabricPriceModules: FabricPricingModule[];
 
   @OneToMany(() => FabricQuantity, (module) => module.project)
   fabricQuantities: FabricQuantity[];

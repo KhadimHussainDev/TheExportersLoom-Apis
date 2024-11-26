@@ -11,6 +11,7 @@ import { SeederModule } from './scripts/seeder.module';
 import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
 import { CuttingModule } from './modules/cutting module/cutting.module';
 import { StitchingModule } from './modules/stitching module/stitching.module';
+import { PackagingModule } from './modules/packaging module/packaging.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { StitchingModule } from './modules/stitching module/stitching.module';
     CuttingModule,
     StitchingModule,
     SeederModule,
+    PackagingModule
   ],
   controllers: [AppController],  
   providers: [AppService],  
