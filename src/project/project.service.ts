@@ -109,9 +109,14 @@ export class ProjectService {
 
       console.log("Creating packaging module...");
       await this.packagingService.createPackagingModule(
-        savedProject.id,
-        createProjectDto.quantity,
+        {
+          projectId: savedProject.id,  // Pass the project ID
+          quantity: createProjectDto.quantity,  // Pass the quantity
+          status: 'active',  // Add a status value (or get it dynamically based on your logic)
+        },
+        manager, // Pass the transaction EntityManager
       );
+      
 
       const totalCost = await this.calculateTotalCost(savedProject.id);
       console.log("Calculated total cost:", totalCost);
@@ -127,15 +132,15 @@ export class ProjectService {
     const logoPrintingCost = await this.logoPrintingService.getModuleCost(projectId);
     const cuttingCost = await this.cuttingService.getModuleCost(projectId);
     const stitchingCost = await this.stitchingService.getModuleCost(projectId);
-    const packagingCost = await this.packagingService.getModuleCost(projectId);
+    // const packagingCost = await this.packagingService.getModuleCost(projectId);
 
     return (
       fabricQuantityCost +
       fabricPriceCost +
       logoPrintingCost +
       cuttingCost +
-      stitchingCost +
-      packagingCost
+      stitchingCost 
+      // packagingCost
     );
   }
 }

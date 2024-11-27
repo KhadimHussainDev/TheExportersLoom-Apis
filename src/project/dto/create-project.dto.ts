@@ -2,8 +2,6 @@ import { IsString, IsNumber, IsOptional, IsDecimal, Min } from 'class-validator'
 
 export class ProjectDto {
 
-  
-
   @IsNumber()
   @Min(1)
   userId: number;

@@ -7,4 +7,7 @@ export class CreatePackagingDto {
 
   @IsString()
   status: string;
+
+  @IsNumber()
+  projectId: number;  // Add this field to represent the project ID
 }

@@ -4,7 +4,7 @@ import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fa
 import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
 import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-printing.entity';
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
-import { PackagingModule } from '../../modules/packaging module/entities/packaging.entity';
+import { Packaging } from '../../modules/packaging module/entities/packaging.entity';
 import {Module} from './module.entity';
 import { User } from 'users/entities/user.entity';
 
@@ -76,6 +76,6 @@ modules: Module[];
   @OneToMany(() => Stitching, (module) => module.project)
   stitchingModules: Stitching[];
 
-  @OneToMany(() => PackagingModule, (module) => module.project)
-  packagingModules: PackagingModule[];
+  @OneToMany(() => Packaging, (module) => module.project)
+  packagingModules: Packaging[];
 }
