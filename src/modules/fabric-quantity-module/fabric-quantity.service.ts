@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, QueryResult } from 'typeorm';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
 import { FabricSizeCalculation } from 'entities/fabric-size-calculation.entity';
@@ -90,31 +90,29 @@ export class FabricQuantityService {
 
   async getModuleCost(projectId: number): Promise<number> {
     console.log('Step 7: Fetching Fabric Quantity Cost for Project ID:', projectId);
-
-    // Define the expected shape of the query result
-    type QueryResult = { fabricQuantityCost: number };
-
-    // Log raw query for debugging
-    const rawQuery = this.fabricQuantityRepository
+  
+    // Define the expected structure of the result
+    type QueryResult = { fabricQuantityCost: string }; // 'string' since it's usually returned as a string from raw queries
+  
+    // Log the full query for debugging
+    const query = this.fabricQuantityRepository
       .createQueryBuilder('fabricQuantity')
       .select('fabricQuantity.fabricQuantityCost', 'fabricQuantityCost')
-      .where('fabricQuantity.projectId = :projectId', { projectId })
-      .getQuery();
-    console.log('Executing raw query:', rawQuery);
-
-    // Execute the query
-    const result: QueryResult | undefined = await this.fabricQuantityRepository
-      .createQueryBuilder('fabricQuantity')
-      .select('fabricQuantity.fabricQuantityCost', 'fabricQuantityCost')
-      .where('fabricQuantity.projectId = :projectId', { projectId })
-      .getRawOne();
-
+      .where('fabricQuantity.projectId = :projectId', { projectId });
+  
+    console.log('Executing raw query:', query.getQuery()); // Log the raw SQL query
+  
+    // Execute the raw query to fetch the fabric quantity cost
+    const result: QueryResult | undefined = await query.getRawOne();
+  
     console.log('Raw query result:', result);
-
-    const fabricQuantityCost = Number(result?.fabricQuantityCost) || 0;
-
+  
+    // Safely retrieve fabricQuantityCost, defaulting to 0 if not found
+    const fabricQuantityCost = result?.fabricQuantityCost ? Number(result.fabricQuantityCost) : 0;
+  
     console.log('Step 8: Retrieved Fabric Quantity Cost:', fabricQuantityCost);
-
+  
     return fabricQuantityCost;
   }
+  
 }

@@ -9,6 +9,7 @@ import { LogoPrintingService } from '../modules/logo-printing module/logo-printi
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { StitchingService } from '../modules/stitching module/stitching.service';
 import { PackagingService } from '../modules/packaging module/packaging.service';
+import { User } from 'users/entities/user.entity';
 
 @Injectable()
 export class ProjectService {
@@ -29,23 +30,34 @@ export class ProjectService {
 
   async createProject(createProjectDto: ProjectDto): Promise<Project> {
     return await this.dataSource.transaction(async (manager) => {
-      const project = this.projectRepository.create(createProjectDto);
-      project.totalEstimatedCost = 0;
+      // Step 1: Fetch the user by userId from the database
+      const user = await manager.findOne(User, { where: { user_id: createProjectDto.userId } });
       
-      console.log("Project entity created:", project); // Log the created entity
-      
-       // Step 2: Check if a project with the same responseId exists (or any other unique identifier)
-    if (createProjectDto.responseId) {
-      const existingProject = await this.projectRepository.findOne({
-        where: { responseId: createProjectDto.responseId },
+      // If no user found, throw an error
+      if (!user) {
+        throw new Error(`User with ID ${createProjectDto.userId} not found.`);
+      }
+
+      // Step 2: Create the project entity with the user linked
+      const project = this.projectRepository.create({
+        ...createProjectDto,
+        user,  
+        totalEstimatedCost: 0, 
       });
 
-      if (existingProject) {
-        throw new Error(`Project with responseId ${createProjectDto.responseId} already exists.`);
+      console.log("Project entity created:", project); 
+      // Step 3: Check if a project with the same responseId exists (or any other unique identifier)
+      if (createProjectDto.responseId) {
+        const existingProject = await this.projectRepository.findOne({
+          where: { responseId: createProjectDto.responseId },
+        });
+
+        if (existingProject) {
+          throw new Error(`Project with responseId ${createProjectDto.responseId} already exists.`);
+        }
       }
-    }
       const savedProject = await manager.save(project);
-      console.log("Saved project:", savedProject); // Log the saved project
+      console.log("Saved project:", savedProject);
      
       
       const { fabricQuantityCost } = await this.fabricQuantityService.createFabricQuantityModule(
@@ -81,7 +93,7 @@ export class ProjectService {
           printingMethod: createProjectDto.printingStyle,
           logoSize: createProjectDto.logoSize,
         },
-        manager, // Pass the transaction EntityManager
+        manager, 
       );
 
 
@@ -92,17 +104,17 @@ export class ProjectService {
           cuttingStyle: createProjectDto.cuttingStyle as 'regular' | 'sublimation',
           quantity: createProjectDto.quantity,
         },
-        manager, // Pass EntityManager to CuttingService
+        manager, 
       );
 
       console.log("Creating stitching module...");
       await this.stitchingService.createStitching(
-        manager, // Pass the transaction EntityManager
+        manager, 
         {
           projectId: savedProject.id,
           quantity: createProjectDto.quantity,
           status: 'active',
-          ratePerShirt: 0, // Default; will calculate dynamically
+          ratePerShirt: 0, 
           cost: 0,
         },
       );
@@ -110,11 +122,11 @@ export class ProjectService {
       console.log("Creating packaging module...");
       await this.packagingService.createPackagingModule(
         {
-          projectId: savedProject.id,  // Pass the project ID
-          quantity: createProjectDto.quantity,  // Pass the quantity
-          status: 'active',  // Add a status value (or get it dynamically based on your logic)
+          projectId: savedProject.id,  
+          quantity: createProjectDto.quantity,  
+          status: 'active',  
         },
-        manager, // Pass the transaction EntityManager
+        manager, 
       );
       
 
@@ -128,6 +140,7 @@ export class ProjectService {
 
   private async calculateTotalCost(projectId: number): Promise<number> {
     const fabricQuantityCost = await this.fabricQuantityService.getModuleCost(projectId);
+    console.log("Fabric Quantity Cost from getModuleCost:", fabricQuantityCost);
     const fabricPriceCost = await this.fabricPriceService.getModuleCost(projectId);
     const logoPrintingCost = await this.logoPrintingService.getModuleCost(projectId);
     const cuttingCost = await this.cuttingService.getModuleCost(projectId);

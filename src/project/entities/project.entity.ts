@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { FabricPricingModule } from '../../modules/fabric-price module/entities/fabric-pricing-module.entity';
 import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
@@ -15,8 +15,13 @@ export class Project {
 
   // @Column()
   // userId: number;
-  @ManyToOne(() => User, (user) => user.projects, { nullable: true })
-  user: User;
+  // @ManyToOne(() => User, (user) => user.projects, { nullable: true })
+  // user: User;
+
+   // Ensure that you use the correct column name for the foreign key
+   @ManyToOne(() => User, (user) => user.projects, { nullable: true })
+   @JoinColumn({ name: 'userId' })  // This explicitly maps the userId field to the column in the database
+   user: User;
 
   @Column({ nullable: true })
   responseId: number;
