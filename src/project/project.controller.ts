@@ -9,7 +9,7 @@ export class ProjectController {
 
   @Post()
   async createProject(@Body() createProjectDto: ProjectDto): Promise<Project> {
-    console.log("Received project data in controller:", createProjectDto); // Log received data
+    console.log('Received project data in controller:', createProjectDto); // Log received data
     return await this.projectService.createProject(createProjectDto);
   }
 }

@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 
-@Entity('fabric_pricing_module') // Target table for processed results
+@Entity('fabric_pricing_module')
 export class FabricPricingModule {
   @PrimaryGeneratedColumn()
   id: number;

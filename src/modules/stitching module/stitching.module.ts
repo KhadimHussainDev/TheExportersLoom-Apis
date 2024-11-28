@@ -9,6 +9,6 @@ import { Project } from '../../project/entities/project.entity';
   imports: [TypeOrmModule.forFeature([Stitching, Project])],
   controllers: [StitchingController],
   providers: [StitchingService],
-  exports: [StitchingService], 
+  exports: [StitchingService],
 })
 export class StitchingModule {}

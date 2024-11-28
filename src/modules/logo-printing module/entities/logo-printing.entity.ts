@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Project } from '../../../project/entities/project.entity'; // Ensure the correct import path
 
 @Entity('logo_printing')
@@ -18,10 +24,10 @@ export class LogoPrinting {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
-  @Column() // Explicit projectId column to store the foreign key
+  @Column()
   projectId: number;
 
   @ManyToOne(() => Project, (project) => project.logoPrintingModules)
-  @JoinColumn({ name: 'projectId' }) // Ensure the foreign key column is linked correctly
+  @JoinColumn({ name: 'projectId' })
   project: Project;
 }

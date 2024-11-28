@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsNumber, IsDateString, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsDateString,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 
 export class CreateModuleDto {
   @IsString()
@@ -17,6 +24,6 @@ export class CreateModuleDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['draft', 'posted', 'completed']) // Allowed values for status
-  status?: string; // Optional status field
+  @IsIn(['draft', 'posted', 'completed'])
+  status?: string;
 }

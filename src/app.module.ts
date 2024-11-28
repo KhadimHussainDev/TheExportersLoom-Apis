@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';  
+import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';  
-import { AppService } from './app.service';  
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { MachineModule } from './machines/machine.module';
 import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
@@ -16,26 +16,24 @@ import { PackagingModule } from './modules/packaging module/packaging.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,  
+      isGlobal: true,
     }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const entities = [
-          __dirname + '/**/*.entity{.ts,.js}',
-        ];
+        const entities = [__dirname + '/**/*.entity{.ts,.js}'];
         console.log('Entities being loaded:', entities);
 
         return {
-          type: configService.get<string>('DB_TYPE') as 'postgres',  
+          type: configService.get<string>('DB_TYPE') as 'postgres',
           port: configService.get<number>('DB_PORT'),
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
-          entities,  
-          synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),  
+          entities,
+          synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
           // logging: true,
         };
       },
@@ -48,9 +46,9 @@ import { PackagingModule } from './modules/packaging module/packaging.module';
     CuttingModule,
     StitchingModule,
     SeederModule,
-    PackagingModule
+    PackagingModule,
   ],
-  controllers: [AppController],  
-  providers: [AppService],  
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
-import { FabricPricing } from './entities/fabric-pricing.entity';
+import { FabricPricing } from '../../entities/fabric-pricing.entity';
 import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
 import { Project } from '../../project/entities/project.entity';
@@ -21,9 +21,7 @@ export class FabricPricingService {
     private readonly projectRepository: Repository<Project>,
   ) {}
 
-  /**
-   * Fetch raw prices and calculate total cost.
-   */
+  // Fetch raw prices and calculate total cost.
   async calculateFabricCost(
     projectId: number,
     fabricQuantityCost: number,
@@ -96,14 +94,13 @@ export class FabricPricingService {
     return finalCost;
   }
 
-  /**
-   * Create a fabric pricing module and store results in fabric_pricing_module.
-   */
+  // Create a fabric pricing module and store results in fabric_pricing_module.
+
   async createFabricPricing(
-    project: Project, // Accept the project entity directly
+    project: Project,
     dto: Partial<CreateFabricPricingDto>,
     manager: EntityManager,
-  ): Promise<FabricPricingModule> {
+  ): Promise<number> {
     try {
       console.log(`Starting createFabricPricing for projectId: ${project.id}`);
       console.log('Received DTO:', dto);
@@ -147,7 +144,7 @@ export class FabricPricingService {
       const totalCost = Number(fabricPriceRecord.price) * fabricQuantityCost;
 
       const fabricPricingModule = manager.create(FabricPricingModule, {
-        project, // Use the passed project entity
+        project,
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
@@ -162,48 +159,27 @@ export class FabricPricingService {
         'Saved FabricPricingModule to DB:',
         JSON.stringify(savedFabricPricingModule, null, 2),
       );
-      return savedFabricPricingModule;
+      return totalCost;
     } catch (error) {
       console.error('Error in createFabricPricing:', error.message);
       throw error;
     }
   }
 
-  /**
-   * Get total cost of all FabricPricingModules linked to a project.
-   */
   async getModuleCost(projectId: number): Promise<number> {
-    try {
-      const fabricPricings = await this.fabricPricingModuleRepository.find({
+    const fabricPricingModule =
+      await this.fabricPricingModuleRepository.findOne({
         where: { project: { id: projectId } },
+        relations: ['project'],
       });
 
-      if (!fabricPricings || fabricPricings.length === 0) {
-        console.warn(
-          `No FabricPricing modules found for projectId: ${projectId}`,
-        );
-        return 0;
-      }
+    console.log('FabricPricingModule:', fabricPricingModule);
 
-      const totalCost = fabricPricings.reduce((total, pricing) => {
-        const price = Number(pricing.price);
-        if (isNaN(price)) {
-          console.warn(
-            `Invalid price found in FabricPricingModule entry:`,
-            pricing,
-          );
-          return total;
-        }
-        return total + price;
-      }, 0);
-
-      console.log(
-        `Calculated total cost of FabricPricingModules: ${totalCost}`,
-      );
-      return totalCost;
-    } catch (error) {
-      console.error(`Error fetching FabricPricingModules: ${error.message}`);
-      throw error;
+    if (!fabricPricingModule) {
+      console.log('No fabric pricing found for the project.');
+      return 0;
     }
+
+    return Number(fabricPricingModule.price) || 0;
   }
 }

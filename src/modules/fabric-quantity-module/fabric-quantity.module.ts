@@ -1,4 +1,3 @@
-// src/modules/fabric-quantity-module/fabric-quantity.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FabricQuantityController } from './fabric-quantity.controller';

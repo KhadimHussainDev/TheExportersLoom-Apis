@@ -1,37 +1,43 @@
 // src/auth/entities/auth.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class UserAuthentication {
-    @PrimaryGeneratedColumn()
-    authID: number;
+  @PrimaryGeneratedColumn()
+  authID: number;
 
-    @Column()
-    passwordHash: string;
+  @Column()
+  passwordHash: string;
 
-    @Column({ default: false })
-    TwoFactorEnabled: boolean;
+  @Column({ default: false })
+  TwoFactorEnabled: boolean;
 
-    @Column({ default: false })
-    isEmailVerified: boolean;
+  @Column({ default: false })
+  isEmailVerified: boolean;
 
-    @Column({ default: false })
-    isPhoneVerified: boolean;
+  @Column({ default: false })
+  isPhoneVerified: boolean;
 
-    @Column({ nullable: true })
-    VerificationToken: string;
+  @Column({ nullable: true })
+  VerificationToken: string;
 
-    @Column({ type: 'timestamp', nullable: true })
-    LastPasswordChange: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  LastPasswordChange: Date;
 
-    @Column({ default: 0 })
-    FailedLoginAttempts: number;
+  @Column({ default: 0 })
+  FailedLoginAttempts: number;
 
-    @Column({ nullable: true })
-    PasswordResetToken: string;
+  @Column({ nullable: true })
+  PasswordResetToken: string;
 
-    @ManyToOne(() => User, (user) => user.userAuth)  
-    @JoinColumn({ name: 'user_id' }) 
-    user: User;
+  @ManyToOne(() => User, (user) => user.userAuth)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

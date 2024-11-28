@@ -15,31 +15,38 @@ export class PackagingService {
     private readonly packagingBagsRepository: Repository<PackagingBags>,
   ) {}
 
-  /**
-   * Validates if the project exists.
-   */
-  private async validateProject(manager: EntityManager, projectId: number): Promise<Project> {
+  //  Validates if the project exists.
+
+  private async validateProject(
+    manager: EntityManager,
+    projectId: number,
+  ): Promise<Project> {
     const project = await manager.findOne(Project, {
       where: { id: projectId },
     });
 
     if (!project) {
-      throw new NotFoundException(`Project with ID ${projectId} does not exist.`);
+      throw new NotFoundException(
+        `Project with ID ${projectId} does not exist.`,
+      );
     }
 
     return project;
   }
 
-  /**
-   * Finds the packaging cost based on the quantity.
-   */
-  private async findPackagingCost(manager: EntityManager, quantity: number): Promise<number> {
+  //  Finds the packaging cost based on the quantity.
+  private async findPackagingCost(
+    manager: EntityManager,
+    quantity: number,
+  ): Promise<number> {
     const packagingBags = await manager.find(PackagingBags);
 
     // Find the appropriate range for the quantity
     let packagingCost = 0;
     for (const bag of packagingBags) {
-      const range = bag.numberOfShirts.split(' to ').map((str) => parseInt(str.trim()));
+      const range = bag.numberOfShirts
+        .split(' to ')
+        .map((str) => parseInt(str.trim()));
       const [min, max] = range;
 
       if (quantity >= min && quantity <= max) {
@@ -49,23 +56,23 @@ export class PackagingService {
     }
 
     if (packagingCost === 0) {
-      throw new NotFoundException(`No packaging cost found for quantity ${quantity}`);
+      throw new NotFoundException(
+        `No packaging cost found for quantity ${quantity}`,
+      );
     }
-
 
     return packagingCost;
   }
 
-  /**
-   * Creates a new packaging module, validates the project, and calculates the cost.
-   */
-  async createPackagingModule(dto: CreatePackagingDto, manager: EntityManager): Promise<Packaging> {
-    // Validate the project
+  // Creates a new packaging module, validates the project, and calculates the cost.
+  async createPackagingModule(
+    dto: CreatePackagingDto,
+    manager: EntityManager,
+  ): Promise<number> {
     const project = await this.validateProject(manager, dto.projectId);
 
     // Calculate the packaging cost based on the quantity
     const packagingCost = await this.findPackagingCost(manager, dto.quantity);
-
 
     // Create the new packaging record
     const packaging = manager.create(Packaging, {
@@ -77,20 +84,19 @@ export class PackagingService {
     // Save the packaging record in the database
     await manager.save(Packaging, packaging);
 
-    return packaging;
+    console.log(`Packaging module: ${JSON.stringify(packaging)}`);
+    return packagingCost;
   }
 
+  async getModuleCost(projectId: number): Promise<number> {
+    const packaging = await this.packagingRepository.findOne({
+      where: { project: { id: projectId } },
+    });
 
-  /**
-    * Retrieve packaging cost for a project.
-  */
-  // async getModuleCost(projectId: number): Promise<number> {
-  //   const module = await this.packagingRepo.findOne({
-  //     where: { project: { id: projectId } },
-  //   });
-  //   if (!module) {
-  //     throw new Error(`No packaging module found for projectId: ${projectId}`);
-  //   }
-  //   return module.cost;
-  // }
+    if (!packaging) {
+      return 0;
+    }
+
+    return packaging.cost;
+  }
 }

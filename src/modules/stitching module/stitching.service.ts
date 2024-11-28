@@ -18,28 +18,24 @@ export class StitchingService {
   // Create stitching module and calculate cost
   async createStitching(
     manager: EntityManager,
-    createStitchingDto: CreateStitchingDto
-  ): Promise<Stitching> {
+    createStitchingDto: CreateStitchingDto,
+  ): Promise<number> {
     const { projectId, quantity, status } = createStitchingDto;
 
-    console.log(`Creating stitching module...`);
-    console.log(`Received Stitching DTO: ${JSON.stringify(createStitchingDto)}`);
-
     // Validate the project
-    const project = await manager.findOne(Project, { where: { id: projectId } });
+    const project = await manager.findOne(Project, {
+      where: { id: projectId },
+    });
     if (!project) {
       console.error(`Project with ID ${projectId} not found.`);
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
-    console.log(`Validated Project: ${JSON.stringify(project)}`);
 
     // Fetch the rate per shirt from the stitching table
     const ratePerShirt = await this.getRateFromDb(manager, quantity);
-    console.log(`Fetched rate per shirt: ${ratePerShirt}`);
 
     // Calculate the total cost
     const cost = ratePerShirt * quantity;
-    console.log(`Calculated stitching cost: ${cost}`);
 
     // Create and save the stitching module
     const stitching = manager.create(Stitching, {
@@ -49,17 +45,17 @@ export class StitchingService {
       ratePerShirt,
       cost,
     });
-    console.log(`Stitching data being saved: ${JSON.stringify(stitching)}`);
 
     const savedStitching = await manager.save(Stitching, stitching);
     console.log(`Saved Stitching Module: ${JSON.stringify(savedStitching)}`);
-    return savedStitching;
+    return savedStitching.cost;
   }
 
   // Fetch rate per shirt from DB based on quantity
-  private async getRateFromDb(manager: EntityManager, quantity: number): Promise<number> {
-    console.log(`Fetching rate per shirt for quantity: ${quantity}`);
-
+  private async getRateFromDb(
+    manager: EntityManager,
+    quantity: number,
+  ): Promise<number> {
     // Fetch all rows and process the ranges
     const stitchingRates = await manager
       .createQueryBuilder()
@@ -74,38 +70,36 @@ export class StitchingService {
 
     // Find the appropriate rate based on the range
     for (const rateRow of stitchingRates) {
-      const range = rateRow.quantityOfShirts; // Example: '1-24', '25', or '51-99'
-      const [min, max] = range.split('-').map((value) => parseInt(value.trim()));
+      const range = rateRow.quantityOfShirts;
+      const [min, max] = range
+        .split('-')
+        .map((value) => parseInt(value.trim()));
 
-      // Handle single-value ranges (e.g., '25')
+      // Handle single-value ranges
       const effectiveMax = max || min;
 
       // Check if quantity falls within the range
       if (quantity >= min && quantity <= effectiveMax) {
-        console.log(`Matched range: ${range} with ratePerShirt: ${rateRow.ratePerShirt}`);
         return rateRow.ratePerShirt;
       }
     }
 
     console.error(`No matching range found for quantity: ${quantity}`);
-    throw new Error(`No matching rate found for the provided quantity: ${quantity}`);
+    throw new Error(
+      `No matching rate found for the provided quantity: ${quantity}`,
+    );
   }
 
   // Get module cost for a project (no manager)
   async getModuleCost(projectId: number): Promise<number> {
-    console.log(`Fetching total stitching cost for project ID: ${projectId}`);
-
-    const stitchingModules = await this.stitchingRepository.find({
+    const stitching = await this.stitchingRepository.findOne({
       where: { project: { id: projectId } },
     });
 
-    if (!stitchingModules || stitchingModules.length === 0) {
-      console.warn(`No stitching modules found for projectId: ${projectId}`);
+    if (!stitching) {
       return 0;
     }
 
-    const totalCost = stitchingModules.reduce((total, module) => total + Number(module.cost), 0);
-    console.log(`Calculated total stitching cost: ${totalCost}`);
-    return totalCost;
+    return stitching.cost;
   }
 }

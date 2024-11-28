@@ -3,7 +3,7 @@ import { IsString, IsNotEmpty, IsIn, IsInt } from 'class-validator';
 export class CreateLogoPrintingDto {
   @IsInt()
   @IsNotEmpty()
-  projectId: number; // Include the projectId to associate this module with a specific project
+  projectId: number;
 
   @IsString()
   @IsNotEmpty()
@@ -16,7 +16,7 @@ export class CreateLogoPrintingDto {
     'Oversized Front',
     'Sleeves',
     'Upper Back',
-  ]) // Use human-readable names matching the user input
+  ])
   logoPosition: string;
 
   @IsString()

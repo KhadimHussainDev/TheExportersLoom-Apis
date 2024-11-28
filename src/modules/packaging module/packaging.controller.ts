@@ -15,11 +15,12 @@ export class PackagingController {
     const manager = this.dataSource.createEntityManager();
 
     try {
-      // Call the service method to create the packaging module
-      const packaging = await this.packagingService.createPackagingModule(dto, manager);
+      const packaging = await this.packagingService.createPackagingModule(
+        dto,
+        manager,
+      );
       return { message: 'Packaging module created successfully', packaging };
     } catch (error) {
-      // If an error occurs (e.g., no cost found or project not found)
       throw new NotFoundException(error.message);
     }
   }

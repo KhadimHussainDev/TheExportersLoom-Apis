@@ -5,8 +5,9 @@ import { DataSource } from 'typeorm';
 
 @Controller('stitching')
 export class StitchingController {
-  constructor(private readonly stitchingService: StitchingService,private readonly dataSource: DataSource,
-
+  constructor(
+    private readonly stitchingService: StitchingService,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Post()
@@ -16,9 +17,4 @@ export class StitchingController {
       return this.stitchingService.createStitching(manager, createStitchingDto);
     });
   }
-
-  // @Post(':projectId/calculate')
-  // async calculateCost(@Param('projectId') projectId: number) {
-  //   return this.stitchingService.calculateCost(projectId);
-  // }
 }

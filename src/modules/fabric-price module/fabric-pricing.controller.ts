@@ -25,19 +25,23 @@ export class FabricPricingController {
     const { projectId } = dto;
 
     try {
-      console.log('Starting transaction for fabric pricing creation...');
-
       // Initiate a transaction and pass the manager
       const result = await this.dataSource.transaction(async (manager) => {
-        console.log('Fetching project entity within transaction...');
-        const project = await manager.findOne(Project, { where: { id: projectId } });
+        const project = await manager.findOne(Project, {
+          where: { id: projectId },
+        });
 
         if (!project) {
-          throw new NotFoundException(`Project with ID ${projectId} not found.`);
+          throw new NotFoundException(
+            `Project with ID ${projectId} not found.`,
+          );
         }
 
-        console.log('Passing project and manager to FabricPricingService.createFabricPricing...');
-        return await this.fabricPricingService.createFabricPricing(project, dto, manager);
+        return await this.fabricPricingService.createFabricPricing(
+          project,
+          dto,
+          manager,
+        );
       });
 
       console.log('Fabric pricing created successfully:', result);
@@ -47,7 +51,7 @@ export class FabricPricingController {
       };
     } catch (error) {
       console.error('Error while creating fabric pricing:', error.message);
-      throw error; // Let NestJS handle and send an appropriate HTTP error response
+      throw error;
     }
   }
 

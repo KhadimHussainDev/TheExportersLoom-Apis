@@ -18,9 +18,9 @@ export class Module {
   @Column()
   deadline: Date;
 
-  @Column({ default: 'draft' })  // Initial status is 'draft'
-  status: string;  // Status can be 'draft', 'posted', 'bidded'
+  @Column({ default: 'draft' }) // Initial status is 'draft'
+  status: string; // Status can be 'draft', 'posted', 'bidded'
 
   @ManyToOne(() => Project, (project) => project.modules)
-  project: Project;  // Associate module with a project
+  project: Project; // Associate module with a project
 }

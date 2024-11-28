@@ -6,7 +6,9 @@ export class Packaging {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Project, (project) => project.packagingModules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, (project) => project.packagingModules, {
+    onDelete: 'CASCADE',
+  })
   project: Project;
 
   @Column()

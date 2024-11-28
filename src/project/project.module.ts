@@ -17,7 +17,7 @@ import { PackagingModule } from '../modules/packaging module/packaging.module';
     forwardRef(() => CuttingModule),
     forwardRef(() => StitchingModule),
     PackagingModule,
-    forwardRef(() => FabricPricingModule,),
+    forwardRef(() => FabricPricingModule),
     forwardRef(() => LogoPrintingModule),
   ],
   controllers: [ProjectController],

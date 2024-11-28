@@ -13,21 +13,27 @@ export class LogoPrintingController {
   @Post('calculate-price')
   async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
     const { logoPosition, printingMethod, logoSize } = dto;
-
-    // Map size to column
-    const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize); // Use the correct method name
+    const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize);
     if (!sizeColumn) {
       throw new NotFoundException(`Invalid logo size: ${logoSize}`);
     }
 
-    // Use EntityManager to fetch the cost
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+    return this.logoPrintingService.getCostByPositionAndSize(
+      manager,
+      logoPosition,
+      sizeColumn,
+      printingMethod,
+    );
   }
 
   @Post('create')
   async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto) {
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
+    return this.logoPrintingService.createLogoPrintingModule(
+      dto.projectId,
+      dto,
+      manager,
+    );
   }
 }

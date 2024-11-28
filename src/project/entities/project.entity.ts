@@ -13,21 +13,12 @@ export class Project {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // @Column()
-  // userId: number;
-  // @ManyToOne(() => User, (user) => user.projects, { nullable: true })
-  // user: User;
-
-   // Ensure that you use the correct column name for the foreign key
-   @ManyToOne(() => User, (user) => user.projects, { nullable: true })
-   @JoinColumn({ name: 'userId' })  // This explicitly maps the userId field to the column in the database
+  @ManyToOne(() => User, (user) => user.projects, { nullable: true })
+   @JoinColumn({ name: 'userId' })  
    user: User;
 
   @Column({ nullable: true })
   responseId: number;
-
-  // @Column()
-  // status: string;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
   status: string; 
@@ -66,7 +57,7 @@ modules: Module[];
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
 
-  @OneToMany(() => FabricPricingModule, (module) => module.project)
+  @OneToMany(() => FabricPricingModule, (fabricPricingModule) => fabricPricingModule.project)
   fabricPriceModules: FabricPricingModule[];
 
   @OneToMany(() => FabricQuantity, (module) => module.project)
