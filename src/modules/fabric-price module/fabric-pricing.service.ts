@@ -104,45 +104,51 @@ export class FabricPricingService {
     try {
       console.log(`Starting createFabricPricing for projectId: ${project.id}`);
       console.log('Received DTO:', dto);
-
+  
       if (!project) {
         throw new NotFoundException(`Project not provided.`);
       }
-
-      const fabricQuantityCost = dto.fabricQuantityCost ?? 0;
-      if (fabricQuantityCost <= 0) {
-        throw new BadRequestException(
-          `Invalid fabric quantity cost: ${fabricQuantityCost}`,
-        );
+  
+      let fabricQuantityCost = Number(dto.fabricQuantityCost ?? 0);
+      if (fabricQuantityCost <= 0 || isNaN(fabricQuantityCost)) {
+        throw new BadRequestException(`Invalid fabric quantity cost: ${fabricQuantityCost}`);
       }
-
+  
       const category = dto.category.trim().toLowerCase();
       const subCategory = dto.subCategory
         ? dto.subCategory.trim().toLowerCase()
         : null;
-
-      console.log(
-        `Normalized inputs: category='${category}', subCategory='${subCategory}'`,
-      );
-
+  
+      console.log(`Normalized inputs: category='${category}', subCategory='${subCategory}'`);
+  
       const fabricPriceRecord = await this.fabricPricingRepository
         .createQueryBuilder('fabricPricing')
         .where(
-          `LOWER(TRIM("category")) = :category ${
-            subCategory ? 'AND LOWER(TRIM("subCategory")) = :subCategory' : ''
-          }`,
+          `LOWER(TRIM("category")) = :category ${subCategory ? 'AND LOWER(TRIM("subCategory")) = :subCategory' : ''}`,
           { category, subCategory },
         )
         .getOne();
-
+  
       if (!fabricPriceRecord) {
-        throw new NotFoundException(
-          `Price not found for category: ${dto.category} and subCategory: ${dto.subCategory || 'N/A'}`,
-        );
+        throw new NotFoundException(`Price not found for category: ${dto.category} and subCategory: ${dto.subCategory || 'N/A'}`);
       }
-
-      const totalCost = Number(fabricPriceRecord.price) * fabricQuantityCost;
-
+  
+      console.log("fabricPriceRecord:", fabricPriceRecord);
+      console.log("fabricPriceRecord.price type:", typeof fabricPriceRecord.price);
+      console.log("fabricPriceRecord.price:", fabricPriceRecord.price);
+  
+      // Extract numeric value from the price string using a regular expression.
+      const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); // Matches digits, with optional decimal points.
+      if (!priceMatch) {
+        throw new Error(`Invalid price format for category: ${fabricPriceRecord.category}`);
+      }
+  
+      const fabricPricePerUnit = parseFloat(priceMatch[0]);
+      console.log("Extracted fabricPricePerUnit:", fabricPricePerUnit);
+  
+      const totalCost = fabricPricePerUnit * fabricQuantityCost;
+      console.log("Total cost:", totalCost);
+  
       const fabricPricingModule = manager.create(FabricPricingModule, {
         project,
         category: dto.category,
@@ -150,21 +156,17 @@ export class FabricPricingService {
         price: totalCost,
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
-
-      const savedFabricPricingModule = await manager.save(
-        FabricPricingModule,
-        fabricPricingModule,
-      );
-      console.log(
-        'Saved FabricPricingModule to DB:',
-        JSON.stringify(savedFabricPricingModule, null, 2),
-      );
+  
+      const savedFabricPricingModule = await manager.save(FabricPricingModule, fabricPricingModule);
+      console.log('Saved FabricPricingModule to DB:', JSON.stringify(savedFabricPricingModule, null, 2));
+  
       return totalCost;
     } catch (error) {
       console.error('Error in createFabricPricing:', error.message);
       throw error;
     }
   }
+  
 
   async getModuleCost(projectId: number): Promise<number> {
     const fabricPricingModule =
