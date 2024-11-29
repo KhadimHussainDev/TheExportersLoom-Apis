@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, QueryResult } from 'typeorm';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
-import { FabricSizeCalculation } from 'entities/fabric-size-calculation.entity';
+import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 
 @Injectable()
 export class FabricQuantityService {

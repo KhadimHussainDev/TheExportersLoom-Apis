@@ -6,7 +6,7 @@ import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-p
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { Packaging } from '../../modules/packaging module/entities/packaging.entity';
 import {Module} from './module.entity';
-import { User } from 'users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('project')
 export class Project {

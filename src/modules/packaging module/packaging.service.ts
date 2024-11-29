@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { Packaging } from './entities/packaging.entity';
 import { CreatePackagingDto } from './dto/create-packaging.dto';
-import { PackagingBags } from 'entities/packaging-bags.entity';
-import { Project } from 'project/entities/project.entity';
+import { PackagingBags } from '../../entities/packaging-bags.entity';
+import { Project } from '../../project/entities/project.entity';
 
 @Injectable()
 export class PackagingService {

@@ -19,7 +19,7 @@ import {
   OversizedFront,
   Sleeves,
   UpperBack,
-} from '../entities';
+} from 'entities';
 import * as dotenv from 'dotenv';
 dotenv.config(); // Load environment variables from .env
 
@@ -121,8 +121,21 @@ async function populateData() {
     entityName: string,
   ) {
     try {
-      await repository.save(data);
-      console.log(`${entityName} data populated successfully.`);
+      for (const row of data) {
+        // Check if the data already exists in the database
+        const existingRecord = await repository.findOne({
+          where: row, // Match row data with the entity fields (this can be adjusted if needed)
+        });
+
+        // If record exists, skip insertion
+        if (existingRecord) {
+          console.log(`${entityName} data already exists, skipping...`);
+        } else {
+          // If record does not exist, save the data
+          await repository.save(row);
+          console.log(`${entityName} data populated successfully.`);
+        }
+      }
     } catch (error) {
       console.error(`Error saving ${entityName} data:`, error);
     }

@@ -9,7 +9,7 @@ import { LogoPrintingService } from '../modules/logo-printing module/logo-printi
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { StitchingService } from '../modules/stitching module/stitching.service';
 import { PackagingService } from '../modules/packaging module/packaging.service';
-import { User } from 'users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ProjectService {
