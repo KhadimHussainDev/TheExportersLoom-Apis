@@ -23,7 +23,7 @@ export class ProjectService {
     private stitchingService: StitchingService,
     private packagingService: PackagingService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async createProject(createProjectDto: ProjectDto): Promise<Project> {
     return await this.dataSource.transaction(async (manager) => {
@@ -83,22 +83,32 @@ export class ProjectService {
           },
           manager,
         );
+      console.log('Fabric Pricing Cost: ', fabricPricingCost);
 
-      console.log('Fabric Pricing COst: ', fabricPricingCost);
 
-      const logoPrintingCost =
+    // Logo Printing Module 
+    let logoPrintingCost = 0; 
+    const { logoSize, printingStyle, logoPosition } = createProjectDto;
+
+    // Check if all logo-related fields are provided
+    if (logoSize && printingStyle && logoPosition) {
+      logoPrintingCost =
         await this.logoPrintingService.createLogoPrintingModule(
           savedProject.id,
           {
             projectId: savedProject.id,
-            logoPosition: createProjectDto.logoPosition,
-            printingMethod: createProjectDto.printingStyle,
-            logoSize: createProjectDto.logoSize,
+            logoPosition: logoPosition,
+            printingMethod: printingStyle,
+            logoSize: logoSize,
           },
           manager,
         );
+      console.log('Logo Printing Cost:', logoPrintingCost);
+    } else {
+      console.log('Logo printing not created (missing one or more required fields).');
+    }
 
-      console.log('Logo Printing COst: ', logoPrintingCost);
+
 
       const cuttingCost = await this.cuttingService.createCuttingModule(
         {
@@ -110,8 +120,7 @@ export class ProjectService {
         },
         manager,
       );
-
-      console.log('Cutting COst: ', cuttingCost);
+      console.log('Cutting Cost: ', cuttingCost);
 
       const stitchingCost = await this.stitchingService.createStitching(
         manager,
@@ -124,7 +133,7 @@ export class ProjectService {
         },
       );
 
-      console.log('Stictching COst: ', stitchingCost);
+      console.log('Stictching C0st: ', stitchingCost);
 
       const packagingCost = await this.packagingService.createPackagingModule(
         {
@@ -135,7 +144,7 @@ export class ProjectService {
         manager,
       );
 
-      console.log('Packaging COst: ', packagingCost);
+      console.log('Packaging Cost: ', packagingCost);
 
       const totalCost =
         fabricPricingCost +

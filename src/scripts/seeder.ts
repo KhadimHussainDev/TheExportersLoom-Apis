@@ -121,25 +121,25 @@ async function populateData() {
     entityName: string,
   ) {
     try {
-      for (const row of data) {
-        // Check if the data already exists in the database
-        const existingRecord = await repository.findOne({
-          where: row, // Match row data with the entity fields (this can be adjusted if needed)
-        });
-
-        // If record exists, skip insertion
-        if (existingRecord) {
-          console.log(`${entityName} data already exists, skipping...`);
-        } else {
-          // If record does not exist, save the data
+      // Check if any data exists in the table by counting records
+      const existingRecordsCount = await repository.count();
+  
+      // If there are existing records, log the "already exists" message
+      if (existingRecordsCount > 0) {
+        console.log(`${entityName} data already populated, skipping...`);
+      } else {
+        // If no data exists, proceed to populate the data
+        for (const row of data) {
           await repository.save(row);
-          console.log(`${entityName} data populated successfully.`);
         }
+        console.log(`${entityName} data populated successfully.`);
       }
     } catch (error) {
       console.error(`Error saving ${entityName} data:`, error);
     }
   }
+  
+  
 
   // Data loading and saving for each entity
   await saveData(

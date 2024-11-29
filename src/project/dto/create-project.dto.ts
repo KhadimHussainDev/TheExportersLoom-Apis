@@ -32,15 +32,19 @@ export class ProjectDto {
   fabricSize: string;
 
   @IsString()
+  @IsOptional()
   logoPosition: string;
 
   @IsString()
+  @IsOptional()
   printingStyle: string;
 
   @IsString()
+  @IsOptional()
   logoSize: string;
 
   @IsString()
+  @IsOptional()
   cuttingStyle: string;
 
   @IsNumber()

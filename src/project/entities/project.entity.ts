@@ -5,7 +5,6 @@ import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
 import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-printing.entity';
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { Packaging } from '../../modules/packaging module/entities/packaging.entity';
-import {Module} from './module.entity';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('project')
@@ -35,25 +34,22 @@ export class Project {
   @Column()
   fabricSize: string;
 
-  @Column()
+  @Column({ nullable: true })
   logoPosition: string;
 
-  @Column()
+  @Column({ nullable: true })
   printingStyle: string;
 
-  @Column()
+  @Column({ nullable: true })
   logoSize: string;
 
-  @Column()
+  @Column({ nullable: true })
   cuttingStyle: string;
 
   @Column()
   quantity: number;
 
-  @OneToMany(() => Module, (module) => module.project)
-modules: Module[];
-
-
+ 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
 

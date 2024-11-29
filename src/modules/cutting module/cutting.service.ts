@@ -44,7 +44,7 @@ export class CuttingService {
     }
 
     // A pattern of single size will cost 600 Rupees
-    totalCost = ratePerShirt * quantity * 600;
+    totalCost = ratePerShirt * quantity + 600;
 
     // Validate project existence using the transaction manager
     const projectExists = await manager.findOne('Project', {
