@@ -101,4 +101,20 @@ export class FabricQuantityService {
     console.log('Fabric Quantity module found:', fabricQuantityModule);
     return fabricQuantityModule.fabricQuantityCost || 0;
   }
+
+
+
+  // Fetch the complete FabricQuantity record by projectId
+  async getFabricQuantityByProjectId(projectId: number): Promise<FabricQuantity> {
+    const fabricQuantity = await this.fabricQuantityRepository.findOne({
+      where: { projectId },
+    });
+  
+    if (!fabricQuantity) {
+      throw new NotFoundException(`Fabric Quantity module not found for project ID ${projectId}`);
+    }
+  
+    return fabricQuantity;
+  }
+  
 }

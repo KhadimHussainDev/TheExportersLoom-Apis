@@ -30,4 +30,7 @@ export class LogoPrinting {
   @ManyToOne(() => Project, (project) => project.logoPrintingModules)
   @JoinColumn({ name: 'projectId' })
   project: Project;
+
+  @Column({ nullable: true })
+  status: string;
 }

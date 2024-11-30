@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { FabricQuantityService } from './fabric-quantity.service';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
@@ -20,5 +20,16 @@ export class FabricQuantityController {
       data: fabricQuantityEntity,
       cost: fabricQuantityCost,
     };
+  }
+
+
+
+  // GET API to fetch the complete FabricQuantity entity by projectId
+  @Get('project/:projectId')
+  async getByProjectId(@Param('projectId') projectId: number): Promise<FabricQuantity> {
+    // Fetch the full FabricQuantity entity based on the projectId
+    const fabricQuantity = await this.fabricQuantityService.getFabricQuantityByProjectId(projectId);
+
+    return fabricQuantity;
   }
 }

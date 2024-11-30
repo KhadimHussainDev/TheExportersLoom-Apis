@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager, Not } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { ProjectDto } from './dto/create-project.dto';
 import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
@@ -10,6 +10,12 @@ import { CuttingService } from '../modules/cutting module/cutting.service';
 import { StitchingService } from '../modules/stitching module/stitching.service';
 import { PackagingService } from '../modules/packaging module/packaging.service';
 import { User } from '../users/entities/user.entity';
+import { FabricPricingModule } from 'modules/fabric-price module/entities/fabric-pricing-module.entity';
+import { FabricQuantity } from 'modules/fabric-quantity-module/entities/fabric-quantity.entity';
+import { Cutting } from 'modules/cutting module/entities/cutting.entity';
+import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
+import { Stitching } from 'modules/stitching module/entities/stitching.entity';
+import { Packaging } from 'modules/packaging module/entities/packaging.entity';
 
 @Injectable()
 export class ProjectService {
@@ -86,27 +92,27 @@ export class ProjectService {
       console.log('Fabric Pricing Cost: ', fabricPricingCost);
 
 
-    // Logo Printing Module 
-    let logoPrintingCost = 0; 
-    const { logoSize, printingStyle, logoPosition } = createProjectDto;
+      // Logo Printing Module 
+      let logoPrintingCost = 0;
+      const { logoSize, printingStyle, logoPosition } = createProjectDto;
 
-    // Check if all logo-related fields are provided
-    if (logoSize && printingStyle && logoPosition) {
-      logoPrintingCost =
-        await this.logoPrintingService.createLogoPrintingModule(
-          savedProject.id,
-          {
-            projectId: savedProject.id,
-            logoPosition: logoPosition,
-            printingMethod: printingStyle,
-            logoSize: logoSize,
-          },
-          manager,
-        );
-      console.log('Logo Printing Cost:', logoPrintingCost);
-    } else {
-      console.log('Logo printing not created (missing one or more required fields).');
-    }
+      // Check if all logo-related fields are provided
+      if (logoSize && printingStyle && logoPosition) {
+        logoPrintingCost =
+          await this.logoPrintingService.createLogoPrintingModule(
+            savedProject.id,
+            {
+              projectId: savedProject.id,
+              logoPosition: logoPosition,
+              printingMethod: printingStyle,
+              logoSize: logoSize,
+            },
+            manager,
+          );
+        console.log('Logo Printing Cost:', logoPrintingCost);
+      } else {
+        console.log('Logo printing not created (missing one or more required fields).');
+      }
 
 
 
@@ -159,5 +165,69 @@ export class ProjectService {
 
       return manager.save(savedProject);
     });
+  }
+
+  //get all projects
+  async getAllProjects(): Promise<Project[]> {
+    return await this.projectRepository.find({
+      where: {
+        status: Not('inactive'),  
+      },
+    });
+  }
+
+  // get a specific project by ID along its modules
+  async getProjectById(id: number): Promise<Project> {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+      relations: [
+        'fabricPriceModules',
+        'fabricQuantities',
+        'cuttings',
+        'logoPrintingModules',
+        'stitchingModules',
+        'packagingModules'
+      ], 
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${id} not found.`);
+    }
+    return project;
+  }
+
+
+  // Soft delete a project and its associated modules
+  //doing through transaction
+  async deleteProject(projectId: number): Promise<string> {
+    return await this.projectRepository.manager.transaction(
+      async (manager: EntityManager) => {
+        const project = await manager.findOne(Project, {
+          where: { id: projectId },
+        });
+
+        if (!project) {
+          throw new Error(`Project with ID ${projectId} not found.`);
+        }
+        // Soft delete the project
+        project.status = 'inactive'; 
+        await manager.save(Project, project);
+
+        // Soft delete all related modules by updating their status
+        await this.softDeleteRelatedModules(projectId, manager);
+
+        return `Project with ID ${projectId} and its related modules have been marked as inactive->soft delete.`;
+      },
+    );
+  }
+
+  // Update status of related modules
+  private async softDeleteRelatedModules(projectId: number, manager: EntityManager) {
+    await manager.update(FabricPricingModule, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(FabricQuantity, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(Cutting, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(LogoPrinting, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(Stitching, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(Packaging, { project: { id: projectId } }, { status: 'inactive' });
   }
 }

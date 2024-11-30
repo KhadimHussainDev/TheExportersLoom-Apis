@@ -142,6 +142,7 @@ export class LogoPrintingService {
       size: dto.logoSize,
       logoPosition: dto.logoPosition,
       price: cost,
+      status: 'draft',
     });
     const savedLogoPrinting = await manager.save(LogoPrinting, logoPrinting);
     console.log(

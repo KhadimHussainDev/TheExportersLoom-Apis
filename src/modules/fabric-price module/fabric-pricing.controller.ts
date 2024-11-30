@@ -8,10 +8,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { FabricPricingService } from './fabric-pricing.service';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
 import { DataSource } from 'typeorm';
 import { Project } from '../../project/entities/project.entity';
+
 
 @Controller('fabric-pricing')
 export class FabricPricingController {
@@ -68,5 +70,23 @@ export class FabricPricingController {
       projectId,
       Number(fabricQuantityCost),
     );
+  }
+
+  // GET endpoint to fetch the FabricPricingModule by projectId
+  @Get('/:projectId')
+  async getFabricPricingByProjectId(
+    @Param('projectId') projectId: number,
+  ): Promise<FabricPricingModule> {
+    const fabricPricingModule = await this.fabricPricingService.getFabricPricingByProjectId(
+      projectId,
+    );
+
+    if (!fabricPricingModule) {
+      throw new NotFoundException(
+        `Fabric pricing not found for project with ID ${projectId}`,
+      );
+    }
+
+    return fabricPricingModule;
   }
 }

@@ -22,4 +22,7 @@ export class FabricPricingModule {
     onDelete: 'CASCADE',
   })
   project: Project;
+
+  @Column({ nullable: true })
+status: string;
 }

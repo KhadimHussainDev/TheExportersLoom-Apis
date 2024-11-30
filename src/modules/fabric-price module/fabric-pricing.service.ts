@@ -154,6 +154,7 @@ export class FabricPricingService {
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
+        status: 'draft',
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
   
@@ -183,5 +184,23 @@ export class FabricPricingService {
     }
 
     return Number(fabricPricingModule.price) || 0;
+  }
+
+
+  // Fetch the fabric pricing module by projectId
+  async getFabricPricingByProjectId(
+    projectId: number,
+  ): Promise<FabricPricingModule> {
+    const fabricPricingModule = await this.fabricPricingModuleRepository.findOne({
+      where: { project: { id: projectId } }, // Matching projectId
+    });
+
+    if (!fabricPricingModule) {
+      throw new NotFoundException(
+        `Fabric pricing not found for project with ID ${projectId}`,
+      );
+    }
+
+    return fabricPricingModule;
   }
 }
