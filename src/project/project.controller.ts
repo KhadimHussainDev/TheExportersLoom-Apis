@@ -1,7 +1,8 @@
-import { Controller, Post, Body, NotFoundException, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, NotFoundException, Get, Param, Delete, Put } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { ProjectDto } from './dto/create-project.dto';
 import { Project } from './entities/project.entity';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Controller('projects')
 export class ProjectController {
@@ -40,4 +41,19 @@ export class ProjectController {
       throw new NotFoundException(error.message);
     }
   }
+
+
+  // Edit project by ID
+  @Put(':projectId')
+async editProject(
+  @Param('projectId') projectId: number,
+  @Body() updateProjectDto: UpdateProjectDto,
+) {
+  const updatedProject = await this.projectService.editProject(
+    projectId,
+    updateProjectDto
+  );
+  return updatedProject;
+}
+
 }

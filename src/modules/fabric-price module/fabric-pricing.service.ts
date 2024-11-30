@@ -9,6 +9,7 @@ import { FabricPricing } from '../../entities/fabric-pricing.entity';
 import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
 import { Project } from '../../project/entities/project.entity';
+import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
 
 @Injectable()
 export class FabricPricingService {
@@ -19,7 +20,7 @@ export class FabricPricingService {
     private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>, // Store processed results
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
-  ) {}
+  ) { }
 
   // Fetch raw prices and calculate total cost.
   async calculateFabricCost(
@@ -104,23 +105,23 @@ export class FabricPricingService {
     try {
       console.log(`Starting createFabricPricing for projectId: ${project.id}`);
       console.log('Received DTO:', dto);
-  
+
       if (!project) {
         throw new NotFoundException(`Project not provided.`);
       }
-  
+
       let fabricQuantityCost = Number(dto.fabricQuantityCost ?? 0);
       if (fabricQuantityCost <= 0 || isNaN(fabricQuantityCost)) {
         throw new BadRequestException(`Invalid fabric quantity cost: ${fabricQuantityCost}`);
       }
-  
+
       const category = dto.category.trim().toLowerCase();
       const subCategory = dto.subCategory
         ? dto.subCategory.trim().toLowerCase()
         : null;
-  
+
       console.log(`Normalized inputs: category='${category}', subCategory='${subCategory}'`);
-  
+
       const fabricPriceRecord = await this.fabricPricingRepository
         .createQueryBuilder('fabricPricing')
         .where(
@@ -128,27 +129,27 @@ export class FabricPricingService {
           { category, subCategory },
         )
         .getOne();
-  
+
       if (!fabricPriceRecord) {
         throw new NotFoundException(`Price not found for category: ${dto.category} and subCategory: ${dto.subCategory || 'N/A'}`);
       }
-  
+
       console.log("fabricPriceRecord:", fabricPriceRecord);
       console.log("fabricPriceRecord.price type:", typeof fabricPriceRecord.price);
       console.log("fabricPriceRecord.price:", fabricPriceRecord.price);
-  
+
       // Extract numeric value from the price string using a regular expression.
       const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); // Matches digits, with optional decimal points.
       if (!priceMatch) {
         throw new Error(`Invalid price format for category: ${fabricPriceRecord.category}`);
       }
-  
+
       const fabricPricePerUnit = parseFloat(priceMatch[0]);
       console.log("Extracted fabricPricePerUnit:", fabricPricePerUnit);
-  
+
       const totalCost = fabricPricePerUnit * fabricQuantityCost;
       console.log("Total cost:", totalCost);
-  
+
       const fabricPricingModule = manager.create(FabricPricingModule, {
         project,
         category: dto.category,
@@ -157,17 +158,17 @@ export class FabricPricingService {
         status: 'draft',
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
-  
+
       const savedFabricPricingModule = await manager.save(FabricPricingModule, fabricPricingModule);
       console.log('Saved FabricPricingModule to DB:', JSON.stringify(savedFabricPricingModule, null, 2));
-  
+
       return totalCost;
     } catch (error) {
       console.error('Error in createFabricPricing:', error.message);
       throw error;
     }
   }
-  
+
 
   async getModuleCost(projectId: number): Promise<number> {
     const fabricPricingModule =
@@ -203,4 +204,84 @@ export class FabricPricingService {
 
     return fabricPricingModule;
   }
+
+  async editFabricPricingModule(
+    projectId: number,
+    updatedDto: UpdateFabricPricingDto,
+    manager?: EntityManager,
+  ): Promise<FabricPricingModule> {
+    const { category, subCategory, fabricQuantityCost } = updatedDto;
+
+    // Ensure fabricQuantityCost is a valid number
+    const validFabricQuantityCost = Number(fabricQuantityCost);
+    if (isNaN(validFabricQuantityCost)) {
+      throw new BadRequestException('Invalid fabric quantity cost provided.');
+    }
+
+    // Fetch the existing fabric pricing module by projectId
+    const existingFabricPricingModule = await this.fabricPricingModuleRepository.findOne({
+      where: { project: { id: projectId } },
+      relations: ['project'], // Ensure project is loaded for validation
+    });
+
+    if (!existingFabricPricingModule) {
+      throw new NotFoundException('Fabric Pricing module not found for projectId ' + projectId);
+    }
+
+    // Optionally update category and subCategory if provided
+    if (category) {
+      existingFabricPricingModule.category = category;
+    }
+    if (subCategory) {
+      existingFabricPricingModule.subCategory = subCategory;
+    }
+
+    // If fabricQuantityCost is provided, calculate the new price
+    if (fabricQuantityCost) {
+      let fabricPriceRecord = await this.fabricPricingRepository
+        .createQueryBuilder('fabricPricing')
+        .where(
+          `LOWER(TRIM("category")) = :category AND LOWER(TRIM("subCategory")) = :subCategory`,
+          { category: category.toLowerCase(), subCategory: subCategory?.toLowerCase() },
+        )
+        .getOne();
+
+      if (!fabricPriceRecord) {
+        fabricPriceRecord = await this.fabricPricingRepository
+          .createQueryBuilder('fabricPricing')
+          .where(`LOWER(TRIM("category")) = :category`, { category: category.toLowerCase() })
+          .orderBy('price', 'DESC')
+          .getOne();
+      }
+
+      if (!fabricPriceRecord) {
+        throw new NotFoundException(`Price not found for category: ${category}`);
+      }
+
+      // Calculate the new cost based on fabricQuantityCost
+      const fabricPricePerUnit = Number(fabricPriceRecord.price);
+      if (isNaN(fabricPricePerUnit)) {
+        throw new BadRequestException('Invalid price found for category: ' + category);
+      }
+
+      const finalCost = fabricPricePerUnit * validFabricQuantityCost;
+      existingFabricPricingModule.price = finalCost;
+      existingFabricPricingModule.description = `Updated fabric pricing with quantity cost: ${validFabricQuantityCost}`;
+    }
+
+    // Optionally update other fields like status
+    if (updatedDto.status) {
+      existingFabricPricingModule.status = updatedDto.status;
+    }
+
+    // Save the updated fabric pricing module
+    const updatedFabricPricingModule = await manager
+      ? manager.save(existingFabricPricingModule)
+      : this.fabricPricingModuleRepository.save(existingFabricPricingModule);
+
+    return updatedFabricPricingModule;
+  }
+
+
 }
+

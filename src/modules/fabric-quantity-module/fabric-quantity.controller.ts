@@ -1,11 +1,12 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, NotFoundException } from '@nestjs/common';
 import { FabricQuantityService } from './fabric-quantity.service';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
+import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
 
 @Controller('fabric-quantity')
 export class FabricQuantityController {
-  constructor(private readonly fabricQuantityService: FabricQuantityService) {}
+  constructor(private readonly fabricQuantityService: FabricQuantityService) { }
 
   @Post()
   async create(
@@ -32,4 +33,28 @@ export class FabricQuantityController {
 
     return fabricQuantity;
   }
+
+
+  // edit 
+  // edit API for updating fabric quantity module based on projectId
+  @Put('project/:projectId')
+  async editFabricQuantityModule(
+    @Param('projectId') projectId: number,  // Get projectId from URL
+    @Body() updatedFabricQuantityDto: UpdateFabricQuantityDto,  // Body with data to update
+  ): Promise<{ message: string; data: FabricQuantity }> {
+    try {
+      const updatedFabricQuantity = await this.fabricQuantityService.editFabricQuantityModule(
+        projectId,  // Pass the projectId from URL to service
+        updatedFabricQuantityDto,  // Pass the DTO to update the record
+      );
+
+      return {
+        message: 'Fabric quantity module updated successfully',
+        data: updatedFabricQuantity,
+      };
+    } catch (error) {
+      throw new NotFoundException('Fabric Quantity module not found for projectId ' + projectId);
+    }
+  }
+
 }

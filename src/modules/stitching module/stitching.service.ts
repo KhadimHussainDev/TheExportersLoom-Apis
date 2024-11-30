@@ -4,6 +4,7 @@ import { Repository, EntityManager } from 'typeorm';
 import { Stitching } from './entities/stitching.entity';
 import { CreateStitchingDto } from './dto/create-stitching.dto';
 import { Project } from '../../project/entities/project.entity';
+import { UpdateStitchingDto } from './dto/update-stitchign.dto';
 
 @Injectable()
 export class StitchingService {
@@ -101,5 +102,44 @@ export class StitchingService {
     }
 
     return stitching.cost;
+  }
+
+
+  // Edit an existing stitching module
+  async editStitchingModule(
+    projectId: number,
+    updatedDto: UpdateStitchingDto,
+    manager: EntityManager,
+  ): Promise<Stitching> {
+    const { quantity, status } = updatedDto;
+
+    // Fetch the existing stitching module based on the projectId
+    const existingStitchingModule = await this.stitchingRepository.findOne({
+      where: { project: { id: projectId } },
+    });
+
+    if (!existingStitchingModule) {
+      throw new NotFoundException('Stitching module not found.');
+    }
+
+    // Fetch the new rate based on the updated quantity
+    const ratePerShirt = await this.getRateFromDb(manager, quantity);
+
+    // Recalculate the total cost (rate per shirt * quantity)
+    const cost = ratePerShirt * quantity;
+
+    // Update the stitching record with the new data
+    existingStitchingModule.quantity = quantity;
+    existingStitchingModule.ratePerShirt = ratePerShirt;
+    existingStitchingModule.cost = cost;
+    existingStitchingModule.status = status;
+
+    // Save the updated stitching record
+    const updatedStitching = await manager.save(Stitching, existingStitchingModule);
+
+    console.log('Updated Stitching Module:', updatedStitching);
+
+    // Return the updated stitching record
+    return updatedStitching;
   }
 }

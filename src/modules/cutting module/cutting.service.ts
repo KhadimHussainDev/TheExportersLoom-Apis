@@ -4,6 +4,7 @@ import { Repository, EntityManager } from 'typeorm';
 import { Cutting } from './entities/cutting.entity';
 import { CreateCuttingDto } from './dto/create-cutting.dto';
 import { RegularCutting, SublimationCutting } from '../../entities';
+import { UpdateCuttingDto } from './dto/update-cutting.dto';
 
 @Injectable()
 export class CuttingService {
@@ -125,5 +126,49 @@ export class CuttingService {
     }
 
     return cutting.cost;
+  }
+
+
+
+  // Method to edit an existing cutting module
+   // Method to edit an existing cutting module by project ID
+   async editCuttingModule(
+    projectId: number,
+    updatedDto: UpdateCuttingDto,
+    manager: EntityManager,
+  ): Promise<Cutting> {
+    const { cuttingStyle, quantity } = updatedDto;
+
+    // Fetch the existing cutting module by project ID
+    const existingCuttingModule = await this.cuttingRepository.findOne({
+      where: { projectId },
+    });
+
+    if (!existingCuttingModule) {
+      throw new NotFoundException('Cutting module not found.');
+    }
+
+    let ratePerShirt: number;
+    if (cuttingStyle === 'regular') {
+      ratePerShirt = await this.getRateFromRange(manager, 'regular_cutting', quantity);
+    } else if (cuttingStyle === 'sublimation') {
+      ratePerShirt = await this.getRateFromRange(manager, 'sublimation_cutting', quantity);
+    } else {
+      throw new NotFoundException('Invalid cutting style');
+    }
+
+    const totalCost = ratePerShirt * quantity + 600;
+
+    // Update the cutting module with the new data
+    existingCuttingModule.quantity = quantity;
+    existingCuttingModule.ratePerShirt = ratePerShirt;
+    existingCuttingModule.cost = totalCost;
+    existingCuttingModule.cuttingStyle = cuttingStyle;
+    existingCuttingModule.status = 'Active'; // Optional: Adjust status if needed
+
+    // Save the updated cutting module
+    const updatedCutting = await manager.save(Cutting, existingCuttingModule);
+
+    return updatedCutting;
   }
 }

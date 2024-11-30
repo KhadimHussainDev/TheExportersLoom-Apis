@@ -5,6 +5,7 @@ import { Packaging } from './entities/packaging.entity';
 import { CreatePackagingDto } from './dto/create-packaging.dto';
 import { PackagingBags } from '../../entities/packaging-bags.entity';
 import { Project } from '../../project/entities/project.entity';
+import { UpdatePackagingDto } from './dto/update-packaging.dto';
 
 @Injectable()
 export class PackagingService {
@@ -99,4 +100,41 @@ export class PackagingService {
 
     return packaging.cost;
   }
+
+
+
+  // Edit the packaging module and recalculate the cost
+  async editPackagingModule(
+    projectId: number,
+    updatedDto: UpdatePackagingDto,
+    manager: EntityManager,
+  ): Promise<Packaging> {
+    const { quantity, status } = updatedDto;
+  
+    // Fetch the existing packaging module based on the projectId
+    const existingPackagingModule = await this.packagingRepository.findOne({
+      where: { project: { id: projectId } },
+    });
+  
+    if (!existingPackagingModule) {
+      throw new NotFoundException('Packaging module not found.');
+    }
+  
+    // Fetch the new packaging cost based on the updated quantity
+    const packagingCost = await this.findPackagingCost(manager, quantity);
+  
+    // Update the packaging record with the new data
+    existingPackagingModule.quantity = quantity;
+    existingPackagingModule.status = status;
+    existingPackagingModule.cost = packagingCost;
+  
+    // Save the updated packaging record
+    const updatedPackaging = await manager.save(Packaging, existingPackagingModule);
+  
+    console.log('Updated Packaging Module:', updatedPackaging);
+  
+    // Return the updated packaging record
+    return updatedPackaging;
+  }
+  
 }

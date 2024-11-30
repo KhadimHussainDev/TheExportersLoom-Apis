@@ -4,6 +4,7 @@ import { Repository, DataSource, EntityManager } from 'typeorm';
 import { LogoPrinting } from './entities/logo-printing.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { Project } from '../../project/entities/project.entity';
+import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
 
 @Injectable()
 export class LogoPrintingService {
@@ -161,5 +162,36 @@ export class LogoPrintingService {
     }
 
     return logoPrinting.price || 0;
+  }
+
+
+
+  // Edit logo printing module for a project.
+  // Edit the logo printing module for a project.
+  public async editLogoPrintingModule(
+    projectId: number,
+    updatedDto: UpdateLogoPrintingDto,
+    manager: EntityManager,
+  ): Promise<LogoPrinting> {
+    const { logoPosition, printingMethod, logoSize } = updatedDto;
+
+    const existingLogoPrintingModule = await this.logoPrintingRepository.findOne({
+      where: { projectId },
+    });
+
+    if (!existingLogoPrintingModule) {
+      throw new NotFoundException('Logo printing module not found.');
+    }
+
+    const sizeColumn = this.getSizeColumn(logoSize);
+    const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+
+    existingLogoPrintingModule.printingMethod = printingMethod;
+    existingLogoPrintingModule.logoPosition = logoPosition;
+    existingLogoPrintingModule.size = logoSize;
+    existingLogoPrintingModule.price = cost;
+    existingLogoPrintingModule.status = 'draft'; // Example of status update
+
+    return manager.save(existingLogoPrintingModule);
   }
 }

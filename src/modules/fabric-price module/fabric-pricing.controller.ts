@@ -7,12 +7,14 @@ import {
   Query,
   BadRequestException,
   NotFoundException,
+  Put,
 } from '@nestjs/common';
 import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { FabricPricingService } from './fabric-pricing.service';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
 import { DataSource } from 'typeorm';
 import { Project } from '../../project/entities/project.entity';
+import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
 
 
 @Controller('fabric-pricing')
@@ -20,7 +22,7 @@ export class FabricPricingController {
   constructor(
     private readonly fabricPricingService: FabricPricingService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   @Post()
   async createFabricPricing(@Body() dto: CreateFabricPricingDto) {
@@ -89,4 +91,30 @@ export class FabricPricingController {
 
     return fabricPricingModule;
   }
+
+
+  // Edit an existing Fabric Pricing module based on projectId
+  @Put('project/:projectId')
+  async edit(
+    @Param('projectId') projectId: number,  // Get projectId from URL
+    @Body() updatedFabricPricingDto: UpdateFabricPricingDto,  // Pass the update DTO in the body
+  ): Promise<{ message: string; data: FabricPricingModule }> {
+    try {
+      // Edit the fabric pricing module using the projectId and update DTO
+      const updatedFabricPricing = await this.fabricPricingService.editFabricPricingModule(
+        projectId,  // Pass the projectId from URL to service
+        updatedFabricPricingDto,  // Pass the updated DTO to service
+      );
+
+      return {
+        message: 'Fabric pricing module updated successfully',
+        data: updatedFabricPricing,
+      };
+    } catch (error) {
+      throw new NotFoundException(
+        'Fabric Pricing module not found for projectId ' + projectId,
+      );
+    }
+  }
+
 }
