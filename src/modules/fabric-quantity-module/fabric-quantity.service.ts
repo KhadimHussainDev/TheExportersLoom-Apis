@@ -121,8 +121,8 @@ export class FabricQuantityService {
 
   // edit
   async editFabricQuantityModule(
-    projectId: number,  // Accept projectId directly in the service
-    updatedDto: UpdateFabricQuantityDto,  // Use the DTO to update only the fields provided
+    projectId: number,  
+    updatedDto: UpdateFabricQuantityDto, 
     manager?: EntityManager,
   ): Promise<FabricQuantity> {
     const { shirtType, fabricSize, categoryType, quantityRequired } = updatedDto;
@@ -136,7 +136,7 @@ export class FabricQuantityService {
       throw new NotFoundException('Fabric Quantity module not found.');
     }
   
-    // Retrieve fabric size cost
+    // Fetch the fabric size calculation
     const fabricSizeCalculation = await this.fabricSizeCalculationRepository.findOne({
       where: { shirtType, fabricType: categoryType },
     });
@@ -145,46 +145,64 @@ export class FabricQuantityService {
       throw new NotFoundException('Fabric size calculation not found for the given type.');
     }
   
-    // Calculate the fabric size cost (same logic as creation)
-    let fabricSizeCost = 0;
-    switch (fabricSize.toLowerCase()) {
-      case 'small':
-        fabricSizeCost = fabricSizeCalculation.smallSize || 0;
-        break;
-      case 'medium':
-        fabricSizeCost = fabricSizeCalculation.mediumSize || 0;
-        break;
-      case 'large':
-        fabricSizeCost = fabricSizeCalculation.largeSize || 0;
-        break;
-      case 'xl':
-        fabricSizeCost = fabricSizeCalculation.xlSize || 0;
-        break;
-      default:
-        throw new BadRequestException('Invalid fabric size');
+    // Determine if any relevant fields have changed and recalculate fabric quantity if needed
+    let recalculateCost = false;
+  
+    if (
+      updatedDto.shirtType !== undefined &&
+      updatedDto.shirtType !== existingFabricQuantity.shirtType
+    ) {
+      existingFabricQuantity.shirtType = updatedDto.shirtType;
+      recalculateCost = true;
     }
   
-    // Calculate the new fabric quantity cost
-    const fabricQuantityCost = fabricSizeCost * (quantityRequired || existingFabricQuantity.quantityRequired);
+    if (
+      updatedDto.fabricSize !== undefined &&
+      updatedDto.fabricSize !== existingFabricQuantity.fabricSize
+    ) {
+      existingFabricQuantity.fabricSize = updatedDto.fabricSize;
+      recalculateCost = true;
+    }
   
-    // Update only the fields provided in the DTO
+    if (
+      updatedDto.categoryType !== undefined &&
+      updatedDto.categoryType !== existingFabricQuantity.categoryType
+    ) {
+      existingFabricQuantity.categoryType = updatedDto.categoryType;
+      recalculateCost = true;
+    }
+  
+    // Recalculate the fabric quantity cost 
+    if (recalculateCost) {
+      let fabricSizeCost = 0;
+      switch (existingFabricQuantity.fabricSize.toLowerCase()) {
+        case 'small':
+          fabricSizeCost = fabricSizeCalculation.smallSize || 0;
+          break;
+        case 'medium':
+          fabricSizeCost = fabricSizeCalculation.mediumSize || 0;
+          break;
+        case 'large':
+          fabricSizeCost = fabricSizeCalculation.largeSize || 0;
+          break;
+        case 'xl':
+          fabricSizeCost = fabricSizeCalculation.xlSize || 0;
+          break;
+        default:
+          throw new BadRequestException('Invalid fabric size');
+      }
+  
+      // Recalculate the fabric quantity cost 
+      const fabricQuantityCost = fabricSizeCost * (quantityRequired || existingFabricQuantity.quantityRequired);
+      existingFabricQuantity.fabricQuantityCost = fabricQuantityCost;
+    }
+
     if (updatedDto.quantityRequired !== undefined) {
       existingFabricQuantity.quantityRequired = updatedDto.quantityRequired;
     }
-    if (updatedDto.fabricSize) {
-      existingFabricQuantity.fabricSize = updatedDto.fabricSize;
-    }
-    if (updatedDto.categoryType) {
-      existingFabricQuantity.categoryType = updatedDto.categoryType;
-    }
-    if (updatedDto.shirtType) {
-      existingFabricQuantity.shirtType = updatedDto.shirtType;
-    }
-    if (updatedDto.status) {
+    if (updatedDto.status !== undefined) {
       existingFabricQuantity.status = updatedDto.status;
     }
-    // Update fabric quantity cost if any of the relevant fields are changed
-    existingFabricQuantity.fabricQuantityCost = fabricQuantityCost;
   
     // Save the updated fabric quantity record
     const updatedFabricQuantity = await manager
@@ -193,5 +211,6 @@ export class FabricQuantityService {
   
     return updatedFabricQuantity;
   }
+  
   
 }

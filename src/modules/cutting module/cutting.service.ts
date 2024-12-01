@@ -15,9 +15,9 @@ export class CuttingService {
     private readonly regularCuttingRepository: Repository<RegularCutting>,
     @InjectRepository(SublimationCutting)
     private readonly sublimationCuttingRepository: Repository<SublimationCutting>,
-  ) {}
+  ) { }
 
-  // Method to create a cutting module
+  // create a cutting module
   async createCuttingModule(
     createCuttingDto: CreateCuttingDto,
     manager: EntityManager,
@@ -68,10 +68,7 @@ export class CuttingService {
     });
 
     const savedCutting = await manager.save(Cutting, cutting);
-
-    console.log('Saved Cutting Module:', savedCutting);
-
-    // Return the calculated total cost
+    // console.log('Saved Cutting Module:', savedCutting);
     return totalCost;
   }
 
@@ -124,15 +121,12 @@ export class CuttingService {
     if (!cutting) {
       return 0;
     }
-
     return cutting.cost;
   }
 
 
-
-  // Method to edit an existing cutting module
-   // Method to edit an existing cutting module by project ID
-   async editCuttingModule(
+  // edit an existing cutting module by project ID
+  async editCuttingModule(
     projectId: number,
     updatedDto: UpdateCuttingDto,
     manager: EntityManager,
@@ -164,11 +158,10 @@ export class CuttingService {
     existingCuttingModule.ratePerShirt = ratePerShirt;
     existingCuttingModule.cost = totalCost;
     existingCuttingModule.cuttingStyle = cuttingStyle;
-    existingCuttingModule.status = 'Active'; // Optional: Adjust status if needed
+    existingCuttingModule.status = 'Active';
 
     // Save the updated cutting module
     const updatedCutting = await manager.save(Cutting, existingCuttingModule);
-
     return updatedCutting;
   }
 }

@@ -24,7 +24,7 @@ export class StitchingController {
   @Put(':projectId')
   async editStitching(
     @Param('projectId') projectId: number,
-    @Body() updatedDto: UpdateStitchingDto,  // Use Update DTO here
+    @Body() updatedDto: UpdateStitchingDto,  
   ) {
     return await this.dataSource.transaction(async (manager) => {
       console.log('Editing Stitching with transaction...');

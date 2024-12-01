@@ -24,5 +24,5 @@ export class FabricPricingModule {
   project: Project;
 
   @Column({ nullable: true })
-status: string;
+  status: string;
 }

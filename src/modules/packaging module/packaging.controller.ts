@@ -26,16 +26,15 @@ export class PackagingController {
     }
   }
 
- // Edit Packaging module with transaction support
+ // Edit Packaging module
  @Put(':projectId')
  async editPackagingModule(
    @Param('projectId') projectId: number,
-   @Body() updatedDto: UpdatePackagingDto,  // Use Update DTO here
+   @Body() updatedDto: UpdatePackagingDto, 
  ) {
    const manager = this.dataSource.createEntityManager();
 
    try {
-     // Begin transaction to update packaging module
      const updatedPackaging = await this.packagingService.editPackagingModule(
        projectId,
        updatedDto,
@@ -46,7 +45,6 @@ export class PackagingController {
        updatedPackaging,
      };
    } catch (error) {
-     // Handle error appropriately
      throw new NotFoundException(error.message);
    }
  }

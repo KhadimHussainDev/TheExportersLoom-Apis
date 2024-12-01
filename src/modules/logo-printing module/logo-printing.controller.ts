@@ -10,7 +10,7 @@ export class LogoPrintingController {
   constructor(
     private readonly logoPrintingService: LogoPrintingService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   @Post('calculate-price')
   async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
@@ -47,7 +47,7 @@ export class LogoPrintingController {
   ): Promise<LogoPrinting> {
     const manager = this.dataSource.createEntityManager();
     return this.logoPrintingService.editLogoPrintingModule(
-      projectId,  // Use the projectId from the route params
+      projectId,
       dto,
       manager,
     );

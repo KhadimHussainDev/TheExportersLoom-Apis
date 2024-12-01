@@ -4,24 +4,24 @@ export class UpdateFabricPricingDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  category?: string;  // Category of fabric
+  category?: string;
 
   @IsOptional()
   @IsString()
-  subCategory?: string;  // Subcategory of fabric
+  subCategory?: string;
 
   @IsOptional()
   @IsNumber()
-  fabricQuantityCost?: number;  // Quantity of fabric for calculation
+  fabricQuantityCost?: number;
 
   @IsOptional()
   @IsString()
-  description?: string;  // Optional description
+  description?: string;
 
   @IsOptional()
   @IsString()
   @IsIn(['draft', 'active', 'completed'])
-  status?: string;  // Status of fabric pricing module
+  status?: string;
 
   @IsNotEmpty()
   @IsDecimal()

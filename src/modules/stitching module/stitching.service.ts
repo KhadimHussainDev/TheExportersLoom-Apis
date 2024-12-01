@@ -22,8 +22,6 @@ export class StitchingService {
     createStitchingDto: CreateStitchingDto,
   ): Promise<number> {
     const { projectId, quantity, status } = createStitchingDto;
-
-    // Validate the project
     const project = await manager.findOne(Project, {
       where: { id: projectId },
     });
@@ -136,10 +134,6 @@ export class StitchingService {
 
     // Save the updated stitching record
     const updatedStitching = await manager.save(Stitching, existingStitchingModule);
-
-    console.log('Updated Stitching Module:', updatedStitching);
-
-    // Return the updated stitching record
     return updatedStitching;
   }
 }

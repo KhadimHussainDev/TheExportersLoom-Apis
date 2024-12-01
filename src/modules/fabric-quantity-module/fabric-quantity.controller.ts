@@ -28,24 +28,21 @@ export class FabricQuantityController {
   // GET API to fetch the complete FabricQuantity entity by projectId
   @Get('project/:projectId')
   async getByProjectId(@Param('projectId') projectId: number): Promise<FabricQuantity> {
-    // Fetch the full FabricQuantity entity based on the projectId
     const fabricQuantity = await this.fabricQuantityService.getFabricQuantityByProjectId(projectId);
-
     return fabricQuantity;
   }
 
 
-  // edit 
   // edit API for updating fabric quantity module based on projectId
   @Put('project/:projectId')
   async editFabricQuantityModule(
-    @Param('projectId') projectId: number,  // Get projectId from URL
-    @Body() updatedFabricQuantityDto: UpdateFabricQuantityDto,  // Body with data to update
+    @Param('projectId') projectId: number,
+    @Body() updatedFabricQuantityDto: UpdateFabricQuantityDto,
   ): Promise<{ message: string; data: FabricQuantity }> {
     try {
       const updatedFabricQuantity = await this.fabricQuantityService.editFabricQuantityModule(
-        projectId,  // Pass the projectId from URL to service
-        updatedFabricQuantityDto,  // Pass the DTO to update the record
+        projectId,
+        updatedFabricQuantityDto,
       );
 
       return {
@@ -56,5 +53,4 @@ export class FabricQuantityController {
       throw new NotFoundException('Fabric Quantity module not found for projectId ' + projectId);
     }
   }
-
 }
