@@ -10,11 +10,14 @@ import { Project } from '../project/entities/project.entity'; // Adjust path if 
 import { LogoPrinting } from '../modules/logo-printing module/entities/logo-printing.entity';
 import { Packaging } from '../modules/packaging module/entities/packaging.entity';
 import { Stitching } from '../modules/stitching module/entities/stitching.entity';
+import { BidController } from './bid.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Bid, User, FabricPricingModule,FabricQuantity,Cutting,LogoPrinting,Packaging,Stitching, Project])  // Make sure FabricPricingModule is included here
   ],
   providers: [BidService],
   exports: [BidService],
+  controllers: [BidController]
 })
 export class BidModule {}

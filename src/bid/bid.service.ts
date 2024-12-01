@@ -110,4 +110,31 @@ export class BidService {
     // Save the bid in the repository
     return this.bidRepository.save(bid);
   }
+
+  async getAllBids(): Promise<Bid[]> {
+    try {
+      // Retrieve all bids from the Bid repository
+      return await this.bidRepository.find({
+        relations: ['user'], // Include relations if necessary, such as the user related to the bid
+        order: {
+          created_at: 'DESC', // Optionally, order by creation date
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching all bids: ${error.message}`);
+    }
+  }
+
+  // Method to set a bid's status to 'inactive'
+  async deactivateBid(bidId: number): Promise<Bid> {
+    const bid = await this.bidRepository.findOne({ where: { bid_id: bidId } });
+
+    if (!bid) {
+      throw new Error(`Bid with ID ${bidId} not found.`);
+    }
+
+    // Change status to 'inactive'
+    bid.status = 'inActive';
+    return this.bidRepository.save(bid); // Save the updated bid back to the database
+  }
 }

@@ -340,7 +340,7 @@ export class FabricPricingService {
   
     // Perform action only if fabricPricingModule and newStatus are valid
     if (newStatus === 'Posted') {
-      const title = fabricPricingModule.category;
+      const title = 'Fabric Pricing MOdule Bid';
       const description = fabricPricingModule.description || '';
       const price = fabricPricingModule.price;
       
