@@ -11,6 +11,8 @@ import { LogoPrinting } from '../modules/logo-printing module/entities/logo-prin
 import { LogoPrintingModule } from '../modules/logo-printing module/logo-printing.module';
 import { Packaging } from '../modules/packaging module/entities/packaging.entity';
 import { Stitching } from '../modules/stitching module/entities/stitching.entity';
+import { UpdateBidDto } from './dto/update-bid.dto';
+
 @Injectable()
 export class BidService {
   constructor(
@@ -136,5 +138,24 @@ export class BidService {
     // Change status to 'inactive'
     bid.status = 'inActive';
     return this.bidRepository.save(bid); // Save the updated bid back to the database
+  }
+
+  // Method to update the bid (edit the existing bid)
+  async editBid(bidId: number, updateBidDto: UpdateBidDto): Promise<Bid> {
+    const bid = await this.bidRepository.findOne({ where: { bid_id: bidId } });
+
+    if (!bid) {
+      throw new Error(`Bid with ID ${bidId} not found.`);
+    }
+
+    // Update the bid properties based on the provided data
+    bid.title = updateBidDto.title || bid.title; // Only update if new value is provided
+    bid.description = updateBidDto.description || bid.description;
+    bid.price = updateBidDto.price || bid.price;
+    bid.status = updateBidDto.status || bid.status; // Optionally update status
+    
+
+    // Save the updated bid
+    return this.bidRepository.save(bid);
   }
 }
