@@ -5,6 +5,7 @@ import { Stitching } from './entities/stitching.entity';
 import { CreateStitchingDto } from './dto/create-stitching.dto';
 import { Project } from '../../project/entities/project.entity';
 import { UpdateStitchingDto } from './dto/update-stitchign.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class StitchingService {
@@ -14,6 +15,7 @@ export class StitchingService {
 
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
+    private readonly bidService: BidService,
   ) {}
 
   // Create stitching module and calculate cost
@@ -141,5 +143,54 @@ export class StitchingService {
 
     // Return the updated stitching record
     return updatedStitching;
+  }
+
+  async updateStitchingStatus(id: number, newStatus: string) {
+    // Retrieve the cutting module and load relations (project, user)
+    const stitchingModule = await this.stitchingRepository.findOne({
+      where: { id }, // Look up by ID
+      relations: ['project', 'project.user'], // Load relations
+    });
+
+    // Check if the cutting module was found
+    if (!stitchingModule) {
+      throw new NotFoundException(`stitchingModule with ID ${id} not found.`);
+    }
+
+    // Access the related project and user
+    const project = stitchingModule.project;
+    const user = project?.user;
+
+    if (!user) {
+      throw new NotFoundException(
+        `User related to stitchingModule with ID ${id} not found.`,
+      );
+    }
+
+    const userId = user.user_id; // User ID from the project relation
+
+    // Create a bid if the status is 'Posted'
+    if (newStatus === 'Posted') {
+      const title = 'Stitching Module Bid';
+      const description = ''; // Add description if needed
+      const price = stitchingModule.cost;
+
+      // Create a new bid using the BidService
+      await this.bidService.createBid(
+        userId,
+        stitchingModule.id,
+        title,
+        description,
+        price,
+        'Active', // Status of the bid
+        'StitchingModule', // Type of the module
+      );
+    }
+
+    // Update the status of the cutting module
+    stitchingModule.status = newStatus;
+
+    // Save the updated cutting module
+    await this.stitchingRepository.save(stitchingModule);
   }
 }

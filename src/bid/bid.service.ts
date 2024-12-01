@@ -6,10 +6,11 @@ import { FabricPricingModule } from '../modules/fabric-price module/entities/fab
 import { FabricQuantity } from '../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../modules/cutting module/entities/cutting.entity';
 import { User } from '../users/entities/user.entity';
-import { CuttingModule } from 'modules/cutting module/cutting.module';
-import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
-import { LogoPrintingModule } from 'modules/logo-printing module/logo-printing.module';
-
+import { CuttingModule } from '../modules/cutting module/cutting.module';
+import { LogoPrinting } from '../modules/logo-printing module/entities/logo-printing.entity';
+import { LogoPrintingModule } from '../modules/logo-printing module/logo-printing.module';
+import { Packaging } from '../modules/packaging module/entities/packaging.entity';
+import { Stitching } from '../modules/stitching module/entities/stitching.entity';
 @Injectable()
 export class BidService {
   constructor(
@@ -24,7 +25,11 @@ export class BidService {
     @InjectRepository(Cutting)
     private readonly cuttingRepository: Repository<Cutting>,
     @InjectRepository(LogoPrinting)
-    private readonly logoPrintingRepository: Repository<LogoPrinting>
+    private readonly logoPrintingRepository: Repository<LogoPrinting>,
+    @InjectRepository(Packaging)
+    private readonly packagingRepository: Repository<Packaging>,
+    @InjectRepository(Stitching)
+    private readonly stitchingRepository: Repository<Stitching>
   ) {}
 
   async createBid(
@@ -34,7 +39,7 @@ export class BidService {
     description: string,
     price: number,
     status: string,
-    module_type: 'FabricPricingModule' | 'FabricQuantity' | 'CuttingModule' | 'LogoPrintingModule', // Restrict module_type to valid types
+    module_type: 'FabricPricingModule' | 'FabricQuantity' | 'CuttingModule' | 'LogoPrintingModule' | 'PackagingModule' | 'StitchingModule', // Restrict module_type to valid types
   ): Promise<Bid> {
     // Find the user
     const user = await this.userRepository.findOne({
@@ -45,7 +50,7 @@ export class BidService {
     }
 
     // Validate and fetch the appropriate module based on the module_type
-    let moduleEntity: FabricPricingModule | FabricQuantity | CuttingModule | LogoPrintingModule;
+    let moduleEntity: FabricPricingModule | FabricQuantity | CuttingModule | LogoPrintingModule | Packaging | Stitching;
     if (module_type === 'FabricPricingModule') {
       moduleEntity = await this.fabricPricingRepository.findOne({
         where: { id: moduleId },
@@ -74,7 +79,21 @@ export class BidService {
       if (!moduleEntity) {
         throw new Error(`LogoPrintingModule with ID ${moduleId} not found.`);
       }
-    }else {
+    } else if (module_type === 'PackagingModule') {
+      moduleEntity = await this.packagingRepository.findOne({
+        where: { id: moduleId },
+      });
+      if (!moduleEntity) {
+        throw new Error(`PackagingModule with ID ${moduleId} not found.`);
+      }
+    } else if (module_type === 'StitchingModule') {
+      moduleEntity = await this.stitchingRepository.findOne({
+        where: { id: moduleId },
+      });
+      if (!moduleEntity) {
+        throw new Error(`StitchingModule with ID ${moduleId} not found.`);
+      }
+    } else {
       throw new Error('Invalid module_type provided.');
     }
 

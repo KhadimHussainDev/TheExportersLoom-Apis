@@ -7,10 +7,12 @@ import { FabricQuantity } from '../modules/fabric-quantity-module/entities/fabri
 import { Cutting } from '../modules/cutting module/entities/cutting.entity';  // Adjust path if needed
 import { User } from '../users/entities/user.entity'; // Adjust path if needed
 import { Project } from '../project/entities/project.entity'; // Adjust path if needed
-import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
+import { LogoPrinting } from '../modules/logo-printing module/entities/logo-printing.entity';
+import { Packaging } from '../modules/packaging module/entities/packaging.entity';
+import { Stitching } from '../modules/stitching module/entities/stitching.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Bid, User, FabricPricingModule,FabricQuantity,Cutting,LogoPrinting, Project])  // Make sure FabricPricingModule is included here
+    TypeOrmModule.forFeature([Bid, User, FabricPricingModule,FabricQuantity,Cutting,LogoPrinting,Packaging,Stitching, Project])  // Make sure FabricPricingModule is included here
   ],
   providers: [BidService],
   exports: [BidService],
