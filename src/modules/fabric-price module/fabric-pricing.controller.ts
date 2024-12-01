@@ -8,6 +8,7 @@ import {
   BadRequestException,
   NotFoundException,
   Put,
+  UseGuards 
 } from '@nestjs/common';
 import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { FabricPricingService } from './fabric-pricing.service';
@@ -15,7 +16,7 @@ import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
 import { DataSource } from 'typeorm';
 import { Project } from '../../project/entities/project.entity';
 import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
-
+import { JwtStrategy } from '../../auth/jwt.strategy';
 
 @Controller('fabric-pricing')
 export class FabricPricingController {
@@ -117,4 +118,23 @@ export class FabricPricingController {
     }
   }
 
+  @UseGuards(JwtStrategy)
+  @Put('/:id/status')
+  async updateFabricPricingStatus(
+    @Param('id') id: number,  // The ID of the FabricPricingModule to update
+    @Body('newStatus') newStatus: string,  // The new status to update to
+  ) {
+    try {
+      const updatedFabricPricingModule = await this.fabricPricingService.updateFabricPricingStatus(
+        id,
+        newStatus,
+      );
+
+      return updatedFabricPricingModule;  // Return updated fabric pricing module with success message
+    } catch (error) {
+      throw new NotFoundException(
+        `Error updating fabric pricing module: ${error.message}`,
+      );
+    }
+  }
 }

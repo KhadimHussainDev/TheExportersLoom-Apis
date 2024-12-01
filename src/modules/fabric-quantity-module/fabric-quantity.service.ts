@@ -9,6 +9,7 @@ import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
 import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class FabricQuantityService {
@@ -17,8 +18,9 @@ export class FabricQuantityService {
     private fabricQuantityRepository: Repository<FabricQuantity>,
     @InjectRepository(FabricSizeCalculation)
     private fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
+    private readonly bidService: BidService,
   ) {}
-
+ 
   async createFabricQuantityModule(
     dto: CreateFabricQuantityDto,
     manager?: EntityManager,
@@ -194,4 +196,55 @@ export class FabricQuantityService {
     return updatedFabricQuantity;
   }
   
+  async updateFabricQuantityStatus(id: number, newStatus: string) {
+    // Retrieve fabricPricingModule and load the project and user relations
+    const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
+      where: { id }, // Use the fabric pricing id to fetch the module
+      relations: ['project', 'project.user'], // Ensure both project and user are loaded
+    });
+  
+    console.log(`Updating status for fabricPricingModule ID: ${id}`);
+  
+    // Check if fabricPricingModule exists
+    if (!fabricQuantityModule) {
+      throw new Error(`FabricPricingModule with id ${id} not found`);
+    }
+  
+    // Ensure 'project' and 'user' relations are loaded
+    const project = fabricQuantityModule.project;
+    const user = project?.user;  // Access user from the project relation
+  
+    if (!user) {
+      throw new Error(`User related to FabricPricingModule with id ${id} not found`);
+    }
+
+    
+  
+    const userId = user.user_id;
+  
+    // Perform action only if fabricPricingModule and newStatus are valid
+    if (newStatus === 'Posted') {
+      const title = 'Fabric Quantity Module';
+      const description = '';
+      const price = fabricQuantityModule.fabricQuantityCost;
+      
+      console.log(`Creating bid for fabricPricingModule ID: ${id}, userId: ${userId}`);
+      // Create a new Bid
+      await this.bidService.createBid(
+        userId,
+        fabricQuantityModule.id,
+        title,
+        description,
+        price,
+        'Active',  // Assuming "Active" is the initial status of the Bid
+      );
+    }
+  
+    // Update status
+    fabricQuantityModule.status = newStatus;
+  
+    // Save the updated fabricPricingModule
+    await this.fabricQuantityRepository.save(fabricQuantityModule);
+  }
+
 }

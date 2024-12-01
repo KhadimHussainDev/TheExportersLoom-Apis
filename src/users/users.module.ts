@@ -23,6 +23,6 @@ import { EmailVerificationToken } from './entities/email-verification.entity';
   ],
   controllers: [UsersController],
   providers: [UsersService, MailService],
-  exports: [UsersService],
+  exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}

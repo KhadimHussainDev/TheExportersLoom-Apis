@@ -13,6 +13,7 @@ import { UserProfile } from './user-profile.entity';
 // import { Project } from 'src/project/entities/project.entity';
 import { Machine } from '../../machines/entities/machine.entity';
 import { Project } from '../../project/entities/project.entity';
+import { Bid } from '../../bid/entities/bid.entity';  
 
 @Entity()
 export class User {
@@ -57,4 +58,7 @@ export class User {
 
   @OneToMany(() => Project, (project) => project.user)
   projects: Project[];
+
+  @OneToMany(() => Bid, (bid) => bid.user)  
+  bids: Bid[];
 }
