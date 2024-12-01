@@ -4,7 +4,11 @@ import { Repository } from 'typeorm';
 import { Bid } from './entities/bid.entity';
 import { FabricPricingModule } from '../modules/fabric-price module/entities/fabric-pricing-module.entity'; 
 import { FabricQuantity } from '../modules/fabric-quantity-module/entities/fabric-quantity.entity';
+import { Cutting } from '../modules/cutting module/entities/cutting.entity';
 import { User } from '../users/entities/user.entity';
+import { CuttingModule } from 'modules/cutting module/cutting.module';
+import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
+import { LogoPrintingModule } from 'modules/logo-printing module/logo-printing.module';
 
 @Injectable()
 export class BidService {
@@ -17,6 +21,10 @@ export class BidService {
     private readonly fabricPricingRepository: Repository<FabricPricingModule>,
     @InjectRepository(FabricQuantity)
     private readonly fabricQuantityRepository: Repository<FabricQuantity>,
+    @InjectRepository(Cutting)
+    private readonly cuttingRepository: Repository<Cutting>,
+    @InjectRepository(LogoPrinting)
+    private readonly logoPrintingRepository: Repository<LogoPrinting>
   ) {}
 
   async createBid(
@@ -26,7 +34,7 @@ export class BidService {
     description: string,
     price: number,
     status: string,
-    module_type: 'FabricPricingModule' | 'FabricQuantity', // Restrict module_type to valid types
+    module_type: 'FabricPricingModule' | 'FabricQuantity' | 'CuttingModule' | 'LogoPrintingModule', // Restrict module_type to valid types
   ): Promise<Bid> {
     // Find the user
     const user = await this.userRepository.findOne({
@@ -37,7 +45,7 @@ export class BidService {
     }
 
     // Validate and fetch the appropriate module based on the module_type
-    let moduleEntity: FabricPricingModule | FabricQuantity;
+    let moduleEntity: FabricPricingModule | FabricQuantity | CuttingModule | LogoPrintingModule;
     if (module_type === 'FabricPricingModule') {
       moduleEntity = await this.fabricPricingRepository.findOne({
         where: { id: moduleId },
@@ -52,7 +60,21 @@ export class BidService {
       if (!moduleEntity) {
         throw new Error(`FabricQuantityModule with ID ${moduleId} not found.`);
       }
-    } else {
+    }else if (module_type === 'CuttingModule') {
+      moduleEntity = await this.cuttingRepository.findOne({
+        where: { id: moduleId },
+      });
+      if (!moduleEntity) {
+        throw new Error(`CuttingModule with ID ${moduleId} not found.`);
+      }
+    } else if (module_type === 'LogoPrintingModule') {
+      moduleEntity = await this.logoPrintingRepository.findOne({
+        where: { id: moduleId },
+      });
+      if (!moduleEntity) {
+        throw new Error(`LogoPrintingModule with ID ${moduleId} not found.`);
+      }
+    }else {
       throw new Error('Invalid module_type provided.');
     }
 

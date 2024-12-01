@@ -5,6 +5,7 @@ import { LogoPrinting } from './entities/logo-printing.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { Project } from '../../project/entities/project.entity';
 import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class LogoPrintingService {
@@ -23,6 +24,7 @@ export class LogoPrintingService {
     @InjectRepository(LogoPrinting)
     private readonly logoPrintingRepository: Repository<LogoPrinting>,
     private readonly dataSource: DataSource,
+    private readonly bidService: BidService,
   ) {}
 
   // Normalize and map size to the corresponding database column name.
@@ -193,5 +195,54 @@ export class LogoPrintingService {
     existingLogoPrintingModule.status = 'draft'; // Example of status update
 
     return manager.save(existingLogoPrintingModule);
+  }
+
+  async updateLogoPrintingStatus(id: number, newStatus: string) {
+    // Retrieve the cutting module and load relations (project, user)
+    const logoPrintingModule = await this.logoPrintingRepository.findOne({
+      where: { id }, // Look up by ID
+      relations: ['project', 'project.user'], // Load relations
+    });
+
+    // Check if the cutting module was found
+    if (!logoPrintingModule) {
+      throw new NotFoundException(`logoPrintingModule with ID ${id} not found.`);
+    }
+
+    // Access the related project and user
+    const project = logoPrintingModule.project;
+    const user = project?.user;
+
+    if (!user) {
+      throw new NotFoundException(
+        `User related to logoPrintingModule with ID ${id} not found.`,
+      );
+    }
+
+    const userId = user.user_id; // User ID from the project relation
+
+    // Create a bid if the status is 'Posted'
+    if (newStatus === 'Posted') {
+      const title = 'Logo Priniting Module Bid';
+      const description = ''; // Add description if needed
+      const price = logoPrintingModule.price;
+
+      // Create a new bid using the BidService
+      await this.bidService.createBid(
+        userId,
+        logoPrintingModule.id,
+        title,
+        description,
+        price,
+        'Active', // Status of the bid
+        'LogoPrintingModule', // Type of the module
+      );
+    }
+
+    // Update the status of the cutting module
+    logoPrintingModule.status = newStatus;
+
+    // Save the updated cutting module
+    await this.logoPrintingRepository.save(logoPrintingModule);
   }
 }

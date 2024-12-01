@@ -1,9 +1,10 @@
-import { Controller, Post, Body, NotFoundException, Put, Param } from '@nestjs/common';
+import { Controller, Post, Body, NotFoundException, Put, Param,UseGuards } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { LogoPrintingService } from './logo-printing.service';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { LogoPrinting } from './entities/logo-printing.entity';
 import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { JwtStrategy } from '../../auth/jwt.strategy';
 
 @Controller('logo-printing')
 export class LogoPrintingController {
@@ -51,5 +52,25 @@ export class LogoPrintingController {
       dto,
       manager,
     );
+  }
+
+  @UseGuards(JwtStrategy)
+  @Put('/:id/status')
+  async updateLogoPritingStatus(
+    @Param('id') id: number,  // The ID of the FabricPricingModule to update
+    @Body('newStatus') newStatus: string,  // The new status to update to
+  ) {
+    try {
+      const updatedlogoModule = await this.logoPrintingService.updateLogoPrintingStatus(
+        id,
+        newStatus,
+      );
+
+      return updatedlogoModule;  // Return updated fabric pricing module with success message
+    } catch (error) {
+      throw new NotFoundException(
+        `Error updating logo module: ${error.message}`,
+      );
+    }
   }
 }
