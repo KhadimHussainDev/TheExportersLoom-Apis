@@ -30,7 +30,7 @@ export class FabricPricingModule {
   })
   project: Project;
 
-  // Add the reverse relationship to Bid entity
-  @OneToMany(() => Bid, (bid) => bid.fabricPricingModule)
-  bids: Bid[];
+  // // Add the reverse relationship to Bid entity
+  // @OneToMany(() => Bid, (bid) => bid.fabricPricingModule)
+  // bids: Bid[];
 }

@@ -73,7 +73,7 @@ export class FabricQuantityController {
       return updatedFabricQuantityModule;  // Return updated fabric pricing module with success message
     } catch (error) {
       throw new NotFoundException(
-        `Error updating fabric pricing module: ${error.message}`,
+        `Error updating fabric Quantity module: ${error.message}`,
       );
     }
   }

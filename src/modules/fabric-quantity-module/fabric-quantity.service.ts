@@ -203,11 +203,11 @@ export class FabricQuantityService {
       relations: ['project', 'project.user'], // Ensure both project and user are loaded
     });
   
-    console.log(`Updating status for fabricPricingModule ID: ${id}`);
+    console.log(`Updating status for fabricQuantityModule ID: ${id}`);
   
     // Check if fabricPricingModule exists
     if (!fabricQuantityModule) {
-      throw new Error(`FabricPricingModule with id ${id} not found`);
+      throw new Error(`fabricQuantityModule with id ${id} not found`);
     }
   
     // Ensure 'project' and 'user' relations are loaded
@@ -215,7 +215,7 @@ export class FabricQuantityService {
     const user = project?.user;  // Access user from the project relation
   
     if (!user) {
-      throw new Error(`User related to FabricPricingModule with id ${id} not found`);
+      throw new Error(`User related to fabricQuantityModule with id ${id} not found`);
     }
 
     
@@ -228,7 +228,7 @@ export class FabricQuantityService {
       const description = '';
       const price = fabricQuantityModule.fabricQuantityCost;
       
-      console.log(`Creating bid for fabricPricingModule ID: ${id}, userId: ${userId}`);
+      console.log(`Creating bid for fabricQuantityModule ID: ${id}, userId: ${userId}`);
       // Create a new Bid
       await this.bidService.createBid(
         userId,
@@ -236,7 +236,8 @@ export class FabricQuantityService {
         title,
         description,
         price,
-        'Active',  // Assuming "Active" is the initial status of the Bid
+        'Active', 
+         'FabricQuantity'
       );
     }
   

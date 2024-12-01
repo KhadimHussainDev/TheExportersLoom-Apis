@@ -42,7 +42,7 @@ export class FabricQuantity {
   @JoinColumn({ name: 'projectId' })
   project: Project;
 
-  // Add the reverse relationship to Bid entity
-  @OneToMany(() => Bid, (bid) => bid.fabricPricingModule)
-  bids: Bid[];
+  // // Add the reverse relationship to Bid entity
+  // @OneToMany(() => Bid, (bid) => bid.fabricQuantity)
+  // bids: Bid[];
 }

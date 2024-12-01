@@ -352,7 +352,8 @@ export class FabricPricingService {
         title,
         description,
         price,
-        'Active',  // Assuming "Active" is the initial status of the Bid
+        'Active',
+        'FabricPricingModule'  
       );
     }
   
