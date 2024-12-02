@@ -6,6 +6,7 @@ import { CreatePackagingDto } from './dto/create-packaging.dto';
 import { PackagingBags } from '../../entities/packaging-bags.entity';
 import { Project } from '../../project/entities/project.entity';
 import { UpdatePackagingDto } from './dto/update-packaging.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class PackagingService {
@@ -14,7 +15,10 @@ export class PackagingService {
     private readonly packagingRepository: Repository<Packaging>,
     @InjectRepository(PackagingBags)
     private readonly packagingBagsRepository: Repository<PackagingBags>,
-  ) { }
+    private readonly bidService: BidService,
+  ) {}
+
+  //  Validates if the project exists.
 
   private async validateProject(
     manager: EntityManager,
@@ -128,4 +132,54 @@ export class PackagingService {
     const updatedPackaging = await manager.save(Packaging, existingPackagingModule);
     return updatedPackaging;
   }
+
+  async updatePackagingBagsStatus(id: number, newStatus: string) {
+    // Retrieve the cutting module and load relations (project, user)
+    const packagingModule = await this.packagingRepository.findOne({
+      where: { id }, // Look up by ID
+      relations: ['project', 'project.user'], // Load relations
+    });
+
+    // Check if the cutting module was found
+    if (!packagingModule) {
+      throw new NotFoundException(`packagingModule with ID ${id} not found.`);
+    }
+
+    // Access the related project and user
+    const project = packagingModule.project;
+    const user = project?.user;
+
+    if (!user) {
+      throw new NotFoundException(
+        `User related to PackagingModule with ID ${id} not found.`,
+      );
+    }
+
+    const userId = user.user_id; // User ID from the project relation
+
+    // Create a bid if the status is 'Posted'
+    if (newStatus === 'Posted') {
+      const title = 'Packaging Module Bid';
+      const description = ''; // Add description if needed
+      const price = packagingModule.cost;
+
+      // Create a new bid using the BidService
+      await this.bidService.createBid(
+        userId,
+        packagingModule.id,
+        title,
+        description,
+        price,
+        'Active', // Status of the bid
+        'PackagingModule', // Type of the module
+      );
+    }
+
+    // Update the status of the cutting module
+    packagingModule.status = newStatus;
+
+    // Save the updated cutting module
+    await this.packagingRepository.save(packagingModule);
+  }
+  
 }

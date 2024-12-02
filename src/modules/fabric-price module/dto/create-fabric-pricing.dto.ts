@@ -5,6 +5,7 @@ import {
   IsDecimal,
   IsInt,
   IsNumber,
+  IsDateString
 } from 'class-validator';
 
 export class CreateFabricPricingDto {
@@ -27,6 +28,14 @@ export class CreateFabricPricingDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @IsNotEmpty()
+  @IsString()
+  status: string;  // Assuming 'status' is a required field
+
+  @IsOptional()
+  @IsDateString()
+  createdAt: Date;
 
   @IsNumber()
   fabricQuantityCost: number;

@@ -4,8 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany
 } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity'; // Ensure the correct import path
+import { Bid } from '../../../bid/entities/bid.entity';
 
 @Entity('fabric_quantity')
 export class FabricQuantity {
@@ -39,4 +41,8 @@ export class FabricQuantity {
   })
   @JoinColumn({ name: 'projectId' })
   project: Project;
+
+  // // Add the reverse relationship to Bid entity
+  // @OneToMany(() => Bid, (bid) => bid.fabricQuantity)
+  // bids: Bid[];
 }

@@ -7,6 +7,7 @@ import { FabricPricingModule as FabricPricingEntityModule } from './entities/fab
 import { ProjectModule } from '../../project/project.module';
 import { Project } from '../../project/entities/project.entity';
 import { FabricQuantityModule } from '../fabric-quantity-module/fabric-quantity.module';
+import { BidModule } from '../../bid/bid.module';  // Import BidModule to access BidService
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { FabricQuantityModule } from '../fabric-quantity-module/fabric-quantity.
       FabricPricingEntityModule,
       Project,
     ]),
-    forwardRef(() => ProjectModule),
+    forwardRef(() => ProjectModule),  // Use forwardRef for circular dependencies
+    forwardRef(() => BidModule),
     FabricQuantityModule,
   ],
   providers: [FabricPricingService],

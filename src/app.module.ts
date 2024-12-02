@@ -14,6 +14,7 @@ import { LogoPrintingModule } from './modules/logo-printing module/logo-printing
 import { CuttingModule } from './modules/cutting module/cutting.module';
 import { StitchingModule } from './modules/stitching module/stitching.module';
 import { PackagingModule } from './modules/packaging module/packaging.module';
+import { BidModule } from './bid/bid.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PackagingModule } from './modules/packaging module/packaging.module';
     PackagingModule,
     MessagesModule,
     NotificationsModule,
+    BidModule
   ],
   controllers: [AppController],
   providers: [AppService],

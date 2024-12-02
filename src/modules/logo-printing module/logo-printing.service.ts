@@ -5,6 +5,7 @@ import { LogoPrinting } from './entities/logo-printing.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { Project } from '../../project/entities/project.entity';
 import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class LogoPrintingService {
@@ -23,6 +24,7 @@ export class LogoPrintingService {
     @InjectRepository(LogoPrinting)
     private readonly logoPrintingRepository: Repository<LogoPrinting>,
     private readonly dataSource: DataSource,
+    private readonly bidService: BidService,
   ) {}
 
   // Normalize and map size to the corresponding database column name.
@@ -164,8 +166,6 @@ export class LogoPrintingService {
     return logoPrinting.price || 0;
   }
 
-
-
   // Edit the logo printing module for a project.
   public async editLogoPrintingModule(
     projectId: number,
@@ -173,16 +173,16 @@ export class LogoPrintingService {
     manager: EntityManager,
   ): Promise<LogoPrinting> {
     const { logoPosition, printingMethod, logoSize } = updatedDto;
-  
+
     // Check if a logo printing module exists for this project
     let existingLogoPrintingModule = await this.logoPrintingRepository.findOne({
       where: { projectId },
     });
-  
+
     if (existingLogoPrintingModule) {
       // If module exists, check if any fields have changed
       let priceUpdated = false;
-  
+
       if (
         existingLogoPrintingModule.logoPosition !== logoPosition ||
         existingLogoPrintingModule.printingMethod !== printingMethod ||
@@ -193,40 +193,42 @@ export class LogoPrintingService {
         if (!sizeColumn) {
           throw new NotFoundException(`Invalid logo size: ${logoSize}`);
         }
-  
+
         const cost = await this.getCostByPositionAndSize(
           manager,
           logoPosition,
           sizeColumn,
-          printingMethod
+          printingMethod,
         );
-  
+
         // Update price only if it changes
         if (existingLogoPrintingModule.price !== cost) {
           existingLogoPrintingModule.price = cost;
-          priceUpdated = true; 
+          priceUpdated = true;
         }
       }
-  
+
       // Update other fields if necessary
       if (existingLogoPrintingModule.logoPosition !== logoPosition) {
         existingLogoPrintingModule.logoPosition = logoPosition;
       }
-  
+
       if (existingLogoPrintingModule.printingMethod !== printingMethod) {
         existingLogoPrintingModule.printingMethod = printingMethod;
       }
-  
+
       if (existingLogoPrintingModule.size !== logoSize) {
         existingLogoPrintingModule.size = logoSize;
       }
-  
+
       // Update status if needed
       existingLogoPrintingModule.status = 'draft';
-  
+
       // Save the updated module only if there is any change
       if (priceUpdated) {
-        console.log(`Saving updated logo printing module with new price: ${existingLogoPrintingModule.price}`);
+        console.log(
+          `Saving updated logo printing module with new price: ${existingLogoPrintingModule.price}`,
+        );
         return manager.save(existingLogoPrintingModule);
       } else {
         console.log(`No change in price, no save needed`);
@@ -238,15 +240,15 @@ export class LogoPrintingService {
       if (!sizeColumn) {
         throw new NotFoundException(`Invalid logo size: ${logoSize}`);
       }
-  
-      // Recalculate the cost 
+
+      // Recalculate the cost
       const cost = await this.getCostByPositionAndSize(
         manager,
         logoPosition,
         sizeColumn,
-        printingMethod
+        printingMethod,
       );
-  
+
       // Create a new logo printing module
       const logoPrinting = manager.create(LogoPrinting, {
         projectId,
@@ -256,12 +258,60 @@ export class LogoPrintingService {
         price: cost,
         status: 'draft',
       });
-  
+
       // Save the new module
       return manager.save(logoPrinting);
     }
   }
-  
-  
-  
+
+  async updateLogoPrintingStatus(id: number, newStatus: string) {
+    // Retrieve the cutting module and load relations (project, user)
+    const logoPrintingModule = await this.logoPrintingRepository.findOne({
+      where: { id }, // Look up by ID
+      relations: ['project', 'project.user'], // Load relations
+    });
+
+    // Check if the cutting module was found
+    if (!logoPrintingModule) {
+      throw new NotFoundException(
+        `logoPrintingModule with ID ${id} not found.`,
+      );
+    }
+
+    // Access the related project and user
+    const project = logoPrintingModule.project;
+    const user = project?.user;
+
+    if (!user) {
+      throw new NotFoundException(
+        `User related to logoPrintingModule with ID ${id} not found.`,
+      );
+    }
+
+    const userId = user.user_id; // User ID from the project relation
+
+    // Create a bid if the status is 'Posted'
+    if (newStatus === 'Posted') {
+      const title = 'Logo Priniting Module Bid';
+      const description = ''; // Add description if needed
+      const price = logoPrintingModule.price;
+
+      // Create a new bid using the BidService
+      await this.bidService.createBid(
+        userId,
+        logoPrintingModule.id,
+        title,
+        description,
+        price,
+        'Active', // Status of the bid
+        'LogoPrintingModule', // Type of the module
+      );
+    }
+
+    // Update the status of the cutting module
+    logoPrintingModule.status = newStatus;
+
+    // Save the updated cutting module
+    await this.logoPrintingRepository.save(logoPrintingModule);
+  }
 }

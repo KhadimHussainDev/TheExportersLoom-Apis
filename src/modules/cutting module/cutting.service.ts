@@ -5,6 +5,7 @@ import { Cutting } from './entities/cutting.entity';
 import { CreateCuttingDto } from './dto/create-cutting.dto';
 import { RegularCutting, SublimationCutting } from '../../entities';
 import { UpdateCuttingDto } from './dto/update-cutting.dto';
+import { BidService } from '../../bid/bid.service';
 
 @Injectable()
 export class CuttingService {
@@ -15,6 +16,7 @@ export class CuttingService {
     private readonly regularCuttingRepository: Repository<RegularCutting>,
     @InjectRepository(SublimationCutting)
     private readonly sublimationCuttingRepository: Repository<SublimationCutting>,
+    private readonly bidService: BidService,
   ) { }
 
   // create a cutting module
@@ -144,9 +146,17 @@ export class CuttingService {
 
     let ratePerShirt: number;
     if (cuttingStyle === 'regular') {
-      ratePerShirt = await this.getRateFromRange(manager, 'regular_cutting', quantity);
+      ratePerShirt = await this.getRateFromRange(
+        manager,
+        'regular_cutting',
+        quantity,
+      );
     } else if (cuttingStyle === 'sublimation') {
-      ratePerShirt = await this.getRateFromRange(manager, 'sublimation_cutting', quantity);
+      ratePerShirt = await this.getRateFromRange(
+        manager,
+        'sublimation_cutting',
+        quantity,
+      );
     } else {
       throw new NotFoundException('Invalid cutting style');
     }
@@ -163,5 +173,54 @@ export class CuttingService {
     // Save the updated cutting module
     const updatedCutting = await manager.save(Cutting, existingCuttingModule);
     return updatedCutting;
+  }
+
+  async updateCuttingStatus(id: number, newStatus: string) {
+    // Retrieve the cutting module and load relations (project, user)
+    const cuttingModule = await this.cuttingRepository.findOne({
+      where: { id }, // Look up by ID
+      relations: ['project', 'project.user'], // Load relations
+    });
+
+    // Check if the cutting module was found
+    if (!cuttingModule) {
+      throw new NotFoundException(`CuttingModule with ID ${id} not found.`);
+    }
+
+    // Access the related project and user
+    const project = cuttingModule.project;
+    const user = project?.user;
+
+    if (!user) {
+      throw new NotFoundException(
+        `User related to CuttingModule with ID ${id} not found.`,
+      );
+    }
+
+    const userId = user.user_id; // User ID from the project relation
+
+    // Create a bid if the status is 'Posted'
+    if (newStatus === 'Posted') {
+      const title = 'Cutting Module Bid';
+      const description = ''; // Add description if needed
+      const price = cuttingModule.cost;
+
+      // Create a new bid using the BidService
+      await this.bidService.createBid(
+        userId,
+        cuttingModule.id,
+        title,
+        description,
+        price,
+        'Active', // Status of the bid
+        'CuttingModule', // Type of the module
+      );
+    }
+
+    // Update the status of the cutting module
+    cuttingModule.status = newStatus;
+
+    // Save the updated cutting module
+    await this.cuttingRepository.save(cuttingModule);
   }
 }
