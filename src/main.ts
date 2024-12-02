@@ -3,14 +3,16 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log', 'debug'] });
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug'],
+  });
   const server = app.getHttpServer();
   const router = app.getHttpAdapter().getInstance();
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,             
-      forbidNonWhitelisted: true,  
-      transform: true,             
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
   app.use((req, res, next) => {

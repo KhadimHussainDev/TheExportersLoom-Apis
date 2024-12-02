@@ -1,95 +1,58 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Body,
-  Put,
-  Delete,
-  Patch,
-  Request,
-  UseGuards,
-  UnauthorizedException,
-  Req,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, NotFoundException, Get, Param, Delete, Put } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/project.dto';
-import { CreateModuleDto } from './dto/create-module.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { CustomRequest } from '../users/custom-request.interface';
+import { ProjectDto } from './dto/create-project.dto';
+import { Project } from './entities/project.entity';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
-@UseGuards(AuthGuard('jwt')) // Use AuthGuard with 'jwt' strategy
 @Controller('projects')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) { }
+  constructor(private readonly projectService: ProjectService) {}
 
   @Post()
-  async createProject(@Body() createProjectDto: CreateProjectDto, @Req() req: CustomRequest) {
-    const userId = Number(req.user?.user_id); // Convert user_id to number
-
-    if (isNaN(userId)) {
-      throw new HttpException('User ID missing or invalid', HttpStatus.UNAUTHORIZED);
-    }
-
-    try {
-      const project = await this.projectService.createProject(createProjectDto, userId);
-      return {
-        message: 'Project created successfully',
-        project,
-      };
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  async createProject(@Body() createProjectDto: ProjectDto): Promise<Project> {
+    return await this.projectService.createProject(createProjectDto);
   }
 
+  // Get all projects
   @Get()
-  async findAllProjectsForUser(@Request() req) {
-    return this.projectService.findAllProjectsForUser(req.user.user_id);
+  async getAllProjects(): Promise<Project[]> {
+    const projects = await this.projectService.getAllProjects();
+    
+    if (!projects || projects.length === 0) {
+      throw new NotFoundException('No projects found.');
+    }
+
+    return projects;
   }
 
+  // Get a specific project by ID
   @Get(':id')
-  async findProjectByIdForUser(@Param('id') id: number, @Request() req) {
-    const userId = Number(req.user?.user_id);
-    return this.projectService.findProjectByIdForUser(id, userId);
+  async getProjectById(@Param('id') id: number): Promise<Project> {
+    return await this.projectService.getProjectById(id);
   }
 
-  @Put(':id')
-  async updateProject(
-    @Param('id') id: number,
-    @Body() updateProjectDto: UpdateProjectDto,
-    @Request() req,
-  ) {
-    console.log('Update project called with ID:', id); // Debugging statement
-    const userId = Number(req.user?.user_id);
-    return this.projectService.updateProject(id, updateProjectDto, userId);
-  }
-
+  //delete project by id 
   @Delete(':id')
-  async deleteProject(@Param('id') id: number, @Request() req) {
-    const userId = Number(req.user?.user_id);
-    await this.projectService.deleteProject(id, userId);
-    return { message: 'Project deleted successfully' };
+  async deleteProject(@Param('id') projectId: number): Promise<string> {
+    try {
+      return await this.projectService.deleteProject(projectId);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 
-  // Module Endpoints
-  @Post(':projectId/modules')
-  createModule(
-    @Param('projectId') projectId: number,
-    @Body() createModuleDto: CreateModuleDto,
-  ) {
-    return this.projectService.createModule(projectId, createModuleDto);
-  }
 
-  @Patch('modules/:id/post')
-  postModuleForBidding(@Param('id') id: number) {
-    return this.projectService.postModuleForBidding(id);
-  }
+  // Edit project by ID
+  @Put(':projectId')
+async editProject(
+  @Param('projectId') projectId: number,
+  @Body() updateProjectDto: UpdateProjectDto,
+) {
+  const updatedProject = await this.projectService.editProject(
+    projectId,
+    updateProjectDto
+  );
+  return updatedProject;
+}
 
-  @Get(':projectId/modules')
-  findModulesByProject(@Param('projectId') projectId: number) {
-    return this.projectService.findModulesByProject(projectId);
-  }
 }

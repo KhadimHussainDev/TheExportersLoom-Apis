@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+  ManyToOne,
+} from 'typeorm';
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
 // import { Machine } from 'src/machines/entities/machine.entity';
@@ -17,7 +25,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ default: 'exporter', nullable: false })  
+  @Column({ default: 'exporter', nullable: false })
   userType: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -27,18 +35,18 @@ export class User {
   profile_verified: boolean;
 
   @Column({ default: false })
-  googleAuth: boolean;  
+  googleAuth: boolean;
 
   @Column({ nullable: true })
-  picture: string;  
+  picture: string;
 
   @Column({ default: true })
   isActive: boolean;
 
   // One-to-One relationship with UserProfile
   @OneToOne(() => UserProfile, (userProfile) => userProfile.user)
-  @JoinColumn()  
-  profile: UserProfile;  
+  @JoinColumn()
+  profile: UserProfile;
 
   // One-to-Many relationship with UserAuthentication
   @OneToMany(() => UserAuthentication, (userAuth) => userAuth.user)
@@ -49,5 +57,4 @@ export class User {
 
   @OneToMany(() => Project, (project) => project.user)
   projects: Project[];
-  
 }

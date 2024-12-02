@@ -1,17 +1,57 @@
-import { IsString, IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsDecimal,
+  Min,
+} from 'class-validator';
 
-export class CreateProjectDto {
-  @IsString()
-  @IsNotEmpty()
-  title: string;
+export class ProjectDto {
+  @IsNumber()
+  @Min(1)
+  userId: number;
+
+  @IsOptional()
+  @IsNumber()
+  responseId?: number;
 
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  status: string;
+
+  @IsString()
+  shirtType: string;
+
+  @IsString()
+  fabricCategory: string;
+
+  @IsOptional()
+  @IsString()
+  fabricSubCategory?: string;
+
+  @IsString()
+  fabricSize: string;
+
+  @IsString()
+  @IsOptional()
+  logoPosition: string;
+
+  @IsString()
+  @IsOptional()
+  printingStyle: string;
+
+  @IsString()
+  @IsOptional()
+  logoSize: string;
+
+  @IsString()
+  @IsOptional()
+  cuttingStyle: string;
 
   @IsNumber()
-  budget: number;
+  @Min(1)
+  quantity: number;
 
-  @IsDateString()
-  deadline: string; // Accepts date in ISO string format
+  @IsOptional()
+  @IsDecimal()
+  totalEstimatedCost?: number;
 }

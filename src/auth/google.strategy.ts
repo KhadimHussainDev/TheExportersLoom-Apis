@@ -13,14 +13,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     private authService: AuthService,
   ) {
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || process.env.GOOGLE_CLIENT_ID,
-      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || process.env.GOOGLE_CLIENT_SECRET,
+      clientID:
+        configService.get<string>('GOOGLE_CLIENT_ID') ||
+        process.env.GOOGLE_CLIENT_ID,
+      clientSecret:
+        configService.get<string>('GOOGLE_CLIENT_SECRET') ||
+        process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: 'http://localhost:3000/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback): Promise<any> {
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
+  ): Promise<any> {
     const { emails, name, photos } = profile;
     const user = {
       email: emails[0].value,
@@ -39,7 +48,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       const jwt = await this.authService.generateJwt({
         email: existingUser.email,
         user_id: existingUser.user_id,
-        userType:existingUser.userType,
+        userType: existingUser.userType,
       });
 
       done(null, { user: existingUser, jwt });

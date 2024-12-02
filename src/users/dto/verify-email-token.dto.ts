@@ -1,4 +1,12 @@
-import { IsEmail, IsInt, IsString, Length, Matches, Max, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class VerifyEmailDto {
   @IsEmail()

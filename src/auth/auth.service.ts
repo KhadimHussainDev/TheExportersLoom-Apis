@@ -10,8 +10,8 @@ import { User } from '../users/entities/user.entity';
 
 interface JwtUserPayload {
   email: string;
-  user_id: number; 
-  userType:string;
+  user_id: number;
+  userType: string;
 }
 
 @Injectable()
@@ -32,18 +32,18 @@ export class AuthService {
   ) {}
 
   // Generates JWT token for a user
-  async generateJwt(user: JwtUserPayload): Promise<{ accessToken: string; refreshToken?: string }> {
-    const payload = { 
-        user_id: user.user_id, 
-        username: user.email, 
-        userType: user.userType 
+  async generateJwt(
+    user: JwtUserPayload,
+  ): Promise<{ accessToken: string; refreshToken?: string }> {
+    const payload = {
+      user_id: user.user_id,
+      username: user.email,
+      userType: user.userType,
     };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
-}
-
-
+  }
 
   // Create user from Google OAuth
   async createGoogleUser(googleUser: any): Promise<User> {
@@ -53,7 +53,9 @@ export class AuthService {
 
     try {
       // Check if user already exists
-      const existingUser = await this.usersService.findUserByEmail(googleUser.email);
+      const existingUser = await this.usersService.findUserByEmail(
+        googleUser.email,
+      );
       if (existingUser) {
         throw new Error('User with this email already exists');
       }
@@ -86,7 +88,7 @@ export class AuthService {
       // Create UserAuthentication entry with Google-specific defaults
       const userAuth = this.userAuthRepository.create({
         user: savedUser,
-        passwordHash: '',  // No password for Google-authenticated users
+        passwordHash: '', // No password for Google-authenticated users
         TwoFactorEnabled: false,
         isEmailVerified: true,
       });

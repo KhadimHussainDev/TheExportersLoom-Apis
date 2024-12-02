@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { UsersModule } from './users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { MachineModule } from './machines/machine.module';
@@ -9,7 +10,11 @@ import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
-import { UsersModule } from './users/users.module';
+import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
+import { CuttingModule } from './modules/cutting module/cutting.module';
+import { StitchingModule } from './modules/stitching module/stitching.module';
+import { PackagingModule } from './modules/packaging module/packaging.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -19,23 +24,31 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: configService.get<string>('DB_TYPE') as 'postgres',
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
-        // logging: true,
-      }),
-    }),
+      useFactory: async (configService: ConfigService) => {
+        const entities = [__dirname + '/**/*.entity{.ts,.js}'];
+        console.log('Entities being loaded:', entities);
 
+        return {
+          type: configService.get<string>('DB_TYPE') as 'postgres',
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          entities,
+          synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
+          // logging: true,
+        };
+      },
+    }),
     UsersModule,
     AuthModule,
     MachineModule,
     ProjectModule,
+    LogoPrintingModule,
+    CuttingModule,
+    StitchingModule,
     SeederModule,
+    PackagingModule,
     MessagesModule,
     NotificationsModule,
   ],

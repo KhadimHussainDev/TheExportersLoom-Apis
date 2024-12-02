@@ -1,5 +1,5 @@
 export class CreateFullFrontDto {
-  logoPosition: string;
+  printingMethod: string;
   size8x10?: string;
   size10x12?: string;
   size12x14?: string;

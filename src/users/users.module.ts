@@ -5,7 +5,7 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { UserAuthentication } from '../auth/entities/auth.entity';
-import { ResetToken } from './entities/reset-token.entity';  
+import { ResetToken } from './entities/reset-token.entity';
 import { AuthModule } from '../auth/auth.module';
 import { MailService } from './services/mail.service';
 import { EmailVerificationToken } from './entities/email-verification.entity';
@@ -17,7 +17,7 @@ import { EmailVerificationToken } from './entities/email-verification.entity';
       UserProfile,
       UserAuthentication,
       ResetToken,
-      EmailVerificationToken
+      EmailVerificationToken,
     ]),
     forwardRef(() => AuthModule),
   ],

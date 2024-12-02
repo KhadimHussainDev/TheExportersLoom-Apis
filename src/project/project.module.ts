@@ -1,17 +1,26 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectController } from './project.controller';
 import { ProjectService } from './project.service';
 import { Project } from './entities/project.entity';
-import { Module as ProjectModuleEntity } from './entities/module.entity';
-import { User } from '../users/entities/user.entity';
+import { FabricQuantityModule } from '../modules/fabric-quantity-module/fabric-quantity.module';
+import { FabricPricingModule } from '../modules/fabric-price module/fabric-pricing.module';
+import { LogoPrintingModule } from '../modules/logo-printing module/logo-printing.module';
+import { CuttingModule } from '../modules/cutting module/cutting.module';
+import { StitchingModule } from '../modules/stitching module/stitching.module';
+import { PackagingModule } from '../modules/packaging module/packaging.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Project, ProjectModuleEntity, User]), // Register entities with TypeORM
+    TypeOrmModule.forFeature([Project]),
+    FabricQuantityModule,
+    forwardRef(() => CuttingModule),
+    forwardRef(() => StitchingModule),
+    PackagingModule,
+    forwardRef(() => FabricPricingModule),
+    forwardRef(() => LogoPrintingModule),
   ],
-  controllers: [ProjectController], // Register the controller
-  providers: [ProjectService], // Register the service
-  exports: [ProjectService], // Export service for use in other modules if needed
+  controllers: [ProjectController],
+  providers: [ProjectService],
 })
 export class ProjectModule {}

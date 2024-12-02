@@ -5,8 +5,8 @@ export class PackagingBags {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  numberOfShirts: number;
+  @Column({ type: 'varchar', nullable: true }) 
+  numberOfShirts: string;
 
   @Column({ type: 'int' })
   packagingCost: number;
