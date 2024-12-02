@@ -1,20 +1,20 @@
 import { IsString, IsNumber, Min, IsOptional } from 'class-validator';
 
 export class UpdateStitchingDto {
-  @IsOptional()  // Allow for optional fields in case we only want to update a subset of them
+  @IsOptional()  
   @IsNumber()
   @Min(1)
   quantity: number;
 
-  @IsOptional()  // Optional field
+  @IsOptional()  
   @IsString()
   status: string;
 
-  @IsOptional()  // Optional fields for ratePerShirt and cost can be recalculated
+  @IsOptional() 
   @IsNumber()
   ratePerShirt: number;
 
-  @IsOptional()  // Optional field for cost, since this will be recalculated
+  @IsOptional() 
   @IsNumber()
   cost: number;
 }

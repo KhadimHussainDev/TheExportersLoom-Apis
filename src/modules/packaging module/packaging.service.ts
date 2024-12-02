@@ -63,11 +63,10 @@ export class PackagingService {
         `No packaging cost found for quantity ${quantity}`,
       );
     }
-
     return packagingCost;
   }
 
-  // Creates a new packaging module, validates the project, and calculates the cost.
+  // Creates a new packaging module
   async createPackagingModule(
     dto: CreatePackagingDto,
     manager: EntityManager,
@@ -99,7 +98,6 @@ export class PackagingService {
     if (!packaging) {
       return 0;
     }
-
     return packaging.cost;
   }
 
@@ -112,30 +110,26 @@ export class PackagingService {
     manager: EntityManager,
   ): Promise<Packaging> {
     const { quantity, status } = updatedDto;
-  
+
     // Fetch the existing packaging module based on the projectId
     const existingPackagingModule = await this.packagingRepository.findOne({
       where: { project: { id: projectId } },
     });
-  
+
     if (!existingPackagingModule) {
       throw new NotFoundException('Packaging module not found.');
     }
-  
+
     // Fetch the new packaging cost based on the updated quantity
     const packagingCost = await this.findPackagingCost(manager, quantity);
-  
+
     // Update the packaging record with the new data
     existingPackagingModule.quantity = quantity;
     existingPackagingModule.status = status;
     existingPackagingModule.cost = packagingCost;
-  
+
     // Save the updated packaging record
     const updatedPackaging = await manager.save(Packaging, existingPackagingModule);
-  
-    console.log('Updated Packaging Module:', updatedPackaging);
-  
-    // Return the updated packaging record
     return updatedPackaging;
   }
 

@@ -89,7 +89,6 @@ export class FabricPricingController {
         `Fabric pricing not found for project with ID ${projectId}`,
       );
     }
-
     return fabricPricingModule;
   }
 
@@ -97,14 +96,14 @@ export class FabricPricingController {
   // Edit an existing Fabric Pricing module based on projectId
   @Put('project/:projectId')
   async edit(
-    @Param('projectId') projectId: number,  // Get projectId from URL
-    @Body() updatedFabricPricingDto: UpdateFabricPricingDto,  // Pass the update DTO in the body
+    @Param('projectId') projectId: number,  
+    @Body() updatedFabricPricingDto: UpdateFabricPricingDto,  
   ): Promise<{ message: string; data: FabricPricingModule }> {
     try {
       // Edit the fabric pricing module using the projectId and update DTO
       const updatedFabricPricing = await this.fabricPricingService.editFabricPricingModule(
-        projectId,  // Pass the projectId from URL to service
-        updatedFabricPricingDto,  // Pass the updated DTO to service
+        projectId, 
+        updatedFabricPricingDto,  
       );
 
       return {
@@ -117,7 +116,6 @@ export class FabricPricingController {
       );
     }
   }
-
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updateFabricPricingStatus(

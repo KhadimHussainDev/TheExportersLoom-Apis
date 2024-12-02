@@ -35,32 +35,30 @@ export class PackagingController {
     }
   }
 
-  // Edit Packaging module with transaction support
-  @Put(':projectId')
-  async editPackagingModule(
-    @Param('projectId') projectId: number,
-    @Body() updatedDto: UpdatePackagingDto, // Use Update DTO here
-  ) {
-    const manager = this.dataSource.createEntityManager();
+ // Edit Packaging module
+ @Put(':projectId')
+ async editPackagingModule(
+   @Param('projectId') projectId: number,
+   @Body() updatedDto: UpdatePackagingDto, 
+ ) {
+   const manager = this.dataSource.createEntityManager();
 
-    try {
-      // Begin transaction to update packaging module
-      const updatedPackaging = await this.packagingService.editPackagingModule(
-        projectId,
-        updatedDto,
-        manager,
-      );
-      return {
-        message: 'Packaging module updated successfully',
-        updatedPackaging,
-      };
-    } catch (error) {
-      // Handle error appropriately
-      throw new NotFoundException(error.message);
-    }
-  }
+   try {
+     const updatedPackaging = await this.packagingService.editPackagingModule(
+       projectId,
+       updatedDto,
+       manager,
+     );
+     return {
+       message: 'Packaging module updated successfully',
+       updatedPackaging,
+     };
+   } catch (error) {
+     throw new NotFoundException(error.message);
+   }
+ }
 
-  @UseGuards(JwtStrategy)
+ @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updatepackagingStatus(
     @Param('id') id: number,  // The ID of the FabricPricingModule to update

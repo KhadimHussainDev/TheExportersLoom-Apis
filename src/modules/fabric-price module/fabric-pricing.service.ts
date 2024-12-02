@@ -16,9 +16,9 @@ import { BidService } from '../../bid/bid.service';
 export class FabricPricingService {
   constructor(
     @InjectRepository(FabricPricing)
-    private readonly fabricPricingRepository: Repository<FabricPricing>, // Fetch raw prices
+    private readonly fabricPricingRepository: Repository<FabricPricing>,
     @InjectRepository(FabricPricingModule)
-    private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>, // Store processed results
+    private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>, 
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly bidService: BidService,
@@ -29,7 +29,7 @@ export class FabricPricingService {
     projectId: number,
     fabricQuantityCost: number,
   ): Promise<number> {
-    console.log(`Calculating fabric cost for projectId: ${projectId}`);
+    // console.log(`Calculating fabric cost for projectId: ${projectId}`);
 
     const project = await this.projectRepository.findOne({
       where: { id: projectId },
@@ -97,8 +97,7 @@ export class FabricPricingService {
     return finalCost;
   }
 
-  // Create a fabric pricing module and store results in fabric_pricing_module.
-
+  // Creating fabric price module
   async createFabricPricing(
     project: Project,
     dto: Partial<CreateFabricPricingDto>,
@@ -150,7 +149,7 @@ export class FabricPricingService {
       console.log('fabricPriceRecord.price:', fabricPriceRecord.price);
 
       // Extract numeric value from the price string using a regular expression.
-      const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); // Matches digits, with optional decimal points.
+      const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); 
       if (!priceMatch) {
         throw new Error(
           `Invalid price format for category: ${fabricPriceRecord.category}`,
@@ -211,7 +210,7 @@ export class FabricPricingService {
   ): Promise<FabricPricingModule> {
     const fabricPricingModule =
       await this.fabricPricingModuleRepository.findOne({
-        where: { project: { id: projectId } }, // Matching projectId
+        where: { project: { id: projectId } }, 
       });
 
     if (!fabricPricingModule) {
@@ -219,96 +218,98 @@ export class FabricPricingService {
         `Fabric pricing not found for project with ID ${projectId}`,
       );
     }
-
     return fabricPricingModule;
   }
 
+  //Edit fabric price method
   async editFabricPricingModule(
     projectId: number,
     updatedDto: UpdateFabricPricingDto,
     manager?: EntityManager,
   ): Promise<FabricPricingModule> {
     const { category, subCategory, fabricQuantityCost } = updatedDto;
-
+  
     // Ensure fabricQuantityCost is a valid number
     const validFabricQuantityCost = Number(fabricQuantityCost);
-    if (isNaN(validFabricQuantityCost)) {
+    if (isNaN(validFabricQuantityCost) || validFabricQuantityCost <= 0) {
       throw new BadRequestException('Invalid fabric quantity cost provided.');
     }
 
     // Fetch the existing fabric pricing module by projectId
-    const existingFabricPricingModule =
-      await this.fabricPricingModuleRepository.findOne({
-        where: { project: { id: projectId } },
-        relations: ['project'], // Ensure project is loaded for validation
-      });
-
+    const existingFabricPricingModule = await this.fabricPricingModuleRepository.findOne({
+      where: { project: { id: projectId } },
+      relations: ['project'],
+    });
+  
     if (!existingFabricPricingModule) {
+      throw new NotFoundException(`Fabric Pricing module not found for projectId: ${projectId}`);
+    }
+  
+    // Fetch the price based on the updated category and subCategory
+    let fabricPriceRecord = await this.fabricPricingRepository
+      .createQueryBuilder('fabricPricing')
+      .where(
+        `LOWER(TRIM("category")) = :category ${subCategory ? 'AND LOWER(TRIM("subCategory")) = :subCategory' : ''}`,
+        { category: category.trim().toLowerCase(), subCategory: subCategory?.trim().toLowerCase() },
+      )
+      .getOne();
+  
+    // Fallback if no exact match is found
+    if (!fabricPriceRecord) {
+      fabricPriceRecord = await this.fabricPricingRepository
+        .createQueryBuilder('fabricPricing')
+        .where('LOWER(TRIM("category")) = :category', { category: category.trim().toLowerCase() })
+        .orderBy('price', 'DESC') 
+        .getOne();
+    }
+  
+    if (!fabricPriceRecord) {
       throw new NotFoundException(
-        'Fabric Pricing module not found for projectId ' + projectId,
+        `Price not found for category: ${category} and subCategory: ${subCategory || 'N/A'}`,
       );
     }
-
-    // Optionally update category and subCategory if provided
-    if (category) {
+  
+    // Extract numeric value from the price string using a regular expression.
+    const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); // Matches digits, with optional decimal points.
+    if (!priceMatch) {
+      throw new Error(`Invalid price format for category: ${fabricPriceRecord.category}`);
+    }
+  
+    const fabricPricePerUnit = parseFloat(priceMatch[0]);
+    // Calculate new total cost based on updated fabricQuantityCost
+    const totalCost = fabricPricePerUnit * validFabricQuantityCost;
+  
+    // Update fabric pricing module
+    let priceUpdated = false;
+  
+    if (category && existingFabricPricingModule.category !== category) {
       existingFabricPricingModule.category = category;
+      priceUpdated = true;
     }
-    if (subCategory) {
+  
+    if (subCategory && existingFabricPricingModule.subCategory !== subCategory) {
       existingFabricPricingModule.subCategory = subCategory;
+      priceUpdated = true;
     }
-
-    // If fabricQuantityCost is provided, calculate the new price
-    if (fabricQuantityCost) {
-      let fabricPriceRecord = await this.fabricPricingRepository
-        .createQueryBuilder('fabricPricing')
-        .where(
-          `LOWER(TRIM("category")) = :category AND LOWER(TRIM("subCategory")) = :subCategory`,
-          {
-            category: category.toLowerCase(),
-            subCategory: subCategory?.toLowerCase(),
-          },
-        )
-        .getOne();
-
-      if (!fabricPriceRecord) {
-        fabricPriceRecord = await this.fabricPricingRepository
-          .createQueryBuilder('fabricPricing')
-          .where(`LOWER(TRIM("category")) = :category`, {
-            category: category.toLowerCase(),
-          })
-          .orderBy('price', 'DESC')
-          .getOne();
-      }
-
-      if (!fabricPriceRecord) {
-        throw new NotFoundException(
-          `Price not found for category: ${category}`,
-        );
-      }
-
-      // Calculate the new cost based on fabricQuantityCost
-      const fabricPricePerUnit = Number(fabricPriceRecord.price);
-      if (isNaN(fabricPricePerUnit)) {
-        throw new BadRequestException(
-          'Invalid price found for category: ' + category,
-        );
-      }
-
-      const finalCost = fabricPricePerUnit * validFabricQuantityCost;
-      existingFabricPricingModule.price = finalCost;
-      existingFabricPricingModule.description = `Updated fabric pricing with quantity cost: ${validFabricQuantityCost}`;
+  
+    if (validFabricQuantityCost !== existingFabricPricingModule.price / fabricPricePerUnit) {
+      existingFabricPricingModule.price = totalCost;
+      existingFabricPricingModule.description = `Updated fabric pricing with new quantity cost: ${validFabricQuantityCost}`;
+      priceUpdated = true;
     }
-
-    // Optionally update other fields like status
+  
+    if (priceUpdated) {
+      existingFabricPricingModule.status = 'draft'; 
+    }
+  
+    // update other fields like status if provided in the DTO
     if (updatedDto.status) {
       existingFabricPricingModule.status = updatedDto.status;
     }
-
-    // Save the updated fabric pricing module
-    const updatedFabricPricingModule = (await manager)
+    const updatedFabricPricingModule = await manager
       ? manager.save(existingFabricPricingModule)
       : this.fabricPricingModuleRepository.save(existingFabricPricingModule);
-
+  
     return updatedFabricPricingModule;
   }
 

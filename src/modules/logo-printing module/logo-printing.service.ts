@@ -166,9 +166,6 @@ export class LogoPrintingService {
     return logoPrinting.price || 0;
   }
 
-
-
-  // Edit logo printing module for a project.
   // Edit the logo printing module for a project.
   public async editLogoPrintingModule(
     projectId: number,
@@ -177,24 +174,94 @@ export class LogoPrintingService {
   ): Promise<LogoPrinting> {
     const { logoPosition, printingMethod, logoSize } = updatedDto;
 
-    const existingLogoPrintingModule = await this.logoPrintingRepository.findOne({
+    // Check if a logo printing module exists for this project
+    let existingLogoPrintingModule = await this.logoPrintingRepository.findOne({
       where: { projectId },
     });
 
-    if (!existingLogoPrintingModule) {
-      throw new NotFoundException('Logo printing module not found.');
+    if (existingLogoPrintingModule) {
+      // If module exists, check if any fields have changed
+      let priceUpdated = false;
+
+      if (
+        existingLogoPrintingModule.logoPosition !== logoPosition ||
+        existingLogoPrintingModule.printingMethod !== printingMethod ||
+        existingLogoPrintingModule.size !== logoSize
+      ) {
+        // Recalculate cost if any field changed
+        const sizeColumn = this.getSizeColumn(logoSize);
+        if (!sizeColumn) {
+          throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+        }
+
+        const cost = await this.getCostByPositionAndSize(
+          manager,
+          logoPosition,
+          sizeColumn,
+          printingMethod,
+        );
+
+        // Update price only if it changes
+        if (existingLogoPrintingModule.price !== cost) {
+          existingLogoPrintingModule.price = cost;
+          priceUpdated = true;
+        }
+      }
+
+      // Update other fields if necessary
+      if (existingLogoPrintingModule.logoPosition !== logoPosition) {
+        existingLogoPrintingModule.logoPosition = logoPosition;
+      }
+
+      if (existingLogoPrintingModule.printingMethod !== printingMethod) {
+        existingLogoPrintingModule.printingMethod = printingMethod;
+      }
+
+      if (existingLogoPrintingModule.size !== logoSize) {
+        existingLogoPrintingModule.size = logoSize;
+      }
+
+      // Update status if needed
+      existingLogoPrintingModule.status = 'draft';
+
+      // Save the updated module only if there is any change
+      if (priceUpdated) {
+        console.log(
+          `Saving updated logo printing module with new price: ${existingLogoPrintingModule.price}`,
+        );
+        return manager.save(existingLogoPrintingModule);
+      } else {
+        console.log(`No change in price, no save needed`);
+        return existingLogoPrintingModule;
+      }
+    } else {
+      // If no logo module exists, create a new one
+      const sizeColumn = this.getSizeColumn(logoSize);
+      if (!sizeColumn) {
+        throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+      }
+
+      // Recalculate the cost
+      const cost = await this.getCostByPositionAndSize(
+        manager,
+        logoPosition,
+        sizeColumn,
+        printingMethod,
+      );
+
+      // Create a new logo printing module
+      const logoPrinting = manager.create(LogoPrinting, {
+        projectId,
+        printingMethod,
+        logoPosition,
+        size: logoSize,
+        price: cost,
+        status: 'draft',
+      });
+
+      // Save the new module
+      return manager.save(logoPrinting);
     }
-
-    const sizeColumn = this.getSizeColumn(logoSize);
-    const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
-
-    existingLogoPrintingModule.printingMethod = printingMethod;
-    existingLogoPrintingModule.logoPosition = logoPosition;
-    existingLogoPrintingModule.size = logoSize;
-    existingLogoPrintingModule.price = cost;
-    existingLogoPrintingModule.status = 'draft'; // Example of status update
-
-    return manager.save(existingLogoPrintingModule);
   }
 
   async updateLogoPrintingStatus(id: number, newStatus: string) {
@@ -206,7 +273,9 @@ export class LogoPrintingService {
 
     // Check if the cutting module was found
     if (!logoPrintingModule) {
-      throw new NotFoundException(`logoPrintingModule with ID ${id} not found.`);
+      throw new NotFoundException(
+        `logoPrintingModule with ID ${id} not found.`,
+      );
     }
 
     // Access the related project and user

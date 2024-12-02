@@ -30,5 +30,5 @@ export class UpdateLogoPrintingDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  status?: string; // optional, for example to update the status if needed
+  status?: string; 
 }

@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { MachineModule } from './machines/machine.module';
+import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectModule } from './project/project.module';
 import { SeederModule } from './scripts/seeder.module';
 import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
@@ -48,9 +50,11 @@ import { BidModule } from './bid/bid.module';
     StitchingModule,
     SeederModule,
     PackagingModule,
+    MessagesModule,
+    NotificationsModule,
     BidModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
