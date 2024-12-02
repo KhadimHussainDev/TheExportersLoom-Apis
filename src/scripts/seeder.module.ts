@@ -17,6 +17,8 @@ import { LeftChest } from '../entities/left-chest.entity';
 import { OversizedFront } from '../entities/oversized-front.entity';
 import { Sleeves } from '../entities/sleeves.entity';
 import { UpperBack } from '../entities/upper-back.entity';
+import { SeederService } from './seeder.service';
+import { SeederController } from './seeder.controller';
 
 @Module({
   imports: [
@@ -39,5 +41,7 @@ import { UpperBack } from '../entities/upper-back.entity';
       UpperBack,
     ]),
   ],
+  providers : [SeederService],
+  controllers : [SeederController]
 })
 export class SeederModule {}
