@@ -16,6 +16,7 @@ import { StitchingModule } from './modules/stitching module/stitching.module';
 import { PackagingModule } from './modules/packaging module/packaging.module';
 import { BidModule } from './bid/bid.module';
 import { OrderModule } from './order/order.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -54,7 +55,8 @@ import { OrderModule } from './order/order.module';
     MessagesModule,
     NotificationsModule,
     BidModule,
-    OrderModule
+    OrderModule,
+    ReviewsModule
   ],
   controllers: [AppController],
   providers: [AppService],

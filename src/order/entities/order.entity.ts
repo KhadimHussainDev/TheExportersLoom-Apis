@@ -1,7 +1,8 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Bid } from '../../bid/entities/bid.entity';
 import { Machine } from 'machines/entities/machine.entity';
 import { User } from 'users/entities/user.entity';
+import { Reviews } from 'reviews/entities/reviews.entity';
 
 @Entity()
 export class Order {
@@ -35,4 +36,7 @@ export class Order {
 
   @Column({ type: 'date' })
   deadline: Date;
+
+  @OneToMany(() => Reviews, review => review.order)
+  reviews: Reviews[];
 }
