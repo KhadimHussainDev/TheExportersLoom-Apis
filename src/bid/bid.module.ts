@@ -18,6 +18,6 @@ import { BidController } from './bid.controller';
   ],
   providers: [BidService],
   exports: [BidService],
-  controllers: [BidController]
+  controllers: [BidController],
 })
 export class BidModule {}

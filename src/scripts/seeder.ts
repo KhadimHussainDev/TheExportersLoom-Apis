@@ -23,8 +23,8 @@ import {
 import * as dotenv from 'dotenv';
 dotenv.config(); // Load environment variables from .env
 
-console.log('JWT_SECRET from dotenv:', process.env.JWT_SECRET);
-console.log('Environment Variables:', process.env);
+// console.log('JWT_SECRET from dotenv:', process.env.JWT_SECRET);
+// console.log('Environment Variables:', process.env);
 
 async function populateData() {
   const app = await NestFactory.createApplicationContext(AppModule);

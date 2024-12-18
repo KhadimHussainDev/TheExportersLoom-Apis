@@ -6,6 +6,7 @@ import {
   JoinColumn,
   OneToMany,
   ManyToOne,
+  ManyToMany,
 } from 'typeorm';
 import { UserAuthentication } from '../../auth/entities/auth.entity';
 import { UserProfile } from './user-profile.entity';
@@ -14,6 +15,7 @@ import { UserProfile } from './user-profile.entity';
 import { Machine } from '../../machines/entities/machine.entity';
 import { Project } from '../../project/entities/project.entity';
 import { Bid } from '../../bid/entities/bid.entity';  
+import { Order } from 'order/entities/order.entity';
 
 @Entity()
 export class User {
@@ -61,4 +63,10 @@ export class User {
 
   @OneToMany(() => Bid, (bid) => bid.user)  
   bids: Bid[];
+
+  @OneToMany(() => Order, order => order.exporter)
+  exportedOrders: Order[];
+
+  @OneToMany(() => Order, order => order.manufacturer)
+  manufacturedOrders: Order[];
 }

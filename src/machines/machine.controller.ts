@@ -28,7 +28,7 @@ export class MachineController {
     @Req() req,
     @Body() createMachineDto: CreateMachineDto,
   ) {
-    if (!req.user || !req.user.userType) {
+    if (!req.user && !req.user.userType) {
       throw new UnauthorizedException('User type is missing');
     }
     return this.machineService.registerMachine(req.user, createMachineDto);
