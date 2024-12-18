@@ -16,6 +16,7 @@ import { Machine } from '../../machines/entities/machine.entity';
 import { Project } from '../../project/entities/project.entity';
 import { Bid } from '../../bid/entities/bid.entity';  
 import { Order } from 'order/entities/order.entity';
+import { Reviews } from 'reviews/entities/reviews.entity';
 
 @Entity()
 export class User {
@@ -69,4 +70,9 @@ export class User {
 
   @OneToMany(() => Order, order => order.manufacturer)
   manufacturedOrders: Order[];
+  @OneToMany(() => Reviews, review => review.reviewGiver)
+  givenReviews: Reviews[];
+
+  @OneToMany(() => Reviews, review => review.reviewTaker)
+  receivedReviews: Reviews[];
 }
