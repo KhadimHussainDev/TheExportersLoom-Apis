@@ -25,8 +25,6 @@ import * as XLSX from 'xlsx';
 import { AppModule } from '../app.module';
 dotenv.config(); // Load environment variables from .env
 
-console.log('JWT_SECRET from dotenv:', process.env.JWT_SECRET);
-console.log('Environment Variables:', process.env);
 @Injectable()
 export class SeederService {
   private readonly logger = new Logger(SeederService.name);

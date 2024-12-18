@@ -33,7 +33,18 @@ export class BidService {
     @InjectRepository(Stitching)
     private readonly stitchingRepository: Repository<Stitching>
   ) {}
+  async findOne(bidId: number): Promise<Bid> {
+    // Find the bid by its ID
+    const bid = await this.bidRepository.findOne({
+      where: { bid_id: bidId },
+    });
 
+    if (!bid) {
+      throw new Error(`Bid with ID ${bidId} not found.`);
+    }
+
+    return bid;
+  }
   async createBid(
     userId: number,
     moduleId: number,

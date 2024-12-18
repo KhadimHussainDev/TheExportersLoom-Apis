@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { User } from '../../users/entities/user.entity';  // Adjust path as per your structure
 import { FabricPricingModule } from '../../modules/fabric-price module/entities/fabric-pricing-module.entity'; 
 import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity'; 
+import { Order } from 'order/entities/order.entity';
 
 @Entity('bid')
 export class Bid {
@@ -32,4 +33,7 @@ export class Bid {
 
   @Column()
   status: string;
+
+  @OneToOne(() => Order, order => order.bid)
+  orders: Order[];
 }

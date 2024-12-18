@@ -15,6 +15,7 @@ import { CuttingModule } from './modules/cutting module/cutting.module';
 import { StitchingModule } from './modules/stitching module/stitching.module';
 import { PackagingModule } from './modules/packaging module/packaging.module';
 import { BidModule } from './bid/bid.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { BidModule } from './bid/bid.module';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const entities = [__dirname + '/**/*.entity{.ts,.js}'];
-        console.log('Entities being loaded:', entities);
+        // console.log('Entities being loaded:', entities);
 
         return {
           type: configService.get<string>('DB_TYPE') as 'postgres',
@@ -52,7 +53,8 @@ import { BidModule } from './bid/bid.module';
     PackagingModule,
     MessagesModule,
     NotificationsModule,
-    BidModule
+    BidModule,
+    OrderModule
   ],
   controllers: [AppController],
   providers: [AppService],
