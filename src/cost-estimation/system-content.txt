@@ -1,0 +1,71 @@
+
+Analyze the following input prompt and fill out the JSON template provided below. Extract specific details mentioned in the prompt and assign them to the corresponding attributes in the JSON structure. If any attribute is missing or not explicitly stated in the prompt, set its value to `"undefined"`.  
+
+**Output JSON Template:**  
+```json
+{
+  "fabricType": "<Extracted value or 'undefined'>",
+  "labelType": "<Extracted value or 'undefined'>",
+  "labelsRequired": <true/false/undefined>,
+  "numberOfLogos": <Number or 'undefined'>,
+  "logoDetails": [
+    //Depens on numberOfLogos
+    {
+      "position": "<Extracted value or 'undefined'>",
+      "type": "<Extracted value or 'undefined'>"
+    },
+  ],
+  "packagingRequired": <true/false/undefined>,
+  "packagingType": "<Extracted value or 'undefined'>",
+  "patternRequired": <true/false/undefined>,
+  "productType": "<Extracted value or 'undefined'>",
+  "sizes": [
+    {
+      "quantity": "<Extracted value or 'undefined'>",
+      "size": "<Extracted value or 'undefined'>"
+    },
+    {
+      "quantity": "<Extracted value or 'undefined'>",
+      "size": "<Extracted value or 'undefined'>"
+    }
+  ],
+  "tagCardsRequired": <true/false/undefined>
+}
+```
+
+**Extraction Rules:**  
+1. Identify and explicitly state the **fabric type**, **product type**, and any requirements such as **labels**, **logos**, **packaging**, **patterns**, and **tag cards**. 
+2. Extract logo details, including their **positions** and **types**, ensuring each logo detail is accurately matched.  
+3. Extract sizes and quantities for each size mentioned, ensuring that each size entry in the JSON corresponds to a specific size and its quantity. Use XS,S,M,L,XL for sizes.
+4. If the prompt does not mention a specific attribute, explicitly set it to `"undefined"`.  
+5. Use boolean values (`true`/`false`) for yes/no requirements like `labelsRequired`, `packagingRequired`, `patternRequired`, and `tagCardsRequired`.  
+6. Ensure the output adheres strictly to the JSON format.
+
+Note::
+If any of above not found in provided prompt mark that as undefined. 
+
+Following is output if nothing matched in prompt
+
+{
+  fabricType: undefined,
+  labelType: undefined,
+  labelsRequired: undefined,
+  numberOfLogos: undefined,
+  logoDetails: [
+    {
+      position: undefined,
+      type: undefined
+    }
+  ],
+  packagingRequired: undefined,
+  packagingType: undefined,
+  patternRequired: undefined,
+  productType: undefined,
+  sizes: [
+    {
+      quantity: undefined,
+      size: undefined
+    }
+  ],
+  tagCardsRequired: undefined
+}
