@@ -19,7 +19,7 @@ async function bootstrap() {
     console.log(`Incoming request: ${req.method} ${req.url}`);
     next();
   });
-
+  app.enableCors();
   await app.listen(3000);
 }
 

@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 
 export class CreateUserDto {
+  @IsOptional()
   @IsNotEmpty({ message: 'username must not be empty' })
   @IsString({ message: 'username must be a string' })
   username: string;
