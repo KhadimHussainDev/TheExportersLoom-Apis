@@ -29,10 +29,10 @@ export class Project {
   @Column({ type: 'varchar', length: 50, default: 'pending' })
   status: string;
 
-  @Column()
+  @Column({ nullable: true }) // Allows NULL values
   shirtType: string;
 
-  @Column()
+  @Column({ nullable: true })
   fabricCategory: string;
 
   @Column({ nullable: true })

@@ -74,7 +74,7 @@ export class ProjectService {
       const savedProject = await manager.save(project);
       console.log('Saved project:', savedProject);
 
-      const { fabricQuantityCost } =
+      const { totalFabricQuantityCost } =
         await this.fabricQuantityService.createFabricQuantityModule(
           {
             projectId: savedProject.id,
@@ -88,7 +88,7 @@ export class ProjectService {
           },
           manager,
         );
-      console.log('Fabric Quantity Cost:', fabricQuantityCost);
+      console.log('Fabric Quantity Cost:', totalFabricQuantityCost);
 
       const fabricPricingCost =
         await this.fabricPriceService.createFabricPricing(
@@ -96,7 +96,7 @@ export class ProjectService {
           {
             category: createProjectDto.fabricCategory,
             subCategory: createProjectDto.fabricSubCategory,
-            fabricQuantityCost,
+            fabricQuantityCost: totalFabricQuantityCost,
           },
           manager,
         );
@@ -105,25 +105,25 @@ export class ProjectService {
 
       // Logo Printing Module 
       // **Logo Printing Module**
-      let logoPrintingCost = 0;
+      // let logoPrintingCost = 0;
 
-      // Check if logoDetails array exists and is not empty
-      if (createProjectDto.logoDetails?.length) {
-        console.log('Creating Logo Printing Module with details:', createProjectDto.logoDetails);
+      // // Check if logoDetails array exists and is not empty
+      // if (createProjectDto.logoDetails?.length) {
+      //   console.log('Creating Logo Printing Module with details:', createProjectDto.logoDetails);
 
-        logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
-          savedProject.id,
-          {
-            projectId: savedProject.id,
-            logoDetails: createProjectDto.logoDetails, // Pass the full logoDetails array
-          },
-          manager,
-        );
+      //   logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
+      //     savedProject.id,
+      //     {
+      //       projectId: savedProject.id,
+      //       logoDetails: createProjectDto.logoDetails, // Pass the full logoDetails array
+      //     },
+      //     manager,
+      //   );
 
-        console.log('Logo Printing Cost:', logoPrintingCost);
-      } else {
-        console.log('Logo printing not created (logoDetails is missing or empty).');
-      }
+      //   console.log('Logo Printing Cost:', logoPrintingCost);
+      // } else {
+      //   console.log('Logo printing not created (logoDetails is missing or empty).');
+      // }
 
 
 
@@ -166,7 +166,7 @@ export class ProjectService {
 
       const totalCost =
         fabricPricingCost +
-        logoPrintingCost +
+        // logoPrintingCost +
         cuttingCost +
         stitchingCost +
         packagingCost;

@@ -14,14 +14,14 @@ export class FabricQuantityController {
   @Post()
   async create(
     @Body() createFabricQuantityDto: CreateFabricQuantityDto,
-  ): Promise<{ message: string; data: FabricQuantity; cost: number }> {
-    const { fabricQuantityEntity, fabricQuantityCost } =
+  ): Promise<{ message: string; data: FabricQuantity[]; cost: number }> {
+    const { fabricQuantityEntities, totalFabricQuantityCost } =
       await this.fabricQuantityService.createFabricQuantityModule(createFabricQuantityDto);
 
     return {
       message: 'Fabric quantity module created successfully',
-      data: fabricQuantityEntity,
-      cost: fabricQuantityCost,
+      data: fabricQuantityEntities,
+      cost: totalFabricQuantityCost,
     };
   }
 
@@ -30,36 +30,36 @@ export class FabricQuantityController {
     return await this.fabricQuantityService.getFabricQuantityByProjectId(projectId);
   }
 
-  @Put('project/:projectId')
-  async editFabricQuantityModule(
-    @Param('projectId') projectId: number,
-    @Body() updatedFabricQuantityDto: UpdateFabricQuantityDto,
-  ): Promise<{ message: string; data: FabricQuantity }> {
-    try { 
-      const updatedFabricQuantity = await this.fabricQuantityService.editFabricQuantityModule(
-        projectId,
-        updatedFabricQuantityDto,
-      );
+  // @Put('project/:projectId')
+  // async editFabricQuantityModule(
+  //   @Param('projectId') projectId: number,
+  //   @Body() updatedFabricQuantityDto: UpdateFabricQuantityDto,
+  // ): Promise<{ message: string; data: FabricQuantity }> {
+  //   try { 
+  //     const updatedFabricQuantity = await this.fabricQuantityService.editFabricQuantityModule(
+  //       projectId,
+  //       updatedFabricQuantityDto,
+  //     );
 
-      return {
-        message: 'Fabric quantity module updated successfully',
-        data: updatedFabricQuantity,
-      };
-    } catch (error) {
-      throw new NotFoundException(`Fabric Quantity module not found for projectId ${projectId}`);
-    }
-  }
+  //     return {
+  //       message: 'Fabric quantity module updated successfully',
+  //       data: updatedFabricQuantity,
+  //     };
+  //   } catch (error) {
+  //     throw new NotFoundException(`Fabric Quantity module not found for projectId ${projectId}`);
+  //   }
+  // }
 
-  @UseGuards(JwtStrategy)
-  @Put('/:id/status')
-  async updateFabricPricingStatus(
-    @Param('id') id: number,
-    @Body('newStatus') newStatus: string,
-  ) {
-    try {
-      return await this.fabricQuantityService.updateFabricQuantityStatus(id, newStatus);
-    } catch (error) {
-      throw new NotFoundException(`Error updating fabric quantity module: ${error.message}`);
-    }
-  }
+  // @UseGuards(JwtStrategy)
+  // @Put('/:id/status')
+  // async updateFabricPricingStatus(
+  //   @Param('id') id: number,
+  //   @Body('newStatus') newStatus: string,
+  // ) {
+  //   try {
+  //     return await this.fabricQuantityService.updateFabricQuantityStatus(id, newStatus);
+  //   } catch (error) {
+  //     throw new NotFoundException(`Error updating fabric quantity module: ${error.message}`);
+  //   }
+  // }
 }
