@@ -1,4 +1,13 @@
-import { IsString, IsInt, IsDecimal } from 'class-validator';
+import { IsString, IsInt, IsDecimal, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class FabricSizeDetailDto {
+  @IsString()
+  size: string;
+
+  @IsInt()
+  quantityRequired: number;
+}
 
 export class CreateFabricQuantityDto {
   @IsString()
@@ -13,9 +22,8 @@ export class CreateFabricQuantityDto {
   @IsString()
   shirtType: string;
 
-  @IsString()
-  fabricSize: string;
-
-  @IsDecimal()
-  quantityRequired: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FabricSizeDetailDto)
+  sizes: FabricSizeDetailDto[];
 }
