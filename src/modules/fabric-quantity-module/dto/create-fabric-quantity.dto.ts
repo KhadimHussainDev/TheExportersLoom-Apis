@@ -1,6 +1,7 @@
 import { IsString, IsInt, IsDecimal, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
+
 export class FabricSizeDetailDto {
   @IsString()
   size: string;

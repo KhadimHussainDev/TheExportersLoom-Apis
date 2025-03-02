@@ -17,7 +17,6 @@ import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printin
 import { Stitching } from 'modules/stitching module/entities/stitching.entity';
 import { Packaging } from 'modules/packaging module/entities/packaging.entity';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/create-fabric-quantity.dto';  // Update path as needed
 
 @Injectable()
 export class ProjectService {
@@ -103,29 +102,45 @@ export class ProjectService {
       console.log('Fabric Pricing Cost: ', fabricPricingCost);
 
 
-      // Logo Printing Module 
-      // **Logo Printing Module**
-      // let logoPrintingCost = 0;
+      // Logo Printing Module
+      let logoPrintingCost = 0;
 
-      // // Check if logoDetails array exists and is not empty
-      // if (createProjectDto.logoDetails?.length) {
-      //   console.log('Creating Logo Printing Module with details:', createProjectDto.logoDetails);
-
-      //   logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
-      //     savedProject.id,
-      //     {
-      //       projectId: savedProject.id,
-      //       logoDetails: createProjectDto.logoDetails, // Pass the full logoDetails array
-      //     },
-      //     manager,
-      //   );
-
-      //   console.log('Logo Printing Cost:', logoPrintingCost);
-      // } else {
-      //   console.log('Logo printing not created (logoDetails is missing or empty).');
-      // }
-
-
+      // Check if logoDetails and sizes arrays exist and are not empty
+      if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
+        console.log(
+          `Creating Logo Printing Module for project ${savedProject.id} with details:`,
+          JSON.stringify({ logoDetails: createProjectDto.logoDetails, sizes: createProjectDto.sizes }),
+        );
+      
+        try {
+          logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
+            savedProject.id,
+            {
+              projectId: savedProject.id,
+              logoDetails: createProjectDto.logoDetails.map((logo) => ({
+              logoPosition: logo.logoPosition,
+              printingMethod: logo.PrintingStyle, // Ensure this is included
+            })),
+              sizes: createProjectDto.sizes?.map((size) => ({
+                size: size.fabricSize,  // Fix: Using `fabricSize` from project DTO
+                quantityRequired: size.quantity, // Fix: Using `quantity` from project DTO
+              })),
+            },
+            manager,
+          );
+      
+          if (!logoPrintingCost) {
+            console.warn('Logo Printing Module creation failed.');
+          } else {
+            console.log('Logo Printing Cost:', logoPrintingCost);
+          }
+        } catch (error) {
+          console.error('Error creating Logo Printing Module:', error);
+        }
+      } else {
+        console.log('Logo printing not created (logoDetails or sizes array is missing or empty).');
+      }
+      
 
 
       const cuttingCost = await this.cuttingService.createCuttingModule(
@@ -153,16 +168,21 @@ export class ProjectService {
 
       console.log('Stictching Cost: ', stitchingCost);
 
-      const packagingCost = await this.packagingService.createPackagingModule(
-        {
-          projectId: savedProject.id,
-          quantity: totalQuantity,
-          status: 'active',
-        },
-        manager,
-      );
-
-      console.log('Packaging Cost: ', packagingCost);
+      // Packaging Module (conditionally created)
+      let packagingCost = 0;
+      if (createProjectDto.packagingRequired) {
+        packagingCost = await this.packagingService.createPackagingModule(
+          {
+            projectId: savedProject.id,
+            quantity: totalQuantity,
+            status: 'active',
+          },
+          manager,
+        );
+        console.log('Packaging Cost: ', packagingCost);
+      } else {
+        console.log('Packaging not required; skipping Packaging Module creation.');
+      }
 
       const totalCost =
         fabricPricingCost +

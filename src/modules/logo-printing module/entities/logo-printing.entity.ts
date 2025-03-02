@@ -1,11 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Project } from '../../../project/entities/project.entity'; // Ensure the correct import path
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Project } from '../../../project/entities/project.entity';
 
 @Entity('logo_printing')
 export class LogoPrinting {
@@ -14,9 +8,6 @@ export class LogoPrinting {
 
   @Column()
   printingMethod: string;
-
-  @Column()
-  size: string;
 
   @Column()
   logoPosition: string;
@@ -33,4 +24,7 @@ export class LogoPrinting {
 
   @Column({ nullable: true })
   status: string;
+
+  @Column('json', { nullable: true })
+  sizes: { size: string; quantityRequired: number }[]; 
 }

@@ -143,7 +143,6 @@ export class FabricQuantityService {
 
 
 
-
   // Fetch the complete FabricQuantity record by projectId
   async getFabricQuantityByProjectId(projectId: number): Promise<FabricQuantity> {
     const fabricQuantity = await this.fabricQuantityRepository.findOne({

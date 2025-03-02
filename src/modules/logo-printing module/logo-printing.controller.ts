@@ -1,4 +1,4 @@
-import { Controller, Post, Body, NotFoundException, Put, Param,UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, NotFoundException, Put, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { LogoPrintingService } from './logo-printing.service';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
@@ -13,9 +13,32 @@ export class LogoPrintingController {
     private readonly dataSource: DataSource,
   ) { }
 
+  // @Post('calculate-price')
+  // async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
+  //   const { logoPosition, printingMethod, logoSize } = dto;
+  //   const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize);
+  //   if (!sizeColumn) {
+  //     throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+  //   }
+
+  //   const manager = this.dataSource.createEntityManager();
+  //   return this.logoPrintingService.getCostByPositionAndSize(
+  //     manager,
+  //     logoPosition,
+  //     sizeColumn,
+  //     printingMethod,
+  //   );
+  // }
+
   @Post('calculate-price')
   async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
-    const { logoPosition, printingMethod, logoSize } = dto;
+    if (!dto.logoDetails || dto.logoDetails.length === 0) {
+      throw new BadRequestException('logoDetails array is required and cannot be empty.');
+    }
+
+    // Assuming you want to calculate the cost for the first logo in the array
+    const { logoPosition, printingMethod, logoSize } = dto.logoDetails[0];
+
     const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize);
     if (!sizeColumn) {
       throw new NotFoundException(`Invalid logo size: ${logoSize}`);
@@ -30,14 +53,15 @@ export class LogoPrintingController {
     );
   }
 
+
   @Post('create')
   async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto) {
+    if (!dto.projectId || !dto.logoDetails || dto.logoDetails.length === 0) {
+      throw new BadRequestException('projectId and at least one logoDetail are required.');
+    }
+
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.createLogoPrintingModule(
-      dto.projectId,
-      dto,
-      manager,
-    );
+    return this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
   }
 
 
