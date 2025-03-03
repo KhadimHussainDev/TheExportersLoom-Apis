@@ -6,10 +6,10 @@ export class LogoPrinting {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   printingMethod: string;
 
-  @Column()
+  @Column({ nullable: true })
   logoPosition: string;
 
   @Column('decimal', { precision: 10, scale: 2 })

@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/create-fabric-quantity.dto';
 
 
-
 export class LogoDetailDto {
   @IsString()
   @IsNotEmpty()

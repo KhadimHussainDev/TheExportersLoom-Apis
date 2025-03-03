@@ -31,52 +31,71 @@ export class LogoPrintingController {
   // }
 
   @Post('calculate-price')
-  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
+  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<{ meanCost: number }> {
     if (!dto.logoDetails || dto.logoDetails.length === 0) {
       throw new BadRequestException('logoDetails array is required and cannot be empty.');
     }
-
-    // Assuming you want to calculate the cost for the first logo in the array
-    const { logoPosition, printingMethod, logoSize } = dto.logoDetails[0];
-
-    const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize);
-    if (!sizeColumn) {
-      throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+    if (!dto.sizes || dto.sizes.length === 0) {
+      throw new BadRequestException('sizes array is required and cannot be empty.');
     }
-
+  
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.getCostByPositionAndSize(
-      manager,
-      logoPosition,
-      sizeColumn,
-      printingMethod,
-    );
+    let totalCost = 0;
+  
+    for (const sizeData of dto.sizes) {
+      const { size: requiredSize } = sizeData;
+  
+      for (const logo of dto.logoDetails) {
+        const { logoPosition, printingMethod } = logo;
+  
+        // ✅ Now it's public, so it can be accessed
+        const sizeColumn = await this.logoPrintingService.getSizeColumn(manager, logoPosition, requiredSize);
+        if (!sizeColumn) {
+          throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
+        }
+  
+        // ✅ Now it's public, so it can be accessed
+        const costRange = await this.logoPrintingService.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+  
+        // ✅ Directly use costRange since it's already a number
+        totalCost += costRange;
+      }
+    }
+  
+    return { meanCost: totalCost };
   }
+  
 
 
   @Post('create')
   async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto) {
-    if (!dto.projectId || !dto.logoDetails || dto.logoDetails.length === 0) {
-      throw new BadRequestException('projectId and at least one logoDetail are required.');
+    if (!dto.projectId) {
+      throw new BadRequestException('projectId is required.');
+    }
+    if (!dto.logoDetails || dto.logoDetails.length === 0) {
+      throw new BadRequestException('logoDetails array is required and cannot be empty.');
+    }
+    if (!dto.sizes || dto.sizes.length === 0) {
+      throw new BadRequestException('sizes array is required and cannot be empty.');
     }
 
-    const manager = this.dataSource.createEntityManager();
+    const manager = this.dataSource.createEntityManager(); // ✅ Create EntityManager
     return this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
   }
 
 
-  @Put('edit/:projectId')
-  async editLogoPrintingModule(
-    @Param('projectId') projectId: number,
-    @Body() dto: UpdateLogoPrintingDto,
-  ): Promise<LogoPrinting> {
-    const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.editLogoPrintingModule(
-      projectId,
-      dto,
-      manager,
-    );
-  }
+  // @Put('edit/:projectId')
+  // async editLogoPrintingModule(
+  //   @Param('projectId') projectId: number,
+  //   @Body() dto: UpdateLogoPrintingDto,
+  // ): Promise<LogoPrinting> {
+  //   const manager = this.dataSource.createEntityManager();
+  //   return this.logoPrintingService.editLogoPrintingModule(
+  //     projectId,
+  //     dto,
+  //     manager,
+  //   );
+  // }
 
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
