@@ -31,8 +31,6 @@ export class CreateProjectDto {
   @IsString()
   status: string;
 
-  @IsInt()
-  responseId: number;
 
   @IsString()
   shirtType: string;

@@ -1,6 +1,37 @@
-import { IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  Min,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+class LogoDetailDto {
+  @IsString()
+  logoPosition: string;
+
+  @IsString()
+  PrintingStyle: string;
+}
+
+class SizeDetailDto {
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+
+  @IsString()
+  fabricSize: string;
+}
 
 export class UpdateProjectDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  userId?: number;
+
   @IsOptional()
   @IsString()
   status?: string;
@@ -19,32 +50,46 @@ export class UpdateProjectDto {
 
   @IsOptional()
   @IsString()
-  fabricSize?: string;
-
-  @IsOptional()
-  @IsString()
-  logoPosition?: string;
-
-  @IsOptional()
-  @IsString()
-  printingStyle?: string;
-
-  @IsOptional()
-  @IsString()
-  logoSize?: string;
-
-  @IsOptional()
-  @IsString()
   cuttingStyle?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(1)
-  quantity?: number;
+  @IsString()
+  labelType?: string;
 
-  @IsNumber()
-  @Min(1)
   @IsOptional()
-  userId?: number;
+  @IsBoolean()
+  labelsRequired?: boolean;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  numberOfLogos?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  packagingRequired?: boolean;
+
+  @IsOptional()
+  @IsString()
+  packagingType?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  patternRequired?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  tagCardsRequired?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LogoDetailDto)
+  logoDetails?: LogoDetailDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SizeDetailDto)
+  sizes?: SizeDetailDto[];
 }

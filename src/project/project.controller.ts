@@ -1,5 +1,5 @@
-import { 
-  Controller, Post, Body, NotFoundException, Get, Param, Delete, Put 
+import {
+  Controller, Post, Body, NotFoundException, Get, Param, Delete, Put
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -8,7 +8,7 @@ import { Project } from './entities/project.entity';
 
 @Controller('projects')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
   /** Create a new project */
   @Post()
@@ -20,7 +20,7 @@ export class ProjectController {
   @Get()
   async getAllProjects(): Promise<Project[]> {
     const projects = await this.projectService.getAllProjects();
-    
+
     if (!projects || projects.length === 0) {
       throw new NotFoundException('No projects found.');
     }
@@ -31,7 +31,7 @@ export class ProjectController {
   @Get(':id')
   async getProjectById(@Param('id') id: number): Promise<Project> {
     const project = await this.projectService.getProjectById(id);
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found.`);
     }
@@ -51,17 +51,17 @@ export class ProjectController {
   }
 
   /** Edit project by ID */
-  // @Put(':projectId')
-  // async editProject(
-  //   @Param('projectId') projectId: number,
-  //   @Body() updateProjectDto: UpdateProjectDto
-  // ): Promise<Project> {
-  //   const updatedProject = await this.projectService.editProject(projectId, updateProjectDto);
-    
-  //   if (!updatedProject) {
-  //     throw new NotFoundException(`Project with ID ${projectId} not found.`);
-  //   }
+  @Put(':projectId')
+  async editProject(
+    @Param('projectId') projectId: number,
+    @Body() updateProjectDto: UpdateProjectDto
+  ): Promise<Project> {
+    const updatedProject = await this.projectService.editProject(projectId, updateProjectDto);
 
-  //   return updatedProject;
-  // }
+    if (!updatedProject) {
+      throw new NotFoundException(`Project with ID ${projectId} not found.`);
+    }
+
+    return updatedProject;
+  }
 }

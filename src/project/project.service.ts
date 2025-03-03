@@ -57,19 +57,6 @@ export class ProjectService {
         user,
         totalEstimatedCost: 0,
       });
-
-      // Step 3: Check if a project with the same responseId exists (or any other unique identifier)
-      if (createProjectDto.responseId) {
-        const existingProject = await this.projectRepository.findOne({
-          where: { responseId: createProjectDto.responseId },
-        });
-
-        if (existingProject) {
-          throw new Error(
-            `Project with responseId ${createProjectDto.responseId} already exists.`,
-          );
-        }
-      }
       const savedProject = await manager.save(project);
       console.log('Saved project:', savedProject);
 
@@ -82,8 +69,8 @@ export class ProjectService {
             categoryType: createProjectDto.fabricCategory,
             shirtType: createProjectDto.shirtType,
             sizes: createProjectDto.sizes?.map((size) => ({
-              size: size.fabricSize,  
-              quantityRequired: size.quantity, 
+              size: size.fabricSize,
+              quantityRequired: size.quantity,
             })) || [],
           },
           manager,
@@ -112,24 +99,24 @@ export class ProjectService {
           `Creating Logo Printing Module for project ${savedProject.id} with details:`,
           JSON.stringify({ logoDetails: createProjectDto.logoDetails, sizes: createProjectDto.sizes }),
         );
-      
+
         try {
           logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
             savedProject.id,
             {
               projectId: savedProject.id,
               logoDetails: createProjectDto.logoDetails.map((logo) => ({
-              logoPosition: logo.logoPosition,
-              printingMethod: logo.PrintingStyle, 
-            })),
+                logoPosition: logo.logoPosition,
+                printingMethod: logo.PrintingStyle,
+              })),
               sizes: createProjectDto.sizes?.map((size) => ({
-                size: size.fabricSize,  
-                quantityRequired: size.quantity, 
+                size: size.fabricSize,
+                quantityRequired: size.quantity,
               })),
             },
             manager,
           );
-      
+
           if (!logoPrintingCost) {
             console.warn('Logo Printing Module creation failed.');
           } else {
@@ -198,6 +185,166 @@ export class ProjectService {
     });
   }
 
+  // Update project 
+  async editProject(projectId: number, updateProjectDto: UpdateProjectDto): Promise<Project> {
+    return await this.dataSource.transaction(async (manager) => {
+      // Step 1: Fetch the existing project
+      const project = await manager.findOne(Project, { where: { id: projectId } });
+
+      if (!project) {
+        throw new NotFoundException(`Project with ID ${projectId} not found.`);
+      }
+
+      // Step 2: Update project fields with new values or keep existing ones
+      project.status = updateProjectDto.status || project.status;
+      project.shirtType = updateProjectDto.shirtType || project.shirtType;
+      project.fabricCategory = updateProjectDto.fabricCategory || project.fabricCategory;
+      project.fabricSubCategory = updateProjectDto.fabricSubCategory || project.fabricSubCategory;
+      project.cuttingStyle = updateProjectDto.cuttingStyle || project.cuttingStyle;
+      project.labelType = updateProjectDto.labelType || project.labelType;
+      project.labelsRequired = updateProjectDto.labelsRequired || project.labelsRequired;
+      project.numberOfLogos = updateProjectDto.numberOfLogos || project.numberOfLogos;
+      project.packagingRequired = updateProjectDto.packagingRequired || project.packagingRequired;
+      project.patternRequired = updateProjectDto.patternRequired || project.patternRequired;
+      project.tagCardsRequired = updateProjectDto.tagCardsRequired || project.tagCardsRequired;
+
+      // Calculate total quantity from sizes array
+      const totalQuantity = updateProjectDto.sizes?.reduce(
+        (sum, size) => sum + size.quantity,
+        0
+      ) || 0;
+      console.log('Total Quantity:', totalQuantity);
+
+      // Save the updated project entity
+      const updatedProject = await manager.save(Project, project);
+
+      // Step 3: Update related modules
+
+      // Update Fabric Quantity module
+      const { totalFabricQuantityCost } = await this.fabricQuantityService.editFabricQuantityModule(
+        updatedProject.id,
+        {
+          categoryType: updateProjectDto.fabricCategory,
+          status: 'draft',
+          shirtType: updateProjectDto.shirtType,
+          sizes: updateProjectDto.sizes?.map((size) => ({
+            size: size.fabricSize, // Corrected field
+            quantityRequired: size.quantity, // Corrected field
+          })) || [],
+        },
+        manager,
+      );
+      console.log('Updated Fabric Quantity Cost:', totalFabricQuantityCost);
+
+      // Update Fabric Pricing module
+      const fabricPricingModule = await this.fabricPriceService.editFabricPricingModule(
+        updatedProject.id,
+        {
+          category: updateProjectDto.fabricCategory,
+          subCategory: updateProjectDto.fabricSubCategory,
+          fabricQuantityCost: totalFabricQuantityCost,
+          price: 0, 
+          description: 'Fabric pricing description',
+        },
+        manager,
+      );
+      const fabricPricingCost = Number(fabricPricingModule.price) || 0;
+      console.log('Updated Fabric Pricing Cost:', fabricPricingCost);
+
+      // Update Logo Printing module
+      // let logoPrintingCostValue = 0;
+      // if (updateProjectDto.logoDetails?.length) {
+      //   const logoPrintingModule = await this.logoPrintingService.editLogoPrintingModule(
+      //     updatedProject.id,
+      //     {
+      //       projectId: updatedProject.id,
+      //       logoDetails: updateProjectDto.logoDetails.map((logo) => ({
+      //         logoPosition: logo.logoPosition,
+      //         printingStyle: logo.printingStyle, // Fixed field name
+      //         logoSize: logo.logoSize, // Ensuring correct structure
+      //       })),
+      //       sizes: updateProjectDto.sizes?.map((size) => ({
+      //         fabricSize: size.fabricSize,
+      //         quantity: size.quantity,
+      //       })) || [],
+      //     },
+      //     manager,
+      //   );
+      //   logoPrintingCostValue = Number(logoPrintingModule.price) || 0;
+      // }
+      // console.log('Updated Logo Printing Cost:', logoPrintingCostValue);
+
+      // Update Cutting module
+      const cuttingModule = await this.cuttingService.editCuttingModule(
+        updatedProject.id,
+        {
+          cuttingStyle: updateProjectDto.cuttingStyle as 'regular' | 'sublimation',
+          quantity: totalQuantity,
+        },
+        manager,
+      );
+      const cuttingCostValue = Number(cuttingModule.cost) || 0;
+      console.log('Updated Cutting Cost:', cuttingCostValue);
+
+      // Update Stitching module
+      const stitchingModule = await this.stitchingService.editStitchingModule(
+        updatedProject.id,
+        {
+          quantity: totalQuantity,
+          ratePerShirt: 0,
+          cost: 0,
+          status: 'active',
+        },
+        manager,
+      );
+      const stitchingCostValue = Number(stitchingModule.cost) || 0;
+      console.log('Updated Stitching Cost:', stitchingCostValue);
+
+      // Update Packaging module if required
+      let packagingCostValue = 0;
+      if (updateProjectDto.packagingRequired) {
+        const packagingModule = await this.packagingService.editPackagingModule(
+          updatedProject.id,
+          {
+            quantity: totalQuantity,
+            status: 'active',
+          },
+          manager,
+        );
+        packagingCostValue = Number(packagingModule.cost) || 0;
+        console.log('Updated Packaging Cost:', packagingCostValue);
+      } else {
+        console.log('Packaging not required; skipping Packaging Module update.');
+      }
+
+      // Step 4: Recalculate the total cost for the project
+      const totalCost =
+        fabricPricingCost +
+        // logoPrintingCostValue +
+        cuttingCostValue +
+        stitchingCostValue +
+        packagingCostValue;
+
+      // Check if the total cost exceeds the database limit for DECIMAL(15,2)
+      const MAX_TOTAL_COST = 9999999999999.99;
+      if (totalCost > MAX_TOTAL_COST) {
+        console.error('Total cost exceeds the database limit!');
+        throw new Error('Total project cost exceeds the allowed limit.');
+      }
+
+      updatedProject.totalEstimatedCost = totalCost;
+      console.log('Updated Project Cost:', updatedProject.totalEstimatedCost);
+
+      // Save the updated project with the new total cost
+      await manager.save(Project, updatedProject);
+
+      return updatedProject;
+    });
+  }
+
+
+
+
   //get all projects
   async getAllProjects(): Promise<Project[]> {
     return await this.projectRepository.find({
@@ -261,139 +408,4 @@ export class ProjectService {
     await manager.update(Packaging, { project: { id: projectId } }, { status: 'inactive' });
   }
 
-  // Update project 
-  // async editProject(projectId: number, updateProjectDto: UpdateProjectDto): Promise<Project> {
-  //   return await this.dataSource.transaction(async (manager) => {
-  //     // Step 1: Fetch the existing project
-  //     const project = await manager.findOne(Project, {
-  //       where: { id: projectId },
-  //     });
-
-  //     if (!project) {
-  //       throw new NotFoundException(`Project with ID ${projectId} not found.`);
-  //     }
-
-  //     // Step 2: Update the project fields
-  //     project.status = updateProjectDto.status || project.status;
-  //     project.shirtType = updateProjectDto.shirtType || project.shirtType;
-  //     project.fabricCategory = updateProjectDto.fabricCategory || project.fabricCategory;
-  //     project.fabricSubCategory = updateProjectDto.fabricSubCategory || project.fabricSubCategory;
-  //     project.fabricSize = updateProjectDto.fabricSize || project.fabricSize;
-  //     project.logoPosition = updateProjectDto.logoPosition || project.logoPosition;
-  //     project.printingStyle = updateProjectDto.printingStyle || project.printingStyle;
-  //     project.logoSize = updateProjectDto.logoSize || project.logoSize;
-  //     project.cuttingStyle = updateProjectDto.cuttingStyle || project.cuttingStyle;
-  //     project.quantity = updateProjectDto.quantity || project.quantity;
-
-  //     // Save the updated project entity
-  //     const updatedProject = await manager.save(Project, project);
-
-  //     // Step 3: Update related modules using their respective services
-  //     const { fabricQuantityCost } = await this.fabricQuantityService.editFabricQuantityModule(
-  //       updatedProject.id, // Pass only the project ID
-  //       {
-  //         categoryType: updateProjectDto.fabricCategory,
-  //         quantityRequired: updateProjectDto.quantity,
-  //         status: 'draft',
-  //         fabricSize: updateProjectDto.fabricSize,
-  //         shirtType: updateProjectDto.shirtType,
-  //       },
-  //       manager,
-  //     );
-  //     console.log('update quantity', fabricQuantityCost);
-
-  //     // Update Fabric Pricing module
-  //     const fabricPricingModule = await this.fabricPriceService.editFabricPricingModule(
-  //       updatedProject.id,
-  //       {
-  //         category: updateProjectDto.fabricCategory,
-  //         subCategory: updateProjectDto.fabricSubCategory,
-  //         fabricQuantityCost,
-  //         price: 0,  // Set the price as needed
-  //         description: 'Fabric pricing description',
-  //       },
-  //       manager,
-  //     );
-  //     const fabricPricingCost = Number(fabricPricingModule.price) || 0;
-  //     console.log('updated fabric price', fabricPricingCost);
-
-  //     // Update Logo Printing module
-  //     let logoPrintingCostValue = 0;
-  //     if (updateProjectDto.logoSize && updateProjectDto.printingStyle && updateProjectDto.logoPosition) {
-  //       const logoPrintingModule = await this.logoPrintingService.editLogoPrintingModule(
-  //         updatedProject.id,
-  //         {
-  //           projectId: updatedProject.id,
-  //           printingMethod: updateProjectDto.printingStyle,
-  //           logoPosition: updateProjectDto.logoPosition,
-  //           logoSize: updateProjectDto.logoSize,
-  //         },
-  //         manager,
-  //       );
-  //       logoPrintingCostValue = Number(logoPrintingModule.price) || 0;
-  //     }
-  //     console.log('update logo price', logoPrintingCostValue);
-
-  //     // Update Cutting module
-  //     const cuttingModule = await this.cuttingService.editCuttingModule(
-  //       updatedProject.id,
-  //       {
-  //         cuttingStyle: (updateProjectDto.cuttingStyle as 'regular' | 'sublimation'),
-  //         quantity: updateProjectDto.quantity,
-  //       },
-  //       manager,
-  //     );
-  //     const cuttingCostValue = Number(cuttingModule.cost) || 0;
-  //     console.log('updated cutting cost', cuttingCostValue);
-
-  //     // Update Stitching module
-  //     const stitchingModule = await this.stitchingService.editStitchingModule(
-  //       updatedProject.id,
-  //       {
-  //         quantity: updateProjectDto.quantity,
-  //         ratePerShirt: 0,
-  //         cost: 0,
-  //         status: 'active',
-  //       },
-  //       manager,
-  //     );
-  //     const stitchingCostValue = Number(stitchingModule.cost) || 0;
-  //     console.log('update stitching module cost', stitchingCostValue);
-
-  //     // Update Packaging module
-  //     const packagingModule = await this.packagingService.editPackagingModule(
-  //       updatedProject.id,
-  //       {
-  //         quantity: updateProjectDto.quantity,
-  //         status: 'active',
-  //       },
-  //       manager,
-  //     );
-  //     const packagingCostValue = Number(packagingModule.cost) || 0;
-  //     console.log('packaging cost', packagingCostValue)
-
-  //     // Step 4: Recalculate the total cost for the project
-  //     const totalCost =
-  //       fabricPricingCost +
-  //       logoPrintingCostValue +
-  //       cuttingCostValue +
-  //       stitchingCostValue +
-  //       packagingCostValue;
-
-  //     // Check if the total cost exceeds the limit for DECIMAL(15,2)
-  //     const MAX_TOTAL_COST = 9999999999999.99;
-  //     if (totalCost > MAX_TOTAL_COST) {
-  //       console.error('Total cost exceeds the database limit!');
-  //       throw new Error('Total project cost exceeds the allowed limit.');
-  //     }
-
-  //     updatedProject.totalEstimatedCost = totalCost;
-  //     console.log('project cost', updatedProject.totalEstimatedCost);
-
-  //     // Save the updated project with the new total cost
-  //     await manager.save(Project, updatedProject);
-
-  //     return updatedProject;
-  //   });
-  // }
 }

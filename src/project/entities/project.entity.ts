@@ -23,9 +23,6 @@ export class Project {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column({ nullable: true })
-  responseId: number;
-
   @Column({ type: 'varchar', length: 50, default: 'pending' })
   status: string;
 
@@ -61,7 +58,7 @@ export class Project {
 
   @Column({ type: 'boolean', default: false })
   tagCardsRequired: boolean;
-  
+
   @Column({ type: 'jsonb', nullable: true })
   logoDetails: { logoPosition: string; printingStyle: string; logoSize: string }[];
 
