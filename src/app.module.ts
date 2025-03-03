@@ -18,6 +18,7 @@ import { BidModule } from './bid/bid.module';
 import { OrderModule } from './order/order.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CostEstimationModule } from './cost-estimation/cost-estimation.module';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -58,7 +59,8 @@ import { CostEstimationModule } from './cost-estimation/cost-estimation.module';
     BidModule,
     OrderModule,
     ReviewsModule,
-    CostEstimationModule
+    CostEstimationModule,
+    RecommendationModule
   ],
   controllers: [AppController],
   providers: [AppService],
