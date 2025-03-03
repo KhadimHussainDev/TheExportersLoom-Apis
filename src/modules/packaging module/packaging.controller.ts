@@ -61,8 +61,8 @@ export class PackagingController {
  @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updatepackagingStatus(
-    @Param('id') id: number,  // The ID of the FabricPricingModule to update
-    @Body('newStatus') newStatus: string,  // The new status to update to
+    @Param('id') id: number,  
+    @Body('newStatus') newStatus: string,  
   ) {
     try {
       const updatedpackagingModule = await this.packagingService.updatePackagingBagsStatus(
@@ -70,7 +70,7 @@ export class PackagingController {
         newStatus,
       );
 
-      return updatedpackagingModule;  // Return updated fabric pricing module with success message
+      return updatedpackagingModule;  
     } catch (error) {
       throw new NotFoundException(
         `Error updating packaging module: ${error.message}`,

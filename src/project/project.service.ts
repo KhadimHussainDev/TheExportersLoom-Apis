@@ -73,6 +73,7 @@ export class ProjectService {
       const savedProject = await manager.save(project);
       console.log('Saved project:', savedProject);
 
+      // Fabric Quanitity Module
       const { totalFabricQuantityCost } =
         await this.fabricQuantityService.createFabricQuantityModule(
           {
@@ -81,14 +82,16 @@ export class ProjectService {
             categoryType: createProjectDto.fabricCategory,
             shirtType: createProjectDto.shirtType,
             sizes: createProjectDto.sizes?.map((size) => ({
-              size: size.fabricSize,  // Fix: Using `fabricSize` from project DTO
-              quantityRequired: size.quantity, // Fix: Using `quantity` from project DTO
+              size: size.fabricSize,  
+              quantityRequired: size.quantity, 
             })) || [],
           },
           manager,
         );
       console.log('Fabric Quantity Cost:', totalFabricQuantityCost);
 
+
+      // Fabric Pricing Module
       const fabricPricingCost =
         await this.fabricPriceService.createFabricPricing(
           savedProject,
@@ -101,10 +104,8 @@ export class ProjectService {
         );
       console.log('Fabric Pricing Cost: ', fabricPricingCost);
 
-
       // Logo Printing Module
       let logoPrintingCost = 0;
-
       // Check if logoDetails and sizes arrays exist and are not empty
       if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
         console.log(
@@ -119,11 +120,11 @@ export class ProjectService {
               projectId: savedProject.id,
               logoDetails: createProjectDto.logoDetails.map((logo) => ({
               logoPosition: logo.logoPosition,
-              printingMethod: logo.PrintingStyle, // Ensure this is included
+              printingMethod: logo.PrintingStyle, 
             })),
               sizes: createProjectDto.sizes?.map((size) => ({
-                size: size.fabricSize,  // Fix: Using `fabricSize` from project DTO
-                quantityRequired: size.quantity, // Fix: Using `quantity` from project DTO
+                size: size.fabricSize,  
+                quantityRequired: size.quantity, 
               })),
             },
             manager,
@@ -140,9 +141,8 @@ export class ProjectService {
       } else {
         console.log('Logo printing not created (logoDetails or sizes array is missing or empty).');
       }
-      
 
-
+      // Cutting Module
       const cuttingCost = await this.cuttingService.createCuttingModule(
         {
           projectId: savedProject.id,
@@ -155,6 +155,7 @@ export class ProjectService {
       );
       console.log('Cutting Cost: ', cuttingCost);
 
+      // Stitching Module
       const stitchingCost = await this.stitchingService.createStitching(
         manager,
         {
@@ -165,10 +166,9 @@ export class ProjectService {
           cost: 0,
         },
       );
-
       console.log('Stictching Cost: ', stitchingCost);
 
-      // Packaging Module (conditionally created)
+      // Packaging Module
       let packagingCost = 0;
       if (createProjectDto.packagingRequired) {
         packagingCost = await this.packagingService.createPackagingModule(
@@ -184,6 +184,7 @@ export class ProjectService {
         console.log('Packaging not required; skipping Packaging Module creation.');
       }
 
+      // Project's total cost
       const totalCost =
         fabricPricingCost +
         // logoPrintingCost +
@@ -193,7 +194,6 @@ export class ProjectService {
       console.log('Calculated total cost:', totalCost);
 
       savedProject.totalEstimatedCost = totalCost;
-
       return manager.save(savedProject);
     });
   }

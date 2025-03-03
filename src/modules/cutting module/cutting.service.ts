@@ -197,7 +197,7 @@ export class CuttingService {
       );
     }
 
-    const userId = user.user_id; // User ID from the project relation
+    const userId = user.user_id; 
 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
@@ -212,7 +212,7 @@ export class CuttingService {
         title,
         description,
         price,
-        'Active', // Status of the bid
+        'Active', 
         'CuttingModule', // Type of the module
       );
     }

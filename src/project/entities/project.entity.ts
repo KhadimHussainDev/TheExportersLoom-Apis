@@ -29,7 +29,7 @@ export class Project {
   @Column({ type: 'varchar', length: 50, default: 'pending' })
   status: string;
 
-  @Column({ nullable: true }) // Allows NULL values
+  @Column({ nullable: true }) 
   shirtType: string;
 
   @Column({ nullable: true })
@@ -41,7 +41,6 @@ export class Project {
   @Column({ nullable: true })
   cuttingStyle: string;
 
-  /** New fields added */
   @Column({ nullable: true })
   labelType: string;
 
@@ -62,8 +61,7 @@ export class Project {
 
   @Column({ type: 'boolean', default: false })
   tagCardsRequired: boolean;
-
-  /** JSONB fields for logo details and sizes */
+  
   @Column({ type: 'jsonb', nullable: true })
   logoDetails: { logoPosition: string; printingStyle: string; logoSize: string }[];
 

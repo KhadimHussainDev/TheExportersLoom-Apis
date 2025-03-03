@@ -18,7 +18,6 @@ export class PackagingService {
     private readonly bidService: BidService,
   ) {}
 
-  //  Validates if the project exists.
 
   private async validateProject(
     manager: EntityManager,
@@ -102,7 +101,6 @@ export class PackagingService {
   }
 
 
-
   // Edit the packaging module and recalculate the cost
   async editPackagingModule(
     projectId: number,
@@ -136,8 +134,8 @@ export class PackagingService {
   async updatePackagingBagsStatus(id: number, newStatus: string) {
     // Retrieve the cutting module and load relations (project, user)
     const packagingModule = await this.packagingRepository.findOne({
-      where: { id }, // Look up by ID
-      relations: ['project', 'project.user'], // Load relations
+      where: { id },
+      relations: ['project', 'project.user'], 
     });
 
     // Check if the cutting module was found
@@ -170,8 +168,8 @@ export class PackagingService {
         title,
         description,
         price,
-        'Active', // Status of the bid
-        'PackagingModule', // Type of the module
+        'Active', 
+        'PackagingModule', 
       );
     }
 

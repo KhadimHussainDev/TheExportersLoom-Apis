@@ -24,7 +24,6 @@ export class ProjectController {
     if (!projects || projects.length === 0) {
       throw new NotFoundException('No projects found.');
     }
-
     return projects;
   }
 

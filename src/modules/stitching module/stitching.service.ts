@@ -161,12 +161,12 @@ export class StitchingService {
       );
     }
 
-    const userId = user.user_id; // User ID from the project relation
-
+    const userId = user.user_id;
+    
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
       const title = 'Stitching Module Bid';
-      const description = ''; // Add description if needed
+      const description = ''; 
       const price = stitchingModule.cost;
 
       // Create a new bid using the BidService
@@ -176,8 +176,8 @@ export class StitchingService {
         title,
         description,
         price,
-        'Active', // Status of the bid
-        'StitchingModule', // Type of the module
+        'Active', 
+        'StitchingModule', 
       );
     }
 
