@@ -22,8 +22,7 @@ import { Reviews } from 'reviews/entities/reviews.entity';
 export class User {
   @PrimaryGeneratedColumn()
   user_id: number;
-
-  @Column()
+  @Column({ nullable: true })
   username: string;
 
   @Column({ unique: true })

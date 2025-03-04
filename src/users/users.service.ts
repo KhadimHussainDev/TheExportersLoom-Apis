@@ -107,7 +107,7 @@ export class UsersService {
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Transaction failed: ' + error.message);
+      throw new Error(error.message);
     } finally {
       await queryRunner.release();
     }

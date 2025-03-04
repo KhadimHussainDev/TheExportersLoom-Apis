@@ -5,6 +5,8 @@ Analyze the following input prompt and fill out the JSON template provided below
 ```json
 {
   "fabricType": "<Extracted value or 'undefined'>",
+  "fabricSubType" : "<Extracted value or 'undefined'>",
+  "cuttingStyle" : "<Extracted value or 'undefined'>",
   "labelType": "<Extracted value or 'undefined'>",
   "labelsRequired": <true/false/undefined>,
   "numberOfLogos": <Number or 'undefined'>,
@@ -48,6 +50,8 @@ Following is output if nothing matched in prompt
 
 {
   fabricType: undefined,
+  fabricSubType : undefined,
+  cuttingStyle : undefined,
   labelType: undefined,
   labelsRequired: undefined,
   numberOfLogos: undefined,
