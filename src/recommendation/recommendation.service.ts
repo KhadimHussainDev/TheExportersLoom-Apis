@@ -52,25 +52,26 @@ export class RecommendationService {
       return []; // No matching manufacturers found
     }
 
-    const manufacturerIds = matchingManufacturers.map((m) => m.userId);
+    const manufacturerIds = matchingManufacturers.map((m) => m.userid);
 
     // Step 4: Get past collaboration manufacturers
     let pastManufacturerIds: number[] = [];
     if (manufacturerIds.length > 0) {
+      console.log('🔍 Checking past manufacturers:', manufacturerIds);
       const pastManufacturers = await this.orderRepository
         .createQueryBuilder('o')
         .select('o.manufacturerId')
         .where('o.exporterId = :exporterId', { exporterId })
         .andWhere('o.status = :status', { status: 'Completed' })
         .andWhere('o.manufacturerId IN (:...manufacturerIds)', {
-          manufacturerIds,
+          manufacturerIds: manufacturerIds.length ? manufacturerIds : [0], // Avoid empty IN ()
         })
         .getRawMany();
 
       console.log('Past Manufacturers:', pastManufacturers);
       pastManufacturerIds = pastManufacturers.map((o) => o.manufacturerId);
     } else {
-      console.log('No manufacturers found for filtering past experience.');
+      console.log('⚠️ No manufacturers found for filtering past experience.');
     }
 
     // Step 5: Get manufacturer ratings
