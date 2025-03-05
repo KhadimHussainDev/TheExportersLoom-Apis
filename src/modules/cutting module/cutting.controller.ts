@@ -16,7 +16,7 @@ export class CuttingController {
   @Put('edit/:projectId')
   async editCuttingModule(
     @Param('projectId') projectId: number,
-    @Body() updateCuttingDto: UpdateCuttingDto,  // Use Update DTO here
+    @Body() updateCuttingDto: UpdateCuttingDto,  
   ): Promise<Cutting> {
     const manager = this.dataSource.createEntityManager();
     return this.cuttingService.editCuttingModule(projectId, updateCuttingDto, manager);
@@ -25,16 +25,15 @@ export class CuttingController {
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updateCuttingStatus(
-    @Param('id') id: number,  // The ID of the FabricPricingModule to update
-    @Body('newStatus') newStatus: string,  // The new status to update to
+    @Param('id') id: number, 
+    @Body('newStatus') newStatus: string, 
   ) {
     try {
       const updatedCuttingModule = await this.cuttingService.updateCuttingStatus(
         id,
         newStatus,
       );
-
-      return updatedCuttingModule;  // Return updated fabric pricing module with success message
+      return updatedCuttingModule;  
     } catch (error) {
       throw new NotFoundException(
         `Error updating cutting module: ${error.message}`,

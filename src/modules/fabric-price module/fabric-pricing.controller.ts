@@ -105,7 +105,6 @@ export class FabricPricingController {
         projectId, 
         updatedFabricPricingDto,  
       );
-
       return {
         message: 'Fabric pricing module updated successfully',
         data: updatedFabricPricing,
@@ -116,11 +115,12 @@ export class FabricPricingController {
       );
     }
   }
+
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updateFabricPricingStatus(
-    @Param('id') id: number,  // The ID of the FabricPricingModule to update
-    @Body('newStatus') newStatus: string,  // The new status to update to
+    @Param('id') id: number,
+    @Body('newStatus') newStatus: string, 
   ) {
     try {
       const updatedFabricPricingModule = await this.fabricPricingService.updateFabricPricingStatus(
@@ -128,7 +128,7 @@ export class FabricPricingController {
         newStatus,
       );
 
-      return updatedFabricPricingModule;  // Return updated fabric pricing module with success message
+      return updatedFabricPricingModule;  
     } catch (error) {
       throw new NotFoundException(
         `Error updating fabric pricing module: ${error.message}`,

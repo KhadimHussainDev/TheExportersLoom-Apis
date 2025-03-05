@@ -1,26 +1,15 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Project } from '../../../project/entities/project.entity'; // Ensure the correct import path
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Project } from '../../../project/entities/project.entity';
+import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/create-fabric-quantity.dto';
 
 @Entity('logo_printing')
 export class LogoPrinting {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  printingMethod: string;
-
-  @Column()
-  size: string;
-
-  @Column()
-  logoPosition: string;
-
+  
+  @Column({ type: 'jsonb', nullable: true }) 
+  logoDetails: { logoPosition: string; printingMethod: string }[];
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
@@ -33,4 +22,7 @@ export class LogoPrinting {
 
   @Column({ nullable: true })
   status: string;
+
+  @Column({ type: 'jsonb', nullable: true }) 
+  sizes: FabricSizeDetailDto[];
 }

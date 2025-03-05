@@ -1,58 +1,67 @@
-import { Controller, Post, Body, NotFoundException, Get, Param, Delete, Put } from '@nestjs/common';
+import {
+  Controller, Post, Body, NotFoundException, Get, Param, Delete, Put
+} from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { ProjectDto } from './dto/create-project.dto';
-import { Project } from './entities/project.entity';
+import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { Project } from './entities/project.entity';
 
 @Controller('projects')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
+  /** Create a new project */
   @Post()
-  async createProject(@Body() createProjectDto: ProjectDto): Promise<Project> {
+  async createProject(@Body() createProjectDto: CreateProjectDto): Promise<Project> {
     return await this.projectService.createProject(createProjectDto);
   }
 
-  // Get all projects
+  /** Get all projects */
   @Get()
   async getAllProjects(): Promise<Project[]> {
     const projects = await this.projectService.getAllProjects();
-    
+
     if (!projects || projects.length === 0) {
       throw new NotFoundException('No projects found.');
     }
-
     return projects;
   }
 
-  // Get a specific project by ID
+  /** Get project by ID */
   @Get(':id')
   async getProjectById(@Param('id') id: number): Promise<Project> {
-    return await this.projectService.getProjectById(id);
+    const project = await this.projectService.getProjectById(id);
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${id} not found.`);
+    }
+
+    return project;
   }
 
-  //delete project by id 
+  /** Delete project by ID */
   @Delete(':id')
-  async deleteProject(@Param('id') projectId: number): Promise<string> {
+  async deleteProject(@Param('id') projectId: number): Promise<{ message: string }> {
     try {
-      return await this.projectService.deleteProject(projectId);
+      await this.projectService.deleteProject(projectId);
+      return { message: `Project with ID ${projectId} deleted successfully.` };
     } catch (error) {
       throw new NotFoundException(error.message);
     }
   }
 
-
-  // Edit project by ID
+  /** Edit project by ID */
   @Put(':projectId')
-async editProject(
-  @Param('projectId') projectId: number,
-  @Body() updateProjectDto: UpdateProjectDto,
-) {
-  const updatedProject = await this.projectService.editProject(
-    projectId,
-    updateProjectDto
-  );
-  return updatedProject;
-}
+  async editProject(
+    @Param('projectId') projectId: number,
+    @Body() updateProjectDto: UpdateProjectDto
+  ): Promise<Project> {
+    const updatedProject = await this.projectService.editProject(projectId, updateProjectDto);
 
+    if (!updatedProject) {
+      throw new NotFoundException(`Project with ID ${projectId} not found.`);
+    }
+
+    return updatedProject;
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, NotFoundException, Put, Param,UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, NotFoundException, Put, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { LogoPrintingService } from './logo-printing.service';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
@@ -14,30 +14,47 @@ export class LogoPrintingController {
   ) { }
 
   @Post('calculate-price')
-  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<number> {
-    const { logoPosition, printingMethod, logoSize } = dto;
-    const sizeColumn = this.logoPrintingService.getSizeColumn(logoSize);
-    if (!sizeColumn) {
-      throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<{ meanCost: number }> {
+    if (!dto.logoDetails || dto.logoDetails.length === 0) {
+      throw new BadRequestException('logoDetails array is required and cannot be empty.');
+    }
+    if (!dto.sizes || dto.sizes.length === 0) {
+      throw new BadRequestException('sizes array is required and cannot be empty.');
     }
 
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.getCostByPositionAndSize(
-      manager,
-      logoPosition,
-      sizeColumn,
-      printingMethod,
-    );
+    let totalCost = 0;
+
+    for (const sizeData of dto.sizes) {
+      const { size: requiredSize } = sizeData;
+
+      for (const logo of dto.logoDetails) {
+        const { logoPosition, printingMethod } = logo;
+        const sizeColumn = await this.logoPrintingService.getSizeColumn(manager, logoPosition, requiredSize);
+        if (!sizeColumn) {
+          throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
+        }
+        const costRange = await this.logoPrintingService.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        totalCost += costRange;
+      }
+    }
+    return { meanCost: totalCost };
   }
+
 
   @Post('create')
   async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto) {
+    if (!dto.projectId) {
+      throw new BadRequestException('projectId is required.');
+    }
+    if (!dto.logoDetails || dto.logoDetails.length === 0) {
+      throw new BadRequestException('logoDetails array is required and cannot be empty.');
+    }
+    if (!dto.sizes || dto.sizes.length === 0) {
+      throw new BadRequestException('sizes array is required and cannot be empty.');
+    }
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.createLogoPrintingModule(
-      dto.projectId,
-      dto,
-      manager,
-    );
+    return this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
   }
 
 
@@ -57,8 +74,8 @@ export class LogoPrintingController {
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updateLogoPritingStatus(
-    @Param('id') id: number,  // The ID of the FabricPricingModule to update
-    @Body('newStatus') newStatus: string,  // The new status to update to
+    @Param('id') id: number,
+    @Body('newStatus') newStatus: string,
   ) {
     try {
       const updatedlogoModule = await this.logoPrintingService.updateLogoPrintingStatus(
@@ -66,7 +83,7 @@ export class LogoPrintingController {
         newStatus,
       );
 
-      return updatedlogoModule;  // Return updated fabric pricing module with success message
+      return updatedlogoModule;
     } catch (error) {
       throw new NotFoundException(
         `Error updating logo module: ${error.message}`,

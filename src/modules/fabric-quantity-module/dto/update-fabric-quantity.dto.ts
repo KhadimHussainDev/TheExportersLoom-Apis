@@ -1,4 +1,15 @@
-import { IsString, IsInt, IsOptional, IsDecimal } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsDecimal, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class FabricSizeUpdateDto {
+  @IsOptional()
+  @IsString()
+  size?: string;
+
+  @IsOptional()
+  @IsInt()
+  quantityRequired?: number;
+}
 
 export class UpdateFabricQuantityDto {
   @IsOptional()
@@ -14,12 +25,10 @@ export class UpdateFabricQuantityDto {
   shirtType?: string;
 
   @IsOptional()
-  @IsString()
-  fabricSize?: string;
-
-  @IsOptional()
-  @IsInt()
-  quantityRequired?: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FabricSizeUpdateDto)
+  sizes?: FabricSizeUpdateDto[];
 
   @IsOptional()
   @IsDecimal()

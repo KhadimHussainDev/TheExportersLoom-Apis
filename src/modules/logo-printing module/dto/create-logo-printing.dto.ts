@@ -1,10 +1,9 @@
-import { IsString, IsNotEmpty, IsIn, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, IsIn, IsArray, ValidateNested, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
+import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/create-fabric-quantity.dto';
 
-export class CreateLogoPrintingDto {
-  @IsInt()
-  @IsNotEmpty()
-  projectId: number;
 
+export class LogoDetailDto {
   @IsString()
   @IsNotEmpty()
   @IsIn([
@@ -22,8 +21,19 @@ export class CreateLogoPrintingDto {
   @IsString()
   @IsNotEmpty()
   printingMethod: string;
+}
 
-  @IsString()
-  @IsNotEmpty()
-  logoSize: string;
+export class CreateLogoPrintingDto {
+  @IsInt()
+  projectId: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LogoDetailDto)
+  logoDetails: LogoDetailDto[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FabricSizeDetailDto)
+  sizes: FabricSizeDetailDto[]; 
 }

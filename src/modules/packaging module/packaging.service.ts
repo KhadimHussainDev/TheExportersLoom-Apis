@@ -16,9 +16,8 @@ export class PackagingService {
     @InjectRepository(PackagingBags)
     private readonly packagingBagsRepository: Repository<PackagingBags>,
     private readonly bidService: BidService,
-  ) {}
+  ) { }
 
-  //  Validates if the project exists.
 
   private async validateProject(
     manager: EntityManager,
@@ -102,42 +101,57 @@ export class PackagingService {
   }
 
 
-
   // Edit the packaging module and recalculate the cost
   async editPackagingModule(
     projectId: number,
-    updatedDto: UpdatePackagingDto,
+    updatedDto: UpdatePackagingDto | null,
     manager: EntityManager,
-  ): Promise<Packaging> {
-    const { quantity, status } = updatedDto;
+  ): Promise<Packaging | null> {
+    const project = await manager.findOne(Project, { where: { id: projectId } });
 
-    // Fetch the existing packaging module based on the projectId
-    const existingPackagingModule = await this.packagingRepository.findOne({
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    let existingPackagingModule = await this.packagingRepository.findOne({
       where: { project: { id: projectId } },
     });
 
-    if (!existingPackagingModule) {
-      throw new NotFoundException('Packaging module not found.');
+    if (!updatedDto) {
+      // If `updatedDto` is null, remove packaging
+      if (existingPackagingModule) {
+        await manager.remove(Packaging, existingPackagingModule);
+        console.log(`Deleted Packaging Module for project ID: ${projectId}`);
+      }
+      return null;
     }
 
-    // Fetch the new packaging cost based on the updated quantity
+    const { quantity, status } = updatedDto;
     const packagingCost = await this.findPackagingCost(manager, quantity);
 
-    // Update the packaging record with the new data
-    existingPackagingModule.quantity = quantity;
-    existingPackagingModule.status = status;
-    existingPackagingModule.cost = packagingCost;
+    if (!existingPackagingModule) {
+      existingPackagingModule = manager.create(Packaging, {
+        project: { id: projectId },
+        quantity,
+        status,
+        cost: packagingCost,
+      });
+    } else {
+      existingPackagingModule.quantity = quantity;
+      existingPackagingModule.status = status;
+      existingPackagingModule.cost = packagingCost;
+    }
 
-    // Save the updated packaging record
-    const updatedPackaging = await manager.save(Packaging, existingPackagingModule);
-    return updatedPackaging;
+    return await manager.save(Packaging, existingPackagingModule);
   }
+
+
 
   async updatePackagingBagsStatus(id: number, newStatus: string) {
     // Retrieve the cutting module and load relations (project, user)
     const packagingModule = await this.packagingRepository.findOne({
-      where: { id }, // Look up by ID
-      relations: ['project', 'project.user'], // Load relations
+      where: { id },
+      relations: ['project', 'project.user'],
     });
 
     // Check if the cutting module was found
@@ -155,12 +169,11 @@ export class PackagingService {
       );
     }
 
-    const userId = user.user_id; // User ID from the project relation
-
+    const userId = user.user_id; 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
       const title = 'Packaging Module Bid';
-      const description = ''; // Add description if needed
+      const description = ''; 
       const price = packagingModule.cost;
 
       // Create a new bid using the BidService
@@ -170,8 +183,8 @@ export class PackagingService {
         title,
         description,
         price,
-        'Active', // Status of the bid
-        'PackagingModule', // Type of the module
+        'Active',
+        'PackagingModule',
       );
     }
 
@@ -181,5 +194,5 @@ export class PackagingService {
     // Save the updated cutting module
     await this.packagingRepository.save(packagingModule);
   }
-  
+
 }

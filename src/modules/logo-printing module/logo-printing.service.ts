@@ -4,9 +4,9 @@ import { Repository, DataSource, EntityManager } from 'typeorm';
 import { LogoPrinting } from './entities/logo-printing.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { Project } from '../../project/entities/project.entity';
-import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
 import { BidService } from '../../bid/bid.service';
-
+import { LogoSizes } from '../../entities/logo-sizes.entity';
+import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
 @Injectable()
 export class LogoPrintingService {
   private readonly tableMap: Record<string, string> = {
@@ -25,76 +25,109 @@ export class LogoPrintingService {
     private readonly logoPrintingRepository: Repository<LogoPrinting>,
     private readonly dataSource: DataSource,
     private readonly bidService: BidService,
-  ) {}
+  ) { }
 
-  // Normalize and map size to the corresponding database column name.
-  public getSizeColumn(size: string): string {
-    const sizeMap = {
-      '2.5 x 2.5 inches': 'size2_5x2_5',
-      '3 x 3 inches': 'size3x3',
-      '3.5 x 3.5 inches': 'size3_5x3_5',
-      '4 x 4 inches': 'size4x4',
-      '5 x 5 inches': 'size5x5',
-      '6 x 6 inches': 'size6x6',
-      '7 x 7 inches': 'size7x7',
-      '8 x 8 inches': 'size8x8',
-      '10 x 12 inches': 'size10x12',
-      '12 x 14 inches': 'size12x14',
-      '14 x 16 inches': 'size14x16',
-      '16 x 18 inches': 'size16x18',
-    };
-    const normalizedSize =
-      size.trim().toLowerCase().replace('x', ' x ') + ' inches';
-    const sizeColumn = sizeMap[normalizedSize] || null;
-    return sizeColumn;
-  }
+  // Method to get the size column based on logoPosition and required size
+  public async getSizeColumn(
+    manager: EntityManager,
+    position: string,
+    requiredSize: string,
+  ): Promise<string> {
+    // Normalize position (to handle case differences)
+    const normalizedPosition = position.trim().toLowerCase();
 
-  // Calculate the mean cost from a range string (e.g., "300 - 600").
-  private calculateMeanCost(range: string): number {
-    const [min, max] = range
-      .split('-')
-      .map((value) => parseFloat(value.trim()));
-    if (isNaN(min) || isNaN(max)) {
-      console.error(`Invalid cost range: '${range}'`);
-      throw new NotFoundException(`Invalid cost range: ${range}`);
+    // Fetch logo sizes for the given position
+    const logoSizeData = await manager
+      .createQueryBuilder()
+      .select([
+        `"smallSize"`,
+        `"mediumSize"`,
+        `"largeSize"`,
+        `"xlSize"`
+      ])
+      .from(LogoSizes, 'logo_sizes')
+      .where('LOWER(logo_sizes."logoPosition") = LOWER(:position)', { position: normalizedPosition })
+      .getRawOne();
+
+    if (!logoSizeData) {
+      throw new NotFoundException(
+        `No size mapping found for logo position: ${position}`,
+      );
     }
-    const meanCost = (min + max) / 2;
-    return meanCost;
+    // Normalize requiredSize to match database values
+    const sizeMapping = {
+      's': 'smallSize', 'small': 'smallSize',
+      'm': 'mediumSize', 'medium': 'mediumSize',
+      'l': 'largeSize', 'large': 'largeSize',
+      'xl': 'xlSize', 'extra large': 'xlSize', 'extralarge': 'xlSize'
+    };
+
+    const normalizedSize = requiredSize.trim().toLowerCase();
+    const sizeColumnKey = sizeMapping[normalizedSize];
+
+    if (!sizeColumnKey) {
+      throw new NotFoundException(
+        `No matching size column found for required size: ${requiredSize}`,
+      );
+    }
+
+    // Retrieve the value from the mapped column
+    const rawSizeValue = logoSizeData[sizeColumnKey];
+
+    if (!rawSizeValue) {
+      throw new NotFoundException(
+        `No value found for size column key: ${sizeColumnKey}`,
+      );
+    }
+
+    // Convert "7 x 7" → "size7x7"
+    const formattedSizeColumn = `size${rawSizeValue.replace(/\s/g, '').replace(/\./g, '_')}`;
+    return formattedSizeColumn;
   }
 
-  // Fetch the cost dynamically based on position, size, and printing method.
   public async getCostByPositionAndSize(
     manager: EntityManager,
     position: string,
     sizeColumn: string,
     printingMethod: string,
   ): Promise<number> {
+    // Get table name based on position
     const tableName = this.tableMap[position.toLowerCase()];
     if (!tableName) {
-      console.error(`Invalid logo position: '${position}'`);
       throw new NotFoundException(`Invalid logo position: ${position}`);
     }
+    // console.log(`Fetching cost from ${tableName}, column: ${sizeColumn}, method: ${printingMethod}`);
 
-    const query = manager
+    const result = await manager
       .createQueryBuilder()
-      .select(sizeColumn)
+      .select(`"${sizeColumn}"`)  
       .from(tableName, tableName)
-      .where('"printingMethod" = :printingMethod', { printingMethod });
-
-    const result = await query.getRawOne();
+      .where('"printingMethod" = :printingMethod', { printingMethod })
+      .getRawOne();
 
     if (!result || !result[sizeColumn]) {
-      console.error(
-        `Cost not available for position: '${position}', size: '${sizeColumn}', and method: '${printingMethod}'`,
-      );
       throw new NotFoundException(
-        `Cost not available for position: ${position}, size: ${sizeColumn}, and method: ${printingMethod}`,
+        `Cost not available for position: ${position}, size: ${sizeColumn}, method: ${printingMethod}`,
       );
     }
+
     return this.calculateMeanCost(result[sizeColumn]);
   }
 
-  // Validate if the projectId exists in the database using EntityManager.
+
+  public calculateMeanCost(range: string): number {
+    const [min, max] = range
+      .split('-')
+      .map((value) => parseFloat(value.trim()));
+
+    if (isNaN(min) || isNaN(max)) {
+      throw new NotFoundException(`Invalid cost range: ${range}`);
+    }
+    return (min + max) / 2;
+  }
+
+
+  // Validate if the projectId exists in the database
   private async validateProject(
     manager: EntityManager,
     projectId: number,
@@ -107,63 +140,59 @@ export class LogoPrintingService {
       .getRawOne();
 
     if (!projectExists) {
-      console.error(`Project with ID ${projectId} does not exist.`);
       throw new NotFoundException(
         `Project with ID ${projectId} does not exist.`,
       );
     }
   }
 
-  // Create a logo printing module for a project.
+  // Core function to create the logo printing module
   public async createLogoPrintingModule(
     projectId: number,
     dto: CreateLogoPrintingDto,
-    manager: EntityManager, // Accept EntityManager for transaction
+    manager: EntityManager,
   ): Promise<number> {
-    // Validate the projectId before proceeding
     await this.validateProject(manager, projectId);
 
-    // Get the corresponding size column
-    const sizeColumn = this.getSizeColumn(dto.logoSize);
-    if (!sizeColumn) {
-      console.error(`Invalid logo size: '${dto.logoSize}'`);
-      throw new NotFoundException(`Invalid logo size: ${dto.logoSize}`);
+    let totalCost = 0;
+    for (const sizeData of dto.sizes) {
+      const { size: requiredSize } = sizeData;
+
+      for (const logo of dto.logoDetails) {
+        const { logoPosition, printingMethod } = logo;
+        const sizeColumn = await this.getSizeColumn(manager, logoPosition, requiredSize);
+
+        if (!sizeColumn) {
+          throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
+        }
+        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        totalCost += cost;
+      }
     }
 
-    // Fetch the cost dynamically
-    const cost = await this.getCostByPositionAndSize(
-      manager,
-      dto.logoPosition,
-      sizeColumn,
-      dto.printingMethod,
-    );
+    console.log('Final Total Cost:', totalCost);
 
-    // Create the logo printing module
     const logoPrinting = manager.create(LogoPrinting, {
       projectId,
-      printingMethod: dto.printingMethod,
-      size: dto.logoSize,
-      logoPosition: dto.logoPosition,
-      price: cost,
+      sizes: dto.sizes,
+      price: totalCost,
       status: 'draft',
+      logoDetails: dto.logoDetails,
+
     });
+
     const savedLogoPrinting = await manager.save(LogoPrinting, logoPrinting);
-    console.log(
-      `Saving logo printing module: ${JSON.stringify(savedLogoPrinting)}`,
-    );
     return savedLogoPrinting.price;
   }
 
+
+  //  Fetch the total cost of the logo printing module for a project
   async getModuleCost(projectId: number): Promise<number> {
     const logoPrinting = await this.logoPrintingRepository.findOne({
       where: { projectId },
     });
 
-    if (!logoPrinting) {
-      return 0;
-    }
-
-    return logoPrinting.price || 0;
+    return logoPrinting?.price || 0;
   }
 
   // Edit the logo printing module for a project.
@@ -172,103 +201,86 @@ export class LogoPrintingService {
     updatedDto: UpdateLogoPrintingDto,
     manager: EntityManager,
   ): Promise<LogoPrinting> {
-    const { logoPosition, printingMethod, logoSize } = updatedDto;
+    // Validate project existence
+    await this.validateProject(manager, projectId);
 
-    // Check if a logo printing module exists for this project
+    // Fetch existing logo printing module
     let existingLogoPrintingModule = await this.logoPrintingRepository.findOne({
       where: { projectId },
     });
 
-    if (existingLogoPrintingModule) {
-      // If module exists, check if any fields have changed
-      let priceUpdated = false;
+    // **DELETE MODULE IF logoDetails IS EMPTY**
+    if (!updatedDto.logoDetails || updatedDto.logoDetails.length === 0) {
+      if (existingLogoPrintingModule) {
+        await manager.remove(existingLogoPrintingModule);
+        console.log(`Deleted Logo Printing module for project ID ${projectId}`);
+      }
+      return null;
+    }
 
-      if (
-        existingLogoPrintingModule.logoPosition !== logoPosition ||
-        existingLogoPrintingModule.printingMethod !== printingMethod ||
-        existingLogoPrintingModule.size !== logoSize
-      ) {
-        // Recalculate cost if any field changed
-        const sizeColumn = this.getSizeColumn(logoSize);
+    let totalCost = 0;
+
+    for (const sizeData of updatedDto.sizes) {
+      const { size: requiredSize } = sizeData;
+
+      for (const logo of updatedDto.logoDetails) {
+        const { logoPosition, printingMethod } = logo;
+
+        // Retrieve size column based on position and required size
+        const sizeColumn = await this.getSizeColumn(manager, logoPosition, requiredSize);
+
         if (!sizeColumn) {
-          throw new NotFoundException(`Invalid logo size: ${logoSize}`);
+          throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
         }
 
-        const cost = await this.getCostByPositionAndSize(
-          manager,
-          logoPosition,
-          sizeColumn,
-          printingMethod,
-        );
-
-        // Update price only if it changes
-        if (existingLogoPrintingModule.price !== cost) {
-          existingLogoPrintingModule.price = cost;
-          priceUpdated = true;
-        }
+        // Fetch cost based on position, size, and printing method
+        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        totalCost += cost;
       }
+    }
 
-      // Update other fields if necessary
-      if (existingLogoPrintingModule.logoPosition !== logoPosition) {
-        existingLogoPrintingModule.logoPosition = logoPosition;
-      }
+    if (existingLogoPrintingModule) {
+      // Check if any updates are required
+      const isLogoDetailsChanged =
+        JSON.stringify(existingLogoPrintingModule.logoDetails) !== JSON.stringify(updatedDto.logoDetails);
+      const isSizesChanged =
+        JSON.stringify(existingLogoPrintingModule.sizes) !== JSON.stringify(updatedDto.sizes);
+      const isPriceChanged = existingLogoPrintingModule.price !== totalCost;
 
-      if (existingLogoPrintingModule.printingMethod !== printingMethod) {
-        existingLogoPrintingModule.printingMethod = printingMethod;
-      }
+      if (isLogoDetailsChanged || isSizesChanged || isPriceChanged) {
+        // Update the module
+        existingLogoPrintingModule.logoDetails = updatedDto.logoDetails;
+        existingLogoPrintingModule.sizes = updatedDto.sizes;
+        existingLogoPrintingModule.price = totalCost;
+        existingLogoPrintingModule.status = 'draft';
 
-      if (existingLogoPrintingModule.size !== logoSize) {
-        existingLogoPrintingModule.size = logoSize;
-      }
-
-      // Update status if needed
-      existingLogoPrintingModule.status = 'draft';
-
-      // Save the updated module only if there is any change
-      if (priceUpdated) {
-        console.log(
-          `Saving updated logo printing module with new price: ${existingLogoPrintingModule.price}`,
-        );
+        // Save the updated module
         return manager.save(existingLogoPrintingModule);
       } else {
-        console.log(`No change in price, no save needed`);
+        // No change detected, return the existing module
         return existingLogoPrintingModule;
       }
     } else {
-      // If no logo module exists, create a new one
-      const sizeColumn = this.getSizeColumn(logoSize);
-      if (!sizeColumn) {
-        throw new NotFoundException(`Invalid logo size: ${logoSize}`);
-      }
-
-      // Recalculate the cost
-      const cost = await this.getCostByPositionAndSize(
-        manager,
-        logoPosition,
-        sizeColumn,
-        printingMethod,
-      );
-
-      // Create a new logo printing module
-      const logoPrinting = manager.create(LogoPrinting, {
+      // If module does not exist, create a new one
+      const newLogoPrinting = manager.create(LogoPrinting, {
         projectId,
-        printingMethod,
-        logoPosition,
-        size: logoSize,
-        price: cost,
+        logoDetails: updatedDto.logoDetails,
+        sizes: updatedDto.sizes,
+        price: totalCost,
         status: 'draft',
       });
 
-      // Save the new module
-      return manager.save(logoPrinting);
+      // Save and return the new logo printing module
+      return manager.save(newLogoPrinting);
     }
   }
+
 
   async updateLogoPrintingStatus(id: number, newStatus: string) {
     // Retrieve the cutting module and load relations (project, user)
     const logoPrintingModule = await this.logoPrintingRepository.findOne({
-      where: { id }, // Look up by ID
-      relations: ['project', 'project.user'], // Load relations
+      where: { id },
+      relations: ['project', 'project.user'],
     });
 
     // Check if the cutting module was found
@@ -288,12 +300,12 @@ export class LogoPrintingService {
       );
     }
 
-    const userId = user.user_id; // User ID from the project relation
+    const userId = user.user_id;
 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
       const title = 'Logo Priniting Module Bid';
-      const description = ''; // Add description if needed
+      const description = '';
       const price = logoPrintingModule.price;
 
       // Create a new bid using the BidService
@@ -303,15 +315,14 @@ export class LogoPrintingService {
         title,
         description,
         price,
-        'Active', // Status of the bid
-        'LogoPrintingModule', // Type of the module
+        'Active',
+        'LogoPrintingModule',
       );
     }
 
     // Update the status of the cutting module
     logoPrintingModule.status = newStatus;
 
-    // Save the updated cutting module
     await this.logoPrintingRepository.save(logoPrintingModule);
   }
 }

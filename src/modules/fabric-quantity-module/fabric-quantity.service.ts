@@ -4,12 +4,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, QueryResult } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
 import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
+import { BidService } from 'bid/bid.service';
 import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
-import { BidService } from '../../bid/bid.service';
+import { Project } from 'project/entities/project.entity';
 
 @Injectable()
 export class FabricQuantityService {
@@ -18,166 +19,223 @@ export class FabricQuantityService {
     private fabricQuantityRepository: Repository<FabricQuantity>,
     @InjectRepository(FabricSizeCalculation)
     private fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
+    @InjectRepository(Project) // Ensure this is properly injected
+    private projectRepository: Repository<Project>,
     private readonly bidService: BidService,
-  ) {}
- 
+
+  ) { }
+
+
+  async getModuleCost(projectId: number): Promise<number> {
+    const fabricQuantities = await this.fabricQuantityRepository.find({
+      where: { projectId },
+    });
+
+    if (!fabricQuantities.length) {
+      return 0;
+    }
+    return fabricQuantities.reduce(
+      (sum, item) => sum + (item.fabricQuantityCost || 0),
+      0,
+    );
+  }
+
+  // edit
+  async editFabricQuantityModule(
+    projectId: number,
+    updatedDto: UpdateFabricQuantityDto,
+    manager?: EntityManager,
+  ): Promise<{ updatedFabricQuantities: FabricQuantity[]; totalFabricQuantityCost: number }> {
+    const { status, categoryType, shirtType, sizes } = updatedDto;
+
+    // Fetch the existing project
+    let project = await this.projectRepository.findOne({ where: { id: projectId } });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    if (!sizes || !Array.isArray(sizes) || sizes.length === 0) {
+      throw new BadRequestException('Sizes array must be provided and cannot be empty.');
+    }
+
+    // Fetch existing fabric quantities for the project
+    let existingFabricQuantities = await this.fabricQuantityRepository.find({
+      where: { projectId },
+      order: { id: 'ASC' }, // consistent order
+    });
+
+    let totalFabricQuantityCost = 0;
+    const updatedFabricQuantities: FabricQuantity[] = [];
+
+    // Mapping for size normalization
+    const sizeMapping: Record<string, string> = {
+      s: 'small', small: 'small', S: 'small',
+      m: 'medium', medium: 'medium', M: 'medium',
+      l: 'large', large: 'large', L: 'large',
+      xl: 'xl', XL: 'xl', 'extra large': 'xl',
+    };
+
+    // Track index for updating existing records
+    let existingIndex = 0;
+    for (const sizeObj of sizes) {
+      let { size, quantityRequired } = sizeObj;
+
+      if (!size || !quantityRequired || quantityRequired <= 0) {
+        throw new BadRequestException(
+          `Invalid fabric size or quantity: ${JSON.stringify(sizeObj)}`,
+        );
+      }
+
+      const normalizedSize = sizeMapping[size.toLowerCase()];
+      if (!normalizedSize) {
+        throw new BadRequestException(`Invalid fabric size: ${size}`);
+      }
+
+      // Fetch fabric size calculation for cost computation
+      const fabricSizeCalculation = await this.fabricSizeCalculationRepository.findOne({
+        where: { shirtType, fabricType: categoryType },
+      });
+
+      if (!fabricSizeCalculation) {
+        throw new NotFoundException(
+          `Fabric size calculation not found for ${shirtType} - ${categoryType}`,
+        );
+      }
+
+      let fabricSizeCost = 0;
+      switch (normalizedSize) {
+        case 'small': fabricSizeCost = fabricSizeCalculation.smallSize || 0; break;
+        case 'medium': fabricSizeCost = fabricSizeCalculation.mediumSize || 0; break;
+        case 'large': fabricSizeCost = fabricSizeCalculation.largeSize || 0; break;
+        case 'xl': fabricSizeCost = fabricSizeCalculation.xlSize || 0; break;
+        default:
+          throw new BadRequestException(`Invalid fabric size: ${size}`);
+      }
+
+      const fabricQuantityCost = fabricSizeCost * quantityRequired;
+      totalFabricQuantityCost += fabricQuantityCost;
+
+      // Update existing fabric quantity record
+      if (existingIndex < existingFabricQuantities.length) {
+        let fabricQuantity = existingFabricQuantities[existingIndex];
+        fabricQuantity.fabricSize = normalizedSize;
+        fabricQuantity.quantityRequired = quantityRequired;
+        fabricQuantity.fabricQuantityCost = fabricQuantityCost;
+        fabricQuantity.categoryType = categoryType;
+        fabricQuantity.shirtType = shirtType;
+
+        const savedEntity = manager
+          ? await manager.save(fabricQuantity)
+          : await this.fabricQuantityRepository.save(fabricQuantity);
+        updatedFabricQuantities.push(savedEntity);
+        existingIndex++;
+      } else {
+
+        // Create a new fabric quantity record if required
+        const newFabricQuantity = this.fabricQuantityRepository.create({
+          projectId,
+          status,
+          categoryType,
+          shirtType,
+          fabricSize: normalizedSize,
+          quantityRequired,
+          fabricQuantityCost,
+        });
+
+        const savedEntity = manager
+          ? await manager.save(newFabricQuantity)
+          : await this.fabricQuantityRepository.save(newFabricQuantity);
+
+        updatedFabricQuantities.push(savedEntity);
+      }
+    }
+
+    // Delete extra fabric quantity records if new sizes are fewer than existing ones
+    if (existingIndex < existingFabricQuantities.length) {
+      const recordsToDelete = existingFabricQuantities.slice(existingIndex);
+      await this.fabricQuantityRepository.remove(recordsToDelete);
+    }
+
+    project.sizes = sizes.map(sizeObj => ({
+      fabricSize: sizeObj.size,
+      quantity: sizeObj.quantityRequired,
+    }));
+
+    if (manager) {
+      await manager.save(project);
+    } else {
+      await this.projectRepository.save(project);
+    }
+
+    return {
+      updatedFabricQuantities,
+      totalFabricQuantityCost,
+    };
+  }
+
+
   async createFabricQuantityModule(
     dto: CreateFabricQuantityDto,
     manager?: EntityManager,
   ): Promise<{
-    fabricQuantityEntity: FabricQuantity;
-    fabricQuantityCost: number;
+    fabricQuantityEntities: FabricQuantity[];
+    totalFabricQuantityCost: number;
   }> {
-    const { shirtType, fabricSize, categoryType, projectId, quantityRequired } =
-      dto;
+    const { projectId, status, categoryType, shirtType, sizes } = dto;
 
-    // Retrieve the fabric size calculation
-    const fabricSizeCalculation =
-      await this.fabricSizeCalculationRepository.findOne({
-        where: { shirtType, fabricType: categoryType },
-      });
-
-    if (!fabricSizeCalculation) {
-      console.error('Step 2: Fabric size calculation not found for:', {
-        shirtType,
-        categoryType,
-      });
-      throw new NotFoundException(
-        'Fabric size calculation not found for this type.',
-      );
+    if (!sizes || !Array.isArray(sizes) || sizes.length === 0) {
+      throw new BadRequestException('Sizes array must be provided.');
     }
 
-    // Calculate the fabric size cost
-    let fabricSizeCost = 0;
-    switch (fabricSize.toLowerCase()) {
-      case 'small':
-        fabricSizeCost = fabricSizeCalculation.smallSize || 0;
-        break;
-      case 'medium':
-        fabricSizeCost = fabricSizeCalculation.mediumSize || 0;
-        break;
-      case 'large':
-        fabricSizeCost = fabricSizeCalculation.largeSize || 0;
-        break;
-      case 'xl':
-        fabricSizeCost = fabricSizeCalculation.xlSize || 0;
-        break;
-      default:
-        console.error('Step 3: Invalid fabric size:', fabricSize);
-        throw new BadRequestException('Invalid fabric size provided.');
-    }
+    let totalFabricQuantityCost = 0;
+    const savedFabricQuantities: FabricQuantity[] = [];
 
-    const fabricQuantityCost = fabricSizeCost * quantityRequired;
-
-    // Create the FabricQuantity entity
-    const fabricQuantity = this.fabricQuantityRepository.create({
-      status: 'draft',
-      projectId,
-      categoryType,
-      shirtType,
-      fabricSize,
-      quantityRequired,
-      fabricQuantityCost,
-    });
-
-    // Save the FabricQuantity entity
-    const savedFabricQuantity = manager
-      ? await manager.save(fabricQuantity)
-      : await this.fabricQuantityRepository.save(fabricQuantity);
-
-    return {
-      fabricQuantityEntity: savedFabricQuantity,
-      fabricQuantityCost,
+    // Mapping possible size variations to standard names
+    const sizeMapping: Record<string, string> = {
+      s: 'small',
+      small: 'small',
+      S: 'small',
+      m: 'medium',
+      medium: 'medium',
+      M: 'medium',
+      l: 'large',
+      large: 'large',
+      L: 'large',
+      xl: 'xl',
+      XL: 'xl',
+      'extra large': 'xl',
     };
-  }
 
-  async getModuleCost(projectId: number): Promise<number> {
-    const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
-      where: { projectId },
-      relations: ['project'],
-    });
+    for (const sizeObj of sizes) {
+      let { size, quantityRequired } = sizeObj;
 
-    if (!fabricQuantityModule) {
-      return 0;
-    }
+      if (!size || !quantityRequired || quantityRequired <= 0) {
+        throw new BadRequestException(
+          `Invalid fabric size or quantity: ${JSON.stringify(sizeObj)}`,
+        );
+      }
 
-    console.log('Fabric Quantity module found:', fabricQuantityModule);
-    return fabricQuantityModule.fabricQuantityCost || 0;
-  }
+      // Normalize fabric size input
+      const normalizedSize = sizeMapping[size.toLowerCase()];
+      if (!normalizedSize) {
+        throw new BadRequestException(`Invalid fabric size: ${size}`);
+      }
 
+      // Retrieve fabric size calculation
+      const fabricSizeCalculation =
+        await this.fabricSizeCalculationRepository.findOne({
+          where: { shirtType, fabricType: categoryType },
+        });
 
+      if (!fabricSizeCalculation) {
+        throw new NotFoundException(
+          `Fabric size calculation not found for ${shirtType} - ${categoryType}`,
+        );
+      }
 
-  // Fetch the complete FabricQuantity record by projectId
-  async getFabricQuantityByProjectId(projectId: number): Promise<FabricQuantity> {
-    const fabricQuantity = await this.fabricQuantityRepository.findOne({
-      where: { projectId },
-    });
-  
-    if (!fabricQuantity) {
-      throw new NotFoundException(`Fabric Quantity module not found for project ID ${projectId}`);
-    }
-  
-    return fabricQuantity;
-  }
-
-
-  // edit
-  async editFabricQuantityModule(
-    projectId: number,  
-    updatedDto: UpdateFabricQuantityDto, 
-    manager?: EntityManager,
-  ): Promise<FabricQuantity> {
-    const { shirtType, fabricSize, categoryType, quantityRequired } = updatedDto;
-  
-    // Fetch the existing fabric quantity record based on projectId
-    const existingFabricQuantity = await this.fabricQuantityRepository.findOne({
-      where: { projectId },
-    });
-  
-    if (!existingFabricQuantity) {
-      throw new NotFoundException('Fabric Quantity module not found.');
-    }
-  
-    // Fetch the fabric size calculation
-    const fabricSizeCalculation = await this.fabricSizeCalculationRepository.findOne({
-      where: { shirtType, fabricType: categoryType },
-    });
-  
-    if (!fabricSizeCalculation) {
-      throw new NotFoundException('Fabric size calculation not found for the given type.');
-    }
-  
-    // Determine if any relevant fields have changed and recalculate fabric quantity if needed
-    let recalculateCost = false;
-  
-    if (
-      updatedDto.shirtType !== undefined &&
-      updatedDto.shirtType !== existingFabricQuantity.shirtType
-    ) {
-      existingFabricQuantity.shirtType = updatedDto.shirtType;
-      recalculateCost = true;
-    }
-  
-    if (
-      updatedDto.fabricSize !== undefined &&
-      updatedDto.fabricSize !== existingFabricQuantity.fabricSize
-    ) {
-      existingFabricQuantity.fabricSize = updatedDto.fabricSize;
-      recalculateCost = true;
-    }
-  
-    if (
-      updatedDto.categoryType !== undefined &&
-      updatedDto.categoryType !== existingFabricQuantity.categoryType
-    ) {
-      existingFabricQuantity.categoryType = updatedDto.categoryType;
-      recalculateCost = true;
-    }
-  
-    // Recalculate the fabric quantity cost 
-    if (recalculateCost) {
       let fabricSizeCost = 0;
-      switch (existingFabricQuantity.fabricSize.toLowerCase()) {
+      switch (normalizedSize) {
         case 'small':
           fabricSizeCost = fabricSizeCalculation.smallSize || 0;
           break;
@@ -190,62 +248,88 @@ export class FabricQuantityService {
         case 'xl':
           fabricSizeCost = fabricSizeCalculation.xlSize || 0;
           break;
+          break;
         default:
-          throw new BadRequestException('Invalid fabric size');
+          throw new BadRequestException(`Invalid fabric size: ${size}`);
       }
-  
-      // Recalculate the fabric quantity cost 
-      const fabricQuantityCost = fabricSizeCost * (quantityRequired || existingFabricQuantity.quantityRequired);
-      existingFabricQuantity.fabricQuantityCost = fabricQuantityCost;
+
+      // Calculate total cost
+      const fabricQuantityCost = fabricSizeCost * quantityRequired;
+      totalFabricQuantityCost += fabricQuantityCost;
+
+      // Create entity
+      const fabricQuantity = this.fabricQuantityRepository.create({
+        projectId,
+        status,
+        categoryType,
+        shirtType,
+        fabricSize: normalizedSize, // Save standardized size
+        quantityRequired: quantityRequired,
+        fabricQuantityCost,
+      });
+
+      // Save entity
+      const savedEntity = manager
+        ? await manager.save(fabricQuantity)
+        : await this.fabricQuantityRepository.save(fabricQuantity);
+
+      savedFabricQuantities.push(savedEntity);
     }
 
-    if (updatedDto.quantityRequired !== undefined) {
-      existingFabricQuantity.quantityRequired = updatedDto.quantityRequired;
-    }
-    if (updatedDto.status !== undefined) {
-      existingFabricQuantity.status = updatedDto.status;
-    }
-  
-    // Save the updated fabric quantity record
-    const updatedFabricQuantity = await manager
-      ? manager.save(existingFabricQuantity)
-      : this.fabricQuantityRepository.save(existingFabricQuantity);
-  
-    return updatedFabricQuantity;
+    return {
+      fabricQuantityEntities: savedFabricQuantities,
+      totalFabricQuantityCost,
+    };
   }
-  
+
+  // Fetch the complete FabricQuantity record by projectId
+  async getFabricQuantityByProjectId(projectId: number): Promise<FabricQuantity> {
+    const fabricQuantity = await this.fabricQuantityRepository.findOne({
+      where: { projectId },
+    });
+
+    if (!fabricQuantity) {
+      throw new NotFoundException(`Fabric Quantity module not found for project ID ${projectId}`);
+    }
+
+    return fabricQuantity;
+  }
+
+
+
+
   async updateFabricQuantityStatus(id: number, newStatus: string) {
     // Retrieve fabricPricingModule and load the project and user relations
     const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
-      where: { id }, // Use the fabric pricing id to fetch the module
-      relations: ['project', 'project.user'], // Ensure both project and user are loaded
+      where: { id }, 
+      relations: ['project', 'project.user'], 
     });
-  
+
     console.log(`Updating status for fabricQuantityModule ID: ${id}`);
-  
+
     // Check if fabricPricingModule exists
     if (!fabricQuantityModule) {
       throw new Error(`fabricQuantityModule with id ${id} not found`);
     }
-  
+
     // Ensure 'project' and 'user' relations are loaded
     const project = fabricQuantityModule.project;
-    const user = project?.user;  // Access user from the project relation
-  
+    const user = project?.user; 
+
     if (!user) {
       throw new Error(`User related to fabricQuantityModule with id ${id} not found`);
     }
 
-    
-  
+
+
     const userId = user.user_id;
-  
+
     // Perform action only if fabricPricingModule and newStatus are valid
     if (newStatus === 'Posted') {
       const title = 'Fabric Quantity Module';
       const description = '';
       const price = fabricQuantityModule.fabricQuantityCost;
-      
+
       console.log(`Creating bid for fabricQuantityModule ID: ${id}, userId: ${userId}`);
       // Create a new Bid
       await this.bidService.createBid(
@@ -254,14 +338,14 @@ export class FabricQuantityService {
         title,
         description,
         price,
-        'Active', 
-         'FabricQuantity'
+        'Active',
+        'FabricQuantity'
       );
     }
-  
+
     // Update status
     fabricQuantityModule.status = newStatus;
-  
+
     // Save the updated fabricPricingModule
     await this.fabricQuantityRepository.save(fabricQuantityModule);
   }

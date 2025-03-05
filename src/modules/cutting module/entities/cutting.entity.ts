@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Project } from '../../../project/entities/project.entity'; // Ensure the import is correct
+import { Project } from '../../../project/entities/project.entity'; 
 
 @Entity('cutting')
 export class Cutting {
@@ -13,7 +13,7 @@ export class Cutting {
   id: number;
 
   @Column()
-  status: string; // "Active" or other statuses for tracking
+  status: string; 
 
   @Column()
   projectId: number;

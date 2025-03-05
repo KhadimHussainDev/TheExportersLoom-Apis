@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { FabricPricingModule } from '../../modules/fabric-price module/entities/fabric-pricing-module.entity';
 import { FabricQuantity } from '../../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../../modules/cutting module/entities/cutting.entity';
@@ -13,46 +20,55 @@ export class Project {
   id: number;
 
   @ManyToOne(() => User, (user) => user.projects, { nullable: true })
-   @JoinColumn({ name: 'userId' })  
-   user: User;
-
-  @Column({ nullable: true })
-  responseId: number;
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string; 
-  
-  @Column()
+  status: string;
+
+  @Column({ nullable: true }) 
   shirtType: string;
 
-  @Column()
+  @Column({ nullable: true })
   fabricCategory: string;
 
   @Column({ nullable: true })
   fabricSubCategory: string;
 
-  @Column()
-  fabricSize: string;
-
-  @Column({ nullable: true })
-  logoPosition: string;
-
-  @Column({ nullable: true })
-  printingStyle: string;
-
-  @Column({ nullable: true })
-  logoSize: string;
-
   @Column({ nullable: true })
   cuttingStyle: string;
 
-  @Column()
-  quantity: number;
+  @Column({ nullable: true })
+  labelType: string;
 
- 
+  @Column({ type: 'boolean', default: false })
+  labelsRequired: boolean;
+
+  @Column({ type: 'integer', nullable: true })
+  numberOfLogos: number;
+
+  @Column({ type: 'boolean', default: false })
+  packagingRequired: boolean;
+
+  @Column({ nullable: true })
+  packagingType: string;
+
+  @Column({ type: 'boolean', default: false })
+  patternRequired: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  tagCardsRequired: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  logoDetails: { logoPosition: string; printingStyle: string; }[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  sizes: { quantity: number; fabricSize: string }[];
+
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
 
+  /** Relationships */
   @OneToMany(() => FabricPricingModule, (fabricPricingModule) => fabricPricingModule.project)
   fabricPriceModules: FabricPricingModule[];
 

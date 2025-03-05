@@ -46,14 +46,14 @@ export class StitchingController {
   @UseGuards(JwtStrategy)
   @Put('/:id/status')
   async updatestitchingStatus(
-    @Param('id') id: number, // The ID of the FabricPricingModule to update
-    @Body('newStatus') newStatus: string, // The new status to update to
+    @Param('id') id: number, 
+    @Body('newStatus') newStatus: string, 
   ) {
     try {
       const upadteStitchingModule =
         await this.stitchingService.updateStitchingStatus(id, newStatus);
 
-      return upadteStitchingModule; // Return updated fabric pricing module with success message
+      return upadteStitchingModule; 
     } catch (error) {
       throw new NotFoundException(
         `Error updating stitching module: ${error.message}`,
