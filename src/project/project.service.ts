@@ -189,8 +189,9 @@ export class ProjectService {
   async editProject(projectId: number, updateProjectDto: UpdateProjectDto): Promise<Project> {
     return await this.dataSource.transaction(async (manager) => {
       // Step 1: Fetch the existing project
-      const project = await manager.findOne(Project, { where: { id: projectId } });
-
+      const project = await manager.findOne(Project, {
+        where: { id: projectId },
+      });
       if (!project) {
         throw new NotFoundException(`Project with ID ${projectId} not found.`);
       }
@@ -210,16 +211,22 @@ export class ProjectService {
 
       // Calculate total quantity from sizes array
       const totalQuantity = updateProjectDto.sizes?.reduce(
-        (sum, size) => sum + size.quantity,
+        (sum, size) => sum + size.quantityRequired,
         0
       ) || 0;
       console.log('Total Quantity:', totalQuantity);
 
+      if (updateProjectDto.sizes) {
+        project.sizes = updateProjectDto.sizes.map(size => ({
+          fabricSize: size.size, // Map `size` to `fabricSize`
+          quantity: size.quantityRequired, // Map `quantityRequired` to `quantity`
+        }));
+      }
+  
       // Save the updated project entity
       const updatedProject = await manager.save(Project, project);
 
       // Step 3: Update related modules
-
       // Update Fabric Quantity module
       const { totalFabricQuantityCost } = await this.fabricQuantityService.editFabricQuantityModule(
         updatedProject.id,
@@ -228,8 +235,8 @@ export class ProjectService {
           status: 'draft',
           shirtType: updateProjectDto.shirtType,
           sizes: updateProjectDto.sizes?.map((size) => ({
-            size: size.fabricSize, // Corrected field
-            quantityRequired: size.quantity, // Corrected field
+            size: size.size,
+            quantityRequired: size.quantityRequired,
           })) || [],
         },
         manager,
@@ -243,7 +250,7 @@ export class ProjectService {
           category: updateProjectDto.fabricCategory,
           subCategory: updateProjectDto.fabricSubCategory,
           fabricQuantityCost: totalFabricQuantityCost,
-          price: 0, 
+          price: 0,
           description: 'Fabric pricing description',
         },
         manager,

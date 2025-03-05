@@ -5,10 +5,11 @@ import { FabricQuantityService } from './fabric-quantity.service';
 import { FabricQuantity } from './entities/fabric-quantity.entity';
 import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 import { BidModule } from '../../bid/bid.module'; // Import BidModule to access BidService
+import { Project } from 'project/entities/project.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FabricQuantity, FabricSizeCalculation]),
+    TypeOrmModule.forFeature([FabricQuantity, FabricSizeCalculation,Project]),
     forwardRef(() => BidModule),
   ],
   controllers: [FabricQuantityController],

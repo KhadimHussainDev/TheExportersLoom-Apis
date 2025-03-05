@@ -20,10 +20,10 @@ class LogoDetailDto {
 class SizeDetailDto {
   @IsNumber()
   @Min(1)
-  quantity: number;
+  quantityRequired: number;
 
   @IsString()
-  fabricSize: string;
+  size: string;
 }
 
 export class UpdateProjectDto {
