@@ -94,16 +94,18 @@ export class RecommendationService {
     return matchingManufacturers
       .map((manufacturer) => {
         const ratingData = manufacturerRatings.find(
-          (r) => r.manufacturerId === manufacturer.userId,
+          (r) => Number(r.manufacturerid) === Number(manufacturer.userid), // ✅ Convert both to numbers
         );
 
         return {
           ...manufacturer,
-          avgRating: ratingData ? parseFloat(ratingData.avgRating) : 0,
-          totalReviews: ratingData ? parseInt(ratingData.totalReviews, 10) : 0,
-          hasWorkedBefore: pastManufacturerIds.includes(manufacturer.userId)
+          avgRating: ratingData ? parseFloat(ratingData.avgrating) : 0, // ✅ Ensure correct parsing
+          totalReviews: ratingData ? parseInt(ratingData.totalreviews, 10) : 0, // ✅ Ensure correct parsing
+          hasWorkedBefore: pastManufacturerIds.includes(
+            Number(manufacturer.userid),
+          )
             ? 1
-            : 0,
+            : 0, // ✅ Ensure correct ID matching
         };
       })
       .sort(
