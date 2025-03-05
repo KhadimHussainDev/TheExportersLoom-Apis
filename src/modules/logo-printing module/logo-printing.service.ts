@@ -100,7 +100,7 @@ export class LogoPrintingService {
 
     const result = await manager
       .createQueryBuilder()
-      .select(`"${sizeColumn}"`)  // Option 1: Wrap in double quotes
+      .select(`"${sizeColumn}"`)  
       .from(tableName, tableName)
       .where('"printingMethod" = :printingMethod', { printingMethod })
       .getRawOne();
@@ -110,7 +110,7 @@ export class LogoPrintingService {
         `Cost not available for position: ${position}, size: ${sizeColumn}, method: ${printingMethod}`,
       );
     }
-    // console.log('Retrieved Cost:', result[sizeColumn]);
+
     return this.calculateMeanCost(result[sizeColumn]);
   }
 
@@ -215,7 +215,7 @@ export class LogoPrintingService {
         await manager.remove(existingLogoPrintingModule);
         console.log(`Deleted Logo Printing module for project ID ${projectId}`);
       }
-      return null; // No module exists after deletion
+      return null;
     }
 
     let totalCost = 0;

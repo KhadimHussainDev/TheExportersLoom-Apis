@@ -16,7 +16,7 @@ export class PackagingService {
     @InjectRepository(PackagingBags)
     private readonly packagingBagsRepository: Repository<PackagingBags>,
     private readonly bidService: BidService,
-  ) {}
+  ) { }
 
 
   private async validateProject(
@@ -108,15 +108,15 @@ export class PackagingService {
     manager: EntityManager,
   ): Promise<Packaging | null> {
     const project = await manager.findOne(Project, { where: { id: projectId } });
-  
+
     if (!project) {
       throw new Error('Project not found');
     }
-  
+
     let existingPackagingModule = await this.packagingRepository.findOne({
       where: { project: { id: projectId } },
     });
-  
+
     if (!updatedDto) {
       // If `updatedDto` is null, remove packaging
       if (existingPackagingModule) {
@@ -125,10 +125,10 @@ export class PackagingService {
       }
       return null;
     }
-  
+
     const { quantity, status } = updatedDto;
     const packagingCost = await this.findPackagingCost(manager, quantity);
-  
+
     if (!existingPackagingModule) {
       existingPackagingModule = manager.create(Packaging, {
         project: { id: projectId },
@@ -141,17 +141,17 @@ export class PackagingService {
       existingPackagingModule.status = status;
       existingPackagingModule.cost = packagingCost;
     }
-  
+
     return await manager.save(Packaging, existingPackagingModule);
   }
-  
-  
+
+
 
   async updatePackagingBagsStatus(id: number, newStatus: string) {
     // Retrieve the cutting module and load relations (project, user)
     const packagingModule = await this.packagingRepository.findOne({
       where: { id },
-      relations: ['project', 'project.user'], 
+      relations: ['project', 'project.user'],
     });
 
     // Check if the cutting module was found
@@ -169,12 +169,11 @@ export class PackagingService {
       );
     }
 
-    const userId = user.user_id; // User ID from the project relation
-
+    const userId = user.user_id; 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
       const title = 'Packaging Module Bid';
-      const description = ''; // Add description if needed
+      const description = ''; 
       const price = packagingModule.cost;
 
       // Create a new bid using the BidService
@@ -184,8 +183,8 @@ export class PackagingService {
         title,
         description,
         price,
-        'Active', 
-        'PackagingModule', 
+        'Active',
+        'PackagingModule',
       );
     }
 
@@ -195,5 +194,5 @@ export class PackagingService {
     // Save the updated cutting module
     await this.packagingRepository.save(packagingModule);
   }
-  
+
 }

@@ -18,18 +18,17 @@ export class FabricPricingService {
     @InjectRepository(FabricPricing)
     private readonly fabricPricingRepository: Repository<FabricPricing>,
     @InjectRepository(FabricPricingModule)
-    private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>, 
+    private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>,
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly bidService: BidService,
-  ) {}
+  ) { }
 
   // Fetch raw prices and calculate total cost.
   async calculateFabricCost(
     projectId: number,
     fabricQuantityCost: number,
   ): Promise<number> {
-    // console.log(`Calculating fabric cost for projectId: ${projectId}`);
 
     const project = await this.projectRepository.findOne({
       where: { id: projectId },
@@ -38,8 +37,6 @@ export class FabricPricingService {
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found.`);
     }
-
-    console.log(`Using fabricQuantityCost: ${fabricQuantityCost}`);
 
     if (fabricQuantityCost <= 0) {
       throw new BadRequestException(
@@ -51,10 +48,6 @@ export class FabricPricingService {
     const subCategory = project.fabricSubCategory
       ? project.fabricSubCategory.trim().toLowerCase()
       : null;
-
-    console.log(
-      `Normalized inputs: category='${category}', subCategory='${subCategory}'`,
-    );
 
     let fabricPriceRecord = await this.fabricPricingRepository
       .createQueryBuilder('fabricPricing')
@@ -81,10 +74,6 @@ export class FabricPricingService {
       );
     }
 
-    console.log(
-      `Fetched fabric price record: ${JSON.stringify(fabricPriceRecord)}`,
-    );
-
     const fabricPricePerUnit = Number(fabricPriceRecord.price);
     if (isNaN(fabricPricePerUnit)) {
       throw new Error(
@@ -93,7 +82,6 @@ export class FabricPricingService {
     }
 
     const finalCost = fabricPricePerUnit * fabricQuantityCost;
-    console.log(`Calculated final fabric cost: ${finalCost}`);
     return finalCost;
   }
 
@@ -123,10 +111,6 @@ export class FabricPricingService {
         ? dto.subCategory.trim().toLowerCase()
         : null;
 
-      // console.log(
-      //   `Normalized inputs: category='${category}', subCategory='${subCategory}'`,
-      // );
-
       const fabricPriceRecord = await this.fabricPricingRepository
         .createQueryBuilder('fabricPricing')
         .where(
@@ -143,7 +127,7 @@ export class FabricPricingService {
 
 
       // Extract numeric value from the price string using a regular expression.
-      const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); 
+      const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/);
       if (!priceMatch) {
         throw new Error(
           `Invalid price format for category: ${fabricPriceRecord.category}`,
@@ -151,7 +135,6 @@ export class FabricPricingService {
       }
 
       const fabricPricePerUnit = parseFloat(priceMatch[0]);
- 
       const totalCost = fabricPricePerUnit * fabricQuantityCost;
       console.log('Total cost:', totalCost);
 
@@ -196,7 +179,7 @@ export class FabricPricingService {
   ): Promise<FabricPricingModule> {
     const fabricPricingModule =
       await this.fabricPricingModuleRepository.findOne({
-        where: { project: { id: projectId } }, 
+        where: { project: { id: projectId } },
       });
 
     if (!fabricPricingModule) {
@@ -214,7 +197,7 @@ export class FabricPricingService {
     manager?: EntityManager,
   ): Promise<FabricPricingModule> {
     const { category, subCategory, fabricQuantityCost } = updatedDto;
-  
+
     // Ensure fabricQuantityCost is a valid number
     const validFabricQuantityCost = Number(fabricQuantityCost);
     if (isNaN(validFabricQuantityCost) || validFabricQuantityCost <= 0) {
@@ -226,11 +209,11 @@ export class FabricPricingService {
       where: { project: { id: projectId } },
       relations: ['project'],
     });
-  
+
     if (!existingFabricPricingModule) {
       throw new NotFoundException(`Fabric Pricing module not found for projectId: ${projectId}`);
     }
-  
+
     // Fetch the price based on the updated category and subCategory
     let fabricPriceRecord = await this.fabricPricingRepository
       .createQueryBuilder('fabricPricing')
@@ -239,55 +222,55 @@ export class FabricPricingService {
         { category: category.trim().toLowerCase(), subCategory: subCategory?.trim().toLowerCase() },
       )
       .getOne();
-  
+
     // Fallback if no exact match is found
     if (!fabricPriceRecord) {
       fabricPriceRecord = await this.fabricPricingRepository
         .createQueryBuilder('fabricPricing')
         .where('LOWER(TRIM("category")) = :category', { category: category.trim().toLowerCase() })
-        .orderBy('price', 'DESC') 
+        .orderBy('price', 'DESC')
         .getOne();
     }
-  
+
     if (!fabricPriceRecord) {
       throw new NotFoundException(
         `Price not found for category: ${category} and subCategory: ${subCategory || 'N/A'}`,
       );
     }
-  
+
     // Extract numeric value from the price string using a regular expression.
     const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); // Matches digits, with optional decimal points.
     if (!priceMatch) {
       throw new Error(`Invalid price format for category: ${fabricPriceRecord.category}`);
     }
-  
+
     const fabricPricePerUnit = parseFloat(priceMatch[0]);
     // Calculate new total cost based on updated fabricQuantityCost
     const totalCost = fabricPricePerUnit * validFabricQuantityCost;
-  
+
     // Update fabric pricing module
     let priceUpdated = false;
-  
+
     if (category && existingFabricPricingModule.category !== category) {
       existingFabricPricingModule.category = category;
       priceUpdated = true;
     }
-  
+
     if (subCategory && existingFabricPricingModule.subCategory !== subCategory) {
       existingFabricPricingModule.subCategory = subCategory;
       priceUpdated = true;
     }
-  
+
     if (validFabricQuantityCost !== existingFabricPricingModule.price / fabricPricePerUnit) {
       existingFabricPricingModule.price = totalCost;
       existingFabricPricingModule.description = `Updated fabric pricing with new quantity cost: ${validFabricQuantityCost}`;
       priceUpdated = true;
     }
-  
+
     if (priceUpdated) {
-      existingFabricPricingModule.status = 'draft'; 
+      existingFabricPricingModule.status = 'draft';
     }
-  
+
     // update other fields like status if provided in the DTO
     if (updatedDto.status) {
       existingFabricPricingModule.status = updatedDto.status;
@@ -295,7 +278,7 @@ export class FabricPricingService {
     const updatedFabricPricingModule = await manager
       ? manager.save(existingFabricPricingModule)
       : this.fabricPricingModuleRepository.save(existingFabricPricingModule);
-  
+
     return updatedFabricPricingModule;
   }
 
@@ -305,32 +288,32 @@ export class FabricPricingService {
       where: { id }, // Use the fabric pricing id to fetch the module
       relations: ['project', 'project.user'], // Ensure both project and user are loaded
     });
-  
+
     console.log(`Updating status for fabricPricingModule ID: ${id}`);
-  
+
     // Check if fabricPricingModule exists
     if (!fabricPricingModule) {
       throw new Error(`FabricPricingModule with id ${id} not found`);
     }
-  
+
     // Ensure 'project' and 'user' relations are loaded
     const project = fabricPricingModule.project;
     const user = project?.user;  // Access user from the project relation
-  
+
     if (!user) {
       throw new Error(`User related to FabricPricingModule with id ${id} not found`);
     }
 
-    
-  
+
+
     const userId = user.user_id;
-  
+
     // Perform action only if fabricPricingModule and newStatus are valid
     if (newStatus === 'Posted') {
       const title = 'Fabric Pricing MOdule Bid';
       const description = fabricPricingModule.description || '';
       const price = fabricPricingModule.price;
-      
+
       console.log(`Creating bid for fabricPricingModule ID: ${id}, userId: ${userId}`);
       // Create a new Bid
       await this.bidService.createBid(
@@ -340,13 +323,13 @@ export class FabricPricingService {
         description,
         price,
         'Active',
-        'FabricPricingModule'  
+        'FabricPricingModule'
       );
     }
-  
+
     // Update status
     fabricPricingModule.status = newStatus;
-  
+
     // Save the updated fabricPricingModule
     await this.fabricPricingModuleRepository.save(fabricPricingModule);
   }

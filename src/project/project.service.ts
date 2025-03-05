@@ -95,11 +95,6 @@ export class ProjectService {
       let logoPrintingCost = 0;
       // Check if logoDetails and sizes arrays exist and are not empty
       if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
-        // console.log(
-        //   `Creating Logo Printing Module for project ${savedProject.id} with details:`,
-        //   JSON.stringify({ logoDetails: createProjectDto.logoDetails, sizes: createProjectDto.sizes }),
-        // );
-
         try {
           logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
             savedProject.id,
@@ -216,13 +211,15 @@ export class ProjectService {
       ) || 0;
       console.log('Total Quantity:', totalQuantity);
 
+      // Update Sizes
       if (updateProjectDto.sizes) {
         project.sizes = updateProjectDto.sizes.map(size => ({
-          fabricSize: size.size, // Map `size` to `fabricSize`
-          quantity: size.quantityRequired, // Map `quantityRequired` to `quantity`
+          fabricSize: size.size, 
+          quantity: size.quantityRequired,
         }));
       }
-      // Update logoDetails if provided
+
+      // Update logoDetails 
       if (updateProjectDto.logoDetails) {
         project.logoDetails = updateProjectDto.logoDetails.map(logo => ({
           logoPosition: logo.logoPosition,
@@ -230,9 +227,11 @@ export class ProjectService {
         }));
       }
 
+      // Update PackaagingRequired Status
       if (updateProjectDto.packagingRequired !== undefined) {
         project.packagingRequired = updateProjectDto.packagingRequired;
       }
+
       // Save the updated project entity
       const updatedProject = await manager.save(Project, project);
 
@@ -271,7 +270,6 @@ export class ProjectService {
 
       // Update Logo Printing module
       let logoPrintingCostValue = 0;
-      // Always call editLogoPrintingModule, even if logoDetails is empty
       const logoPrintingModule = await this.logoPrintingService.editLogoPrintingModule(
         updatedProject.id,
         {
@@ -294,7 +292,6 @@ export class ProjectService {
       } else {
         console.log(`Logo Printing module deleted for project ID ${updatedProject.id}`);
       }
-
       console.log('Updated Logo Printing Cost:', logoPrintingCostValue);
 
 
@@ -326,6 +323,7 @@ export class ProjectService {
       const stitchingCostValue = Number(stitchingModule.cost) || 0;
       console.log('Updated Stitching Cost:', stitchingCostValue);
 
+
       // Update Packaging module if required
       let packagingCostValue = 0;
       if (updateProjectDto.packagingRequired) {
@@ -356,7 +354,7 @@ export class ProjectService {
         stitchingCostValue +
         packagingCostValue;
 
-      // Check if the total cost exceeds the database limit for DECIMAL(15,2)
+
       const MAX_TOTAL_COST = 9999999999999.99;
       if (totalCost > MAX_TOTAL_COST) {
         console.error('Total cost exceeds the database limit!');

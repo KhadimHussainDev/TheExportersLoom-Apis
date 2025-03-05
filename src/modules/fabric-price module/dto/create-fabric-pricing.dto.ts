@@ -31,7 +31,7 @@ export class CreateFabricPricingDto {
 
   @IsNotEmpty()
   @IsString()
-  status: string;  // Assuming 'status' is a required field
+  status: string;
 
   @IsOptional()
   @IsDateString()

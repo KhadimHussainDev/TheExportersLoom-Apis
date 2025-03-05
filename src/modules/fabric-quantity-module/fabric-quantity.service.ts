@@ -34,7 +34,6 @@ export class FabricQuantityService {
     if (!fabricQuantities.length) {
       return 0;
     }
-
     return fabricQuantities.reduce(
       (sum, item) => sum + (item.fabricQuantityCost || 0),
       0,
@@ -63,7 +62,7 @@ export class FabricQuantityService {
     // Fetch existing fabric quantities for the project
     let existingFabricQuantities = await this.fabricQuantityRepository.find({
       where: { projectId },
-      order: { id: 'ASC' }, // Ensure consistent order
+      order: { id: 'ASC' }, // consistent order
     });
 
     let totalFabricQuantityCost = 0;
@@ -78,7 +77,7 @@ export class FabricQuantityService {
     };
 
     // Track index for updating existing records
-    let existingIndex = 0; 
+    let existingIndex = 0;
     for (const sizeObj of sizes) {
       let { size, quantityRequired } = sizeObj;
 
@@ -123,15 +122,16 @@ export class FabricQuantityService {
         fabricQuantity.fabricSize = normalizedSize;
         fabricQuantity.quantityRequired = quantityRequired;
         fabricQuantity.fabricQuantityCost = fabricQuantityCost;
-        fabricQuantity.categoryType = categoryType;  
-        fabricQuantity.shirtType = shirtType;       
+        fabricQuantity.categoryType = categoryType;
+        fabricQuantity.shirtType = shirtType;
 
         const savedEntity = manager
           ? await manager.save(fabricQuantity)
           : await this.fabricQuantityRepository.save(fabricQuantity);
         updatedFabricQuantities.push(savedEntity);
-        existingIndex++; 
+        existingIndex++;
       } else {
+
         // Create a new fabric quantity record if required
         const newFabricQuantity = this.fabricQuantityRepository.create({
           projectId,
@@ -158,8 +158,8 @@ export class FabricQuantityService {
     }
 
     project.sizes = sizes.map(sizeObj => ({
-      fabricSize: sizeObj.size, 
-      quantity: sizeObj.quantityRequired, 
+      fabricSize: sizeObj.size,
+      quantity: sizeObj.quantityRequired,
     }));
 
     if (manager) {
@@ -301,8 +301,8 @@ export class FabricQuantityService {
   async updateFabricQuantityStatus(id: number, newStatus: string) {
     // Retrieve fabricPricingModule and load the project and user relations
     const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
-      where: { id }, // Use the fabric pricing id to fetch the module
-      relations: ['project', 'project.user'], // Ensure both project and user are loaded
+      where: { id }, 
+      relations: ['project', 'project.user'], 
     });
 
     console.log(`Updating status for fabricQuantityModule ID: ${id}`);
@@ -314,7 +314,7 @@ export class FabricQuantityService {
 
     // Ensure 'project' and 'user' relations are loaded
     const project = fabricQuantityModule.project;
-    const user = project?.user;  // Access user from the project relation
+    const user = project?.user; 
 
     if (!user) {
       throw new Error(`User related to fabricQuantityModule with id ${id} not found`);
