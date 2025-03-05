@@ -20,7 +20,6 @@ export class RecommendationService {
   async getRecommendedManufacturers(exporterId: number, bidId: number) {
     // Step 1: Get bid details
     const bid = await this.bidRepository.findOne({ where: { bid_id: bidId } });
-    console.log('Bid:', bid);
     if (!bid) {
       throw new Error('Bid not found');
     }
@@ -35,7 +34,6 @@ export class RecommendationService {
     };
 
     const machineType = moduleToMachineMap[bid.module_type] || bid.module_type;
-    console.log('Mapped Machine Type:', machineType);
 
     // Step 3: Fetch manufacturers matching the machine type
     const matchingManufacturers = await this.machineRepository
@@ -46,8 +44,6 @@ export class RecommendationService {
       .select(['u.user_id AS userId', 'u.username'])
       .getRawMany();
 
-    console.log('Matching Manufacturers:', matchingManufacturers);
-
     if (matchingManufacturers.length === 0) {
       return []; // No matching manufacturers found
     }
@@ -57,7 +53,6 @@ export class RecommendationService {
     // Step 4: Get past collaboration manufacturers
     let pastManufacturerIds: number[] = [];
     if (manufacturerIds.length > 0) {
-      console.log('🔍 Checking past manufacturers:', manufacturerIds);
       const pastManufacturers = await this.orderRepository
         .createQueryBuilder('o')
         .select('o.manufacturerId')
@@ -68,7 +63,6 @@ export class RecommendationService {
         })
         .getRawMany();
 
-      console.log('Past Manufacturers:', pastManufacturers);
       pastManufacturerIds = pastManufacturers.map((o) => o.manufacturerId);
     } else {
       console.log('⚠️ No manufacturers found for filtering past experience.');
@@ -88,8 +82,7 @@ export class RecommendationService {
         .groupBy('r.reviewTakerId')
         .getRawMany();
     }
-    console.log('Manufacturer Ratings:', manufacturerRatings);
-
+    
     // Step 6: Combine and prioritize recommendations
     return matchingManufacturers
       .map((manufacturer) => {
@@ -105,7 +98,7 @@ export class RecommendationService {
             Number(manufacturer.userid),
           )
             ? 1
-            : 0, // ✅ Ensure correct ID matching
+            : 0, 
         };
       })
       .sort(
@@ -114,6 +107,6 @@ export class RecommendationService {
           b.avgRating - a.avgRating ||
           b.totalReviews - a.totalReviews,
       )
-      .slice(0, 10); // Limit to top 10
+      .slice(0, 10); 
   }
 }
