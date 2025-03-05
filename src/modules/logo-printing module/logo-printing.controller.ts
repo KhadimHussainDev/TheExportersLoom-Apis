@@ -58,18 +58,18 @@ export class LogoPrintingController {
   }
 
 
-  // @Put('edit/:projectId')
-  // async editLogoPrintingModule(
-  //   @Param('projectId') projectId: number,
-  //   @Body() dto: UpdateLogoPrintingDto,
-  // ): Promise<LogoPrinting> {
-  //   const manager = this.dataSource.createEntityManager();
-  //   return this.logoPrintingService.editLogoPrintingModule(
-  //     projectId,
-  //     dto,
-  //     manager,
-  //   );
-  // }
+  @Put('edit/:projectId')
+  async editLogoPrintingModule(
+    @Param('projectId') projectId: number,
+    @Body() dto: UpdateLogoPrintingDto,
+  ): Promise<LogoPrinting> {
+    const manager = this.dataSource.createEntityManager();
+    return this.logoPrintingService.editLogoPrintingModule(
+      projectId,
+      dto,
+      manager,
+    );
+  }
 
   @UseGuards(JwtStrategy)
   @Put('/:id/status')

@@ -60,7 +60,7 @@ export class Project {
   tagCardsRequired: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
-  logoDetails: { logoPosition: string; printingStyle: string; logoSize: string }[];
+  logoDetails: { logoPosition: string; printingStyle: string; }[];
 
   @Column({ type: 'jsonb', nullable: true })
   sizes: { quantity: number; fabricSize: string }[];

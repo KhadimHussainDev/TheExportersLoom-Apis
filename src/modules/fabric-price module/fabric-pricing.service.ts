@@ -123,9 +123,9 @@ export class FabricPricingService {
         ? dto.subCategory.trim().toLowerCase()
         : null;
 
-      console.log(
-        `Normalized inputs: category='${category}', subCategory='${subCategory}'`,
-      );
+      // console.log(
+      //   `Normalized inputs: category='${category}', subCategory='${subCategory}'`,
+      // );
 
       const fabricPriceRecord = await this.fabricPricingRepository
         .createQueryBuilder('fabricPricing')
@@ -141,12 +141,6 @@ export class FabricPricingService {
         );
       }
 
-      console.log('fabricPriceRecord:', fabricPriceRecord);
-      console.log(
-        'fabricPriceRecord.price type:',
-        typeof fabricPriceRecord.price,
-      );
-      console.log('fabricPriceRecord.price:', fabricPriceRecord.price);
 
       // Extract numeric value from the price string using a regular expression.
       const priceMatch = fabricPriceRecord.price.match(/(\d+(\.\d+)?)/); 
@@ -157,8 +151,7 @@ export class FabricPricingService {
       }
 
       const fabricPricePerUnit = parseFloat(priceMatch[0]);
-      console.log('Extracted fabricPricePerUnit:', fabricPricePerUnit);
-
+ 
       const totalCost = fabricPricePerUnit * fabricQuantityCost;
       console.log('Total cost:', totalCost);
 
@@ -175,11 +168,6 @@ export class FabricPricingService {
         FabricPricingModule,
         fabricPricingModule,
       );
-      console.log(
-        'Saved FabricPricingModule to DB:',
-        JSON.stringify(savedFabricPricingModule, null, 2),
-      );
-
       return totalCost;
     } catch (error) {
       console.error('Error in createFabricPricing:', error.message);
@@ -193,8 +181,6 @@ export class FabricPricingService {
         where: { project: { id: projectId } },
         relations: ['project'],
       });
-
-    console.log('FabricPricingModule:', fabricPricingModule);
 
     if (!fabricPricingModule) {
       console.log('No fabric pricing found for the project.');

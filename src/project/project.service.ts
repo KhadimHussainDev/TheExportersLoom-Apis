@@ -95,10 +95,10 @@ export class ProjectService {
       let logoPrintingCost = 0;
       // Check if logoDetails and sizes arrays exist and are not empty
       if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
-        console.log(
-          `Creating Logo Printing Module for project ${savedProject.id} with details:`,
-          JSON.stringify({ logoDetails: createProjectDto.logoDetails, sizes: createProjectDto.sizes }),
-        );
+        // console.log(
+        //   `Creating Logo Printing Module for project ${savedProject.id} with details:`,
+        //   JSON.stringify({ logoDetails: createProjectDto.logoDetails, sizes: createProjectDto.sizes }),
+        // );
 
         try {
           logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
@@ -205,7 +205,7 @@ export class ProjectService {
       project.labelType = updateProjectDto.labelType || project.labelType;
       project.labelsRequired = updateProjectDto.labelsRequired || project.labelsRequired;
       project.numberOfLogos = updateProjectDto.numberOfLogos || project.numberOfLogos;
-      project.packagingRequired = updateProjectDto.packagingRequired || project.packagingRequired;
+      project.packagingRequired = updateProjectDto.packagingRequired;
       project.patternRequired = updateProjectDto.patternRequired || project.patternRequired;
       project.tagCardsRequired = updateProjectDto.tagCardsRequired || project.tagCardsRequired;
 
@@ -222,7 +222,17 @@ export class ProjectService {
           quantity: size.quantityRequired, // Map `quantityRequired` to `quantity`
         }));
       }
-  
+      // Update logoDetails if provided
+      if (updateProjectDto.logoDetails) {
+        project.logoDetails = updateProjectDto.logoDetails.map(logo => ({
+          logoPosition: logo.logoPosition,
+          printingStyle: logo.PrintingStyle,
+        }));
+      }
+
+      if (updateProjectDto.packagingRequired !== undefined) {
+        project.packagingRequired = updateProjectDto.packagingRequired;
+      }
       // Save the updated project entity
       const updatedProject = await manager.save(Project, project);
 
@@ -258,28 +268,36 @@ export class ProjectService {
       const fabricPricingCost = Number(fabricPricingModule.price) || 0;
       console.log('Updated Fabric Pricing Cost:', fabricPricingCost);
 
+
       // Update Logo Printing module
-      // let logoPrintingCostValue = 0;
-      // if (updateProjectDto.logoDetails?.length) {
-      //   const logoPrintingModule = await this.logoPrintingService.editLogoPrintingModule(
-      //     updatedProject.id,
-      //     {
-      //       projectId: updatedProject.id,
-      //       logoDetails: updateProjectDto.logoDetails.map((logo) => ({
-      //         logoPosition: logo.logoPosition,
-      //         printingStyle: logo.printingStyle, // Fixed field name
-      //         logoSize: logo.logoSize, // Ensuring correct structure
-      //       })),
-      //       sizes: updateProjectDto.sizes?.map((size) => ({
-      //         fabricSize: size.fabricSize,
-      //         quantity: size.quantity,
-      //       })) || [],
-      //     },
-      //     manager,
-      //   );
-      //   logoPrintingCostValue = Number(logoPrintingModule.price) || 0;
-      // }
-      // console.log('Updated Logo Printing Cost:', logoPrintingCostValue);
+      let logoPrintingCostValue = 0;
+      // Always call editLogoPrintingModule, even if logoDetails is empty
+      const logoPrintingModule = await this.logoPrintingService.editLogoPrintingModule(
+        updatedProject.id,
+        {
+          projectId: updatedProject.id,
+          logoDetails: updateProjectDto.logoDetails?.map((logo) => ({
+            logoPosition: logo.logoPosition,
+            printingMethod: logo.PrintingStyle,
+          })) || [],
+          sizes: updateProjectDto.sizes?.map((size) => ({
+            size: size.size,
+            quantityRequired: size.quantityRequired,
+          })) || [],
+        },
+        manager,
+      );
+
+      // Set cost to 0 if module is deleted (null returned)
+      if (logoPrintingModule) {
+        logoPrintingCostValue = Number(logoPrintingModule.price) || 0;
+      } else {
+        console.log(`Logo Printing module deleted for project ID ${updatedProject.id}`);
+      }
+
+      console.log('Updated Logo Printing Cost:', logoPrintingCostValue);
+
+
 
       // Update Cutting module
       const cuttingModule = await this.cuttingService.editCuttingModule(
@@ -292,6 +310,7 @@ export class ProjectService {
       );
       const cuttingCostValue = Number(cuttingModule.cost) || 0;
       console.log('Updated Cutting Cost:', cuttingCostValue);
+
 
       // Update Stitching module
       const stitchingModule = await this.stitchingService.editStitchingModule(
@@ -318,16 +337,21 @@ export class ProjectService {
           },
           manager,
         );
-        packagingCostValue = Number(packagingModule.cost) || 0;
+        packagingCostValue = Number(packagingModule?.cost) || 0;
         console.log('Updated Packaging Cost:', packagingCostValue);
       } else {
-        console.log('Packaging not required; skipping Packaging Module update.');
+        await this.packagingService.editPackagingModule(
+          updatedProject.id,
+          null, // Pass null to trigger removal
+          manager,
+        );
+        console.log('Packaging removed for project:', updatedProject.id);
       }
 
       // Step 4: Recalculate the total cost for the project
       const totalCost =
         fabricPricingCost +
-        // logoPrintingCostValue +
+        logoPrintingCostValue +
         cuttingCostValue +
         stitchingCostValue +
         packagingCostValue;

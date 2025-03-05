@@ -104,32 +104,48 @@ export class PackagingService {
   // Edit the packaging module and recalculate the cost
   async editPackagingModule(
     projectId: number,
-    updatedDto: UpdatePackagingDto,
+    updatedDto: UpdatePackagingDto | null,
     manager: EntityManager,
-  ): Promise<Packaging> {
-    const { quantity, status } = updatedDto;
-
-    // Fetch the existing packaging module based on the projectId
-    const existingPackagingModule = await this.packagingRepository.findOne({
+  ): Promise<Packaging | null> {
+    const project = await manager.findOne(Project, { where: { id: projectId } });
+  
+    if (!project) {
+      throw new Error('Project not found');
+    }
+  
+    let existingPackagingModule = await this.packagingRepository.findOne({
       where: { project: { id: projectId } },
     });
-
-    if (!existingPackagingModule) {
-      throw new NotFoundException('Packaging module not found.');
+  
+    if (!updatedDto) {
+      // If `updatedDto` is null, remove packaging
+      if (existingPackagingModule) {
+        await manager.remove(Packaging, existingPackagingModule);
+        console.log(`Deleted Packaging Module for project ID: ${projectId}`);
+      }
+      return null;
     }
-
-    // Fetch the new packaging cost based on the updated quantity
+  
+    const { quantity, status } = updatedDto;
     const packagingCost = await this.findPackagingCost(manager, quantity);
-
-    // Update the packaging record with the new data
-    existingPackagingModule.quantity = quantity;
-    existingPackagingModule.status = status;
-    existingPackagingModule.cost = packagingCost;
-
-    // Save the updated packaging record
-    const updatedPackaging = await manager.save(Packaging, existingPackagingModule);
-    return updatedPackaging;
+  
+    if (!existingPackagingModule) {
+      existingPackagingModule = manager.create(Packaging, {
+        project: { id: projectId },
+        quantity,
+        status,
+        cost: packagingCost,
+      });
+    } else {
+      existingPackagingModule.quantity = quantity;
+      existingPackagingModule.status = status;
+      existingPackagingModule.cost = packagingCost;
+    }
+  
+    return await manager.save(Packaging, existingPackagingModule);
   }
+  
+  
 
   async updatePackagingBagsStatus(id: number, newStatus: string) {
     // Retrieve the cutting module and load relations (project, user)
