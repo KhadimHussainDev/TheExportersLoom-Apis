@@ -48,6 +48,7 @@ export class MachineController {
 
   // Update a specific machine
   @Put(':id')
+  @UseGuards(AuthGuard('jwt')) 
   async updateMachine(
     @Param('id') id: number,
     @Body() updateMachineDto: UpdateMachineDto,

@@ -18,17 +18,34 @@ export class MachineService {
     private machineRepository: Repository<Machine>,
   ) {}
 
-  async registerMachine(
-    user: User,
-    createMachineDto: CreateMachineDto,
-  ): Promise<Machine> {
+  async registerMachine(user: User, createMachineDto: CreateMachineDto): Promise<Machine> {
+    if (user.userType !== 'manufacturer') {
+      throw new UnauthorizedException('Only manufacturers can register machines.');
+    }
+  
+    const { machine_type, machine_model } = createMachineDto;
+  
+    // Check if the manufacturer has already registered this machine type and model
+    const existingMachine = await this.machineRepository.findOne({
+      where: {
+        machine_type,
+        machine_model,
+        machine_owner: user,
+      },
+    });
+  
+    if (existingMachine) {
+      throw new UnauthorizedException('You have already registered this machine.');
+    }
+  
     const machine = this.machineRepository.create({
       ...createMachineDto,
       machine_owner: user,
     });
+  
     return this.machineRepository.save(machine);
-  }
-
+  }  
+  
   // Get all machines
   async findAll(): Promise<Machine[]> {
     return this.machineRepository.find({ relations: ['machine_owner'] });
@@ -52,19 +69,37 @@ export class MachineService {
     updateMachineDto: UpdateMachineDto,
     user: User,
   ): Promise<Machine> {
+    console.log('User object:', user); // Debugging line
+  
+    if (!user) {
+      throw new UnauthorizedException('User is not authenticated.');
+    }
+  
+    if (!user.userType) {
+      throw new UnauthorizedException('User type is missing.');
+    }
+  
+    if (user.userType !== 'manufacturer') {
+      throw new UnauthorizedException('Only manufacturers can update machines.');
+    }
+  
     const machine = await this.machineRepository.findOne({
       where: { machine_id: id },
+      relations: ['machine_owner'],
     });
+  
     if (!machine) {
       throw new NotFoundException(`Machine with ID ${id} not found.`);
     }
-    // if (machine.machine_owner.user_id !== user.user_id) {
-    //     console.error(`Unauthorized access: User ${user.user_id} does not own machine ${id}`);
-    //     throw new UnauthorizedException('You do not own this machine.');
-    // }
+  
+    if (machine.machine_owner.user_id !== user.user_id) {
+      throw new UnauthorizedException('You can only update your own machines.');
+    }
+  
     Object.assign(machine, updateMachineDto);
     return this.machineRepository.save(machine);
   }
+  
 
   // Delete a machine
   async deleteMachine(id: number, user: User): Promise<void> {
