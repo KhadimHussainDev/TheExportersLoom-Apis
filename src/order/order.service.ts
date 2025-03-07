@@ -34,6 +34,7 @@ export class OrderService {
       ...rest,
     });
 
+    this.bidService.deactivateBid(bidId);
     return await this.orderRepository.save(newOrder);
   }
 
