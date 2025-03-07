@@ -19,7 +19,7 @@ export class ReviewsController {
   }
 
   @Get()
-  async getAllReviews(): Promise<Reviews[]> {
+  async getAllReviews(){
     return await this.reviewService.getAllReviews();
   }
 
@@ -29,7 +29,7 @@ export class ReviewsController {
   }
 
   @Delete(':id')
-  async deleteReview(@Param('id') reviewId: number): Promise<void> {
+  async deleteReview(@Param('id') reviewId: number) {
     return await this.reviewService.deleteReview(reviewId);
   }
 }
