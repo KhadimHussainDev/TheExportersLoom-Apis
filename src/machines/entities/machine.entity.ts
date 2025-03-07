@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,Unique, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Order } from 'order/entities/order.entity';
 import { Reviews } from 'reviews/entities/reviews.entity';
 
 @Entity('Machines')
+// @Unique(['machine_type', 'machine_model', 'machine_owner'])
 export class Machine {
   @PrimaryGeneratedColumn()
   machine_id: number;

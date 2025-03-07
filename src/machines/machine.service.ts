@@ -18,16 +18,30 @@ export class MachineService {
     private machineRepository: Repository<Machine>,
   ) {}
 
-  async registerMachine(
-    user: User,
-    createMachineDto: CreateMachineDto,
-  ): Promise<Machine> {
+  async registerMachine(user: User, createMachineDto: CreateMachineDto): Promise<Machine> {
+    const { machine_type, machine_model } = createMachineDto;
+  
+    // Check if the manufacturer has already registered this machine type and model
+    const existingMachine = await this.machineRepository.findOne({
+      where: {
+        machine_type,
+        machine_model,
+        machine_owner: user,
+      },
+    });
+  
+    if (existingMachine) {
+      throw new UnauthorizedException('You have already registered this machine.');
+    }
+  
     const machine = this.machineRepository.create({
       ...createMachineDto,
       machine_owner: user,
     });
+  
     return this.machineRepository.save(machine);
   }
+  
 
   // Get all machines
   async findAll(): Promise<Machine[]> {
