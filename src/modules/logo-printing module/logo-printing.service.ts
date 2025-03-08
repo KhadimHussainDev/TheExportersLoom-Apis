@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
-import { LogoPrinting } from './entities/logo-printing.entity';
-import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
-import { Project } from '../../project/entities/project.entity';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
 import { LogoSizes } from '../../entities/logo-sizes.entity';
+import { Project } from '../../project/entities/project.entity';
+import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { LogoPrinting } from './entities/logo-printing.entity';
+
 @Injectable()
 export class LogoPrintingService {
   private readonly tableMap: Record<string, string> = {
@@ -50,9 +51,7 @@ export class LogoPrintingService {
       .getRawOne();
 
     if (!logoSizeData) {
-      throw new NotFoundException(
-        `No size mapping found for logo position: ${position}`,
-      );
+      throw new NotFoundException(`Logo position "${position}" not found`);
     }
     // Normalize requiredSize to match database values
     const sizeMapping = {
@@ -172,6 +171,7 @@ export class LogoPrintingService {
 
     console.log('Final Total Cost:', totalCost);
 
+    // Create and save the logo printing module
     const logoPrinting = manager.create(LogoPrinting, {
       projectId,
       sizes: dto.sizes,

@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { AppService } from './app.service';
+import { ApiResponseDto } from './common/dto/api-response.dto';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello(): ApiResponseDto<string> {
+    const message = this.appService.getHello();
+    return ApiResponseDto.success(HttpStatus.OK, 'Hello message retrieved successfully', message);
   }
 }

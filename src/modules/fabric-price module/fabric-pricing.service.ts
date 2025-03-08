@@ -1,16 +1,16 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { FabricPricing } from '../../entities/fabric-pricing.entity';
-import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
-import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
-import { Project } from '../../project/entities/project.entity';
-import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
+import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { FabricPricing } from '../../entities/fabric-pricing.entity';
+import { Project } from '../../project/entities/project.entity';
+import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
+import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
+import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 
 @Injectable()
 export class FabricPricingService {

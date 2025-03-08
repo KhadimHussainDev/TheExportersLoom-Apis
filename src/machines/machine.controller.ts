@@ -1,67 +1,91 @@
 // src/machines/machine.controller.ts
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
   Post,
   Put,
-  Delete,
-  Param,
-  Body,
-  UseGuards,
   Req,
-  ParseIntPipe,
-  UnauthorizedException,
+  UseGuards
 } from '@nestjs/common';
-import { MachineService } from './machine.service';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiResponseDto } from '../common/dto/api-response.dto';
+import { User } from '../users/entities/user.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { User } from '../users/entities/user.entity';
+import { MachineService } from './machine.service';
 
 @Controller('machines')
 export class MachineController {
-  constructor(private readonly machineService: MachineService) {}
+  constructor(private readonly machineService: MachineService) { }
 
   @Post('register')
   @UseGuards(AuthGuard('jwt'))
   async registerMachine(
     @Req() req,
     @Body() createMachineDto: CreateMachineDto,
-  ) {
-    if (!req.user && !req.user.userType) {
-      throw new UnauthorizedException('User type is missing');
-    }
-    return this.machineService.registerMachine(req.user, createMachineDto);
+  ): Promise<ApiResponseDto<any>> {
+    const user = req.user as User;
+    const machine = await this.machineService.registerMachine(user, createMachineDto);
+    return ApiResponseDto.success(
+      HttpStatus.CREATED,
+      'Machine registered successfully',
+      machine
+    );
   }
 
-  // Get all machines
   @Get()
-  async findAll() {
-    return this.machineService.findAll();
+  async findAll(): Promise<ApiResponseDto<any>> {
+    const machines = await this.machineService.findAll();
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Machines retrieved successfully',
+      machines
+    );
   }
 
-  // Get a specific machine by ID
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.machineService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto<any>> {
+    const machine = await this.machineService.findOne(id);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Machine retrieved successfully',
+      machine
+    );
   }
 
-  // Update a specific machine
   @Put(':id')
-  @UseGuards(AuthGuard('jwt')) 
+  @UseGuards(AuthGuard('jwt'))
   async updateMachine(
     @Param('id') id: number,
     @Body() updateMachineDto: UpdateMachineDto,
     @Req() req,
-  ) {
-    return this.machineService.updateMachine(id, updateMachineDto, req.user);
+  ): Promise<ApiResponseDto<any>> {
+    const user = req.user as User;
+    const updatedMachine = await this.machineService.updateMachine(id, updateMachineDto, user);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Machine updated successfully',
+      updatedMachine
+    );
   }
 
-  // Delete a specific machine
   @Delete(':id')
-  async deleteMachine(@Req() req, @Param('id', ParseIntPipe) id: number) {
-    const user: User = req.user;
-    await this.machineService.deleteMachine(id, user);
-    return { message: `Machine with ID ${id} has been deleted successfully.` };
+  @UseGuards(AuthGuard('jwt'))
+  async deleteMachine(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number
+  ): Promise<ApiResponseDto<any>> {
+    const user = req.user as User;
+    const result = await this.machineService.deleteMachine(id, user);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Machine deleted successfully',
+      result
+    );
   }
 }

@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,12 +13,12 @@ import { randomInt } from 'crypto';
 import { DataSource, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-users.dto';
 import { EmailVerificationToken } from './entities/email-verification.entity';
 import { ResetToken } from './entities/reset-token.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
 import { MailService } from './services/mail.service';
-import { UpdateUserDto } from './dto/update-users.dto';
 
 @Injectable()
 export class UsersService {
@@ -38,9 +40,9 @@ export class UsersService {
     private jwtService: JwtService,
     private dataSource: DataSource,
     private readonly mailService: MailService,
-  ) {}
+  ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<any> {
+  async create(createUserDto: CreateUserDto): Promise<{ accessToken: string }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -49,7 +51,7 @@ export class UsersService {
       // Check if the user already exists by email
       const existingUser = await this.findUserByEmail(createUserDto.email);
       if (existingUser) {
-        throw new Error('User with this email already exists');
+        throw new HttpException('User with this email already exists', HttpStatus.CONFLICT);
       }
 
       // Create User instance
@@ -91,30 +93,34 @@ export class UsersService {
       await queryRunner.manager.save(userAuth);
 
       // Generate JWT Tokens
-      const payload = {
-        username: savedUser.username,
-        user_id: savedUser.user_id,
-      };
-      const accessToken = this.jwtService.sign(payload);
-      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+      const accessToken = this.generateToken(savedUser)
 
       await queryRunner.commitTransaction();
 
-      return {
-        message: 'User created successfully',
-        accessToken,
-        refreshToken,
-      };
+      return { accessToken };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error(error.message);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(error.message || 'Failed to create user', HttpStatus.INTERNAL_SERVER_ERROR);
     } finally {
       await queryRunner.release();
     }
   }
-  findOne(id: number) {
-    if (!id) return null;
-    return this.userRepository.findOneBy({ user_id: id });
+
+  // Updated method to use ServiceResponseDto
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { user_id: id },
+      relations: ['profile'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
   }
 
   // Method to handle forgot password and generate a reset token
@@ -157,7 +163,7 @@ export class UsersService {
         resetCode,
       };
     } else {
-      throw new Error('User with this email does not exist');
+      throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
     }
   }
 
@@ -280,7 +286,7 @@ export class UsersService {
   }
 
   // Validate user credentials for regular login
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<{ accessToken: string }> {
     const user = await this.findByEmailWithAuth(email);
     if (!user || !user.userAuth || user.userAuth.length === 0) {
       throw new UnauthorizedException('Invalid credentials');
@@ -294,19 +300,18 @@ export class UsersService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return user;
+
+    return { accessToken: this.generateToken(user) };
   }
 
   // Generate JWT token after successful login
-  async login(user: any) {
+  generateToken(user: User): string {
     const payload = {
       user_id: user.user_id,
       username: user.username,
       userType: user.userType,
     };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.jwtService.sign(payload);
   }
 
   //get all users
@@ -358,7 +363,7 @@ export class UsersService {
       });
 
       if (!user) {
-        throw new Error(`User with ID ${userId} not found`);
+        throw new HttpException(`User with ID ${userId} not found`, HttpStatus.NOT_FOUND);
       }
 
       // Update User fields
@@ -386,7 +391,10 @@ export class UsersService {
       return updatedUser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Transaction failed: ' + error.message);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Transaction failed: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     } finally {
       await queryRunner.release();
     }

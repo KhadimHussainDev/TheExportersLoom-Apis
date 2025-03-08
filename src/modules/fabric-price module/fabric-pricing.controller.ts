@@ -1,22 +1,22 @@
 import {
-  Controller,
-  Post,
-  Body,
-  Param,
-  Get,
-  Query,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
   NotFoundException,
+  Param,
+  Post,
   Put,
-  UseGuards 
+  Query,
+  UseGuards
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { JwtStrategy } from '../../auth/jwt.strategy';
+import { Project } from '../../project/entities/project.entity';
+import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
+import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
 import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 import { FabricPricingService } from './fabric-pricing.service';
-import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
-import { DataSource } from 'typeorm';
-import { Project } from '../../project/entities/project.entity';
-import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
-import { JwtStrategy } from '../../auth/jwt.strategy';
 
 @Controller('fabric-pricing')
 export class FabricPricingController {
@@ -96,14 +96,14 @@ export class FabricPricingController {
   // Edit an existing Fabric Pricing module based on projectId
   @Put('project/:projectId')
   async edit(
-    @Param('projectId') projectId: number,  
-    @Body() updatedFabricPricingDto: UpdateFabricPricingDto,  
+    @Param('projectId') projectId: number,
+    @Body() updatedFabricPricingDto: UpdateFabricPricingDto,
   ): Promise<{ message: string; data: FabricPricingModule }> {
     try {
       // Edit the fabric pricing module using the projectId and update DTO
       const updatedFabricPricing = await this.fabricPricingService.editFabricPricingModule(
-        projectId, 
-        updatedFabricPricingDto,  
+        projectId,
+        updatedFabricPricingDto,
       );
       return {
         message: 'Fabric pricing module updated successfully',
@@ -120,7 +120,7 @@ export class FabricPricingController {
   @Put('/:id/status')
   async updateFabricPricingStatus(
     @Param('id') id: number,
-    @Body('newStatus') newStatus: string, 
+    @Body('newStatus') newStatus: string,
   ) {
     try {
       const updatedFabricPricingModule = await this.fabricPricingService.updateFabricPricingStatus(
@@ -128,7 +128,7 @@ export class FabricPricingController {
         newStatus,
       );
 
-      return updatedFabricPricingModule;  
+      return updatedFabricPricingModule;
     } catch (error) {
       throw new NotFoundException(
         `Error updating fabric pricing module: ${error.message}`,

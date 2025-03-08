@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MachineService } from 'machines/machine.service';
 import { Repository } from 'typeorm';
@@ -17,45 +17,36 @@ export class ReviewsService {
     private readonly machineService: MachineService,
   ) { }
 
-  async createReview(createReviewDto: CreateReviewDto): Promise<{ success: boolean, statusCode: number, data?: Reviews, error?: string }> {
+  async createReview(createReviewDto: CreateReviewDto): Promise<Reviews> {
     const { orderId, reviewGiverId, reviewTakerId, machineId, ...rest } = createReviewDto;
 
+    // Validate all required entities exist
     const order = await this.orderService.getOrderById(orderId);
-    const reviewGiver = await this.userService.findOne(reviewGiverId);
-    const reviewTaker = await this.userService.findOne(reviewTakerId);
-    const machine = await this.machineService.findOne(machineId);
-
     if (!order) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Order not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (!reviewGiver) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Review giver not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (!reviewTaker) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Review taker not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (!machine) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Machine not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (order.status == 'Pending') {
-      throw new HttpException(
-        { success: false, statusCode: HttpStatus.BAD_REQUEST, error: 'Order is pending.' },
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new NotFoundException('Order not found');
     }
 
+    const reviewGiver = await this.userService.findOne(reviewGiverId);
+    if (!reviewGiver) {
+      throw new NotFoundException('Review giver not found');
+    }
+
+    const reviewTaker = await this.userService.findOne(reviewTakerId);
+    if (!reviewTaker) {
+      throw new NotFoundException('Review taker not found');
+    }
+
+    const machine = await this.machineService.findOne(machineId);
+    if (!machine) {
+      throw new NotFoundException('Machine not found');
+    }
+
+    // Validate order status
+    if (order.status === 'Pending') {
+      throw new BadRequestException('Cannot create review: Order is still pending');
+    }
+
+    // Create and save the review
     const newReview = this.reviewRepository.create({
       order,
       reviewGiver,
@@ -64,50 +55,41 @@ export class ReviewsService {
       ...rest,
     });
 
-    const savedReview = await this.reviewRepository.save(newReview);
-    return { success: true, statusCode: 201, data: savedReview };
+    return await this.reviewRepository.save(newReview);
   }
 
-  async getReviewById(reviewId: number): Promise<{ success: boolean, statusCode: number, data?: Reviews, error?: string }> {
+  async getReviewById(reviewId: number): Promise<Reviews> {
     const review = await this.reviewRepository.findOne({
       where: { reviewId },
       relations: ['order', 'reviewGiver', 'reviewTaker', 'machine'],
     });
+
     if (!review) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Review not found' },
-        HttpStatus.NOT_FOUND,
-      );
+      throw new NotFoundException(`Review with ID ${reviewId} not found`);
     }
-    return { success: true, statusCode: 200, data: review };
+
+    return review;
   }
 
-  async getAllReviews(): Promise<{ success: boolean, statusCode: number, data: Reviews[] }> {
-    const reviews = await this.reviewRepository.find({ relations: ['order', 'reviewGiver', 'reviewTaker', 'machine'] });
-    return { success: true, statusCode: 200, data: reviews };
+  async getAllReviews(): Promise<Reviews[]> {
+    return await this.reviewRepository.find({
+      relations: ['order', 'reviewGiver', 'reviewTaker', 'machine']
+    });
   }
 
-  async updateReview(reviewId: number, updateReviewDto: Partial<Reviews>): Promise<{ success: boolean, statusCode: number, data?: Reviews, error?: string }> {
+  async updateReview(reviewId: number, updateReviewDto: Partial<Reviews>): Promise<Reviews> {
     const review = await this.getReviewById(reviewId);
-    if (!review || 'error' in review) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Review not found' },
-        HttpStatus.NOT_FOUND,
-      );
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${reviewId} not found`);
     }
-    Object.assign(review.data, updateReviewDto);
-    const updatedReview = await this.reviewRepository.save(review.data);
-    return { success: true, statusCode: 200, data: updatedReview };
+    Object.assign(review, updateReviewDto);
+    return await this.reviewRepository.save(review);
+
   }
 
-  async deleteReview(reviewId: number): Promise<{ success: boolean, statusCode: number, error?: string }> {
-    const result = await this.reviewRepository.delete(reviewId);
-    if (result.affected === 0) {
-      throw new HttpException(
-        { success: false, statusCode: 404, error: 'Review not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    return { success: true, statusCode: 200 };
+  async deleteReview(reviewId: number): Promise<void> {
+    const review = await this.getReviewById(reviewId);
+
+    await this.reviewRepository.remove(review);
   }
 }
