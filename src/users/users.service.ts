@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
 import { DataSource, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
+import { VERIFICATION } from '../common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-users.dto';
 import { EmailVerificationToken } from './entities/email-verification.entity';
@@ -129,9 +130,9 @@ export class UsersService {
     const existingUser = await this.findUserByEmail(email);
     if (existingUser) {
       // Generate a 6-digit reset code
-      const resetCode = randomInt(100000, 999999).toString();
+      const resetCode = randomInt(VERIFICATION.CODE_MIN, VERIFICATION.CODE_MAX).toString();
       const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 1); // Expires in 1 hour
+      expiryDate.setHours(expiryDate.getHours() + VERIFICATION.EXPIRY_HOURS); // Expires in 24 hours
 
       // Check if there's an existing reset code entry for the user
       let resetTokenObj = await this.resetTokenRepo.findOne({
@@ -155,7 +156,7 @@ export class UsersService {
       this.mailService.sendMail(
         existingUser.email,
         'Password Reset Code',
-        `Your password reset code is: ${resetCode} \n\nThis code will expire in 1 hour`,
+        `Your password reset code is: ${resetCode} \n\nThis code will expire in 24 hours`,
       );
 
       return {
@@ -203,11 +204,9 @@ export class UsersService {
     }
 
     // Generate a 6-digit random number for verification
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
+    const verificationCode = randomInt(VERIFICATION.CODE_MIN, VERIFICATION.CODE_MAX).toString();
     const expiryDate = new Date();
-    expiryDate.setMinutes(expiryDate.getMinutes() + 10);
+    expiryDate.setHours(expiryDate.getHours() + VERIFICATION.EXPIRY_HOURS);
 
     // Save or update the verification code with expiry in the database
     const existingToken = await this.emailVerificationTokenRepo.findOne({
@@ -232,7 +231,7 @@ export class UsersService {
     this.mailService.sendMail(
       existingUser.email,
       'Email Verification',
-      `Your verification code is: ${verificationCode}\n\nThis code will expire in 10 minutes.`,
+      `Your verification code is: ${verificationCode}\n\nThis code will expire in ${VERIFICATION.EXPIRY_HOURS} hours.`,
     );
 
     return {

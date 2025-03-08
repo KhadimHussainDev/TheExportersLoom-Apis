@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { MODULE_TITLES } from '../../common';
 import { FabricPricing } from '../../entities/fabric-pricing.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
@@ -310,7 +311,7 @@ export class FabricPricingService {
 
     // Perform action only if fabricPricingModule and newStatus are valid
     if (newStatus === 'Posted') {
-      const title = 'Fabric Pricing MOdule Bid';
+      const title = MODULE_TITLES.FABRIC_PRICING;
       const description = fabricPricingModule.description || '';
       const price = fabricPricingModule.price;
 

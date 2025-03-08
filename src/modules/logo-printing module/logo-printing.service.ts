@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, SIZE_MAPPINGS } from '../../common';
 import { LogoSizes } from '../../entities/logo-sizes.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
@@ -54,15 +55,8 @@ export class LogoPrintingService {
       throw new NotFoundException(`Logo position "${position}" not found`);
     }
     // Normalize requiredSize to match database values
-    const sizeMapping = {
-      's': 'smallSize', 'small': 'smallSize',
-      'm': 'mediumSize', 'medium': 'mediumSize',
-      'l': 'largeSize', 'large': 'largeSize',
-      'xl': 'xlSize', 'extra large': 'xlSize', 'extralarge': 'xlSize'
-    };
-
     const normalizedSize = requiredSize.trim().toLowerCase();
-    const sizeColumnKey = sizeMapping[normalizedSize];
+    const sizeColumnKey = SIZE_MAPPINGS[normalizedSize];
 
     if (!sizeColumnKey) {
       throw new NotFoundException(
@@ -99,7 +93,7 @@ export class LogoPrintingService {
 
     const result = await manager
       .createQueryBuilder()
-      .select(`"${sizeColumn}"`)  
+      .select(`"${sizeColumn}"`)
       .from(tableName, tableName)
       .where('"printingMethod" = :printingMethod', { printingMethod })
       .getRawOne();
@@ -304,8 +298,8 @@ export class LogoPrintingService {
 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
-      const title = 'Logo Priniting Module Bid';
-      const description = '';
+      const title = MODULE_TITLES.LOGO_PRINTING;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = logoPrintingModule.price;
 
       // Create a new bid using the BidService

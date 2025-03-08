@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+import { Bid } from '../bid/entities/bid.entity';
+import { MODULE_TO_MACHINE_MAP, STATUS } from '../common';
+import { Machine } from '../machines/entities/machine.entity';
 import { Order } from '../order/entities/order.entity';
 import { Reviews } from '../reviews/entities/reviews.entity';
-import { Machine } from '../machines/entities/machine.entity';
-import { Bid } from '../bid/entities/bid.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class RecommendationService {
@@ -15,7 +16,7 @@ export class RecommendationService {
     @InjectRepository(Reviews) private reviewRepository: Repository<Reviews>,
     @InjectRepository(Machine) private machineRepository: Repository<Machine>,
     @InjectRepository(Bid) private bidRepository: Repository<Bid>,
-  ) {}
+  ) { }
 
   async getRecommendedManufacturers(exporterId: number, bidId: number) {
     // Step 1: Get bid details
@@ -25,15 +26,7 @@ export class RecommendationService {
     }
 
     // Step 2: Map module_type to machine_type
-    const moduleToMachineMap = {
-      CuttingModule: 'Cutting',
-      StitchingModule: 'Stitching',
-      LogoPrintingModule: 'Logo Printing',
-      FabricPricingModule: 'Fabric Pricing',
-      PackagingModule: 'Packaging',
-    };
-
-    const machineType = moduleToMachineMap[bid.module_type] || bid.module_type;
+    const machineType = MODULE_TO_MACHINE_MAP[bid.module_type] || bid.module_type;
 
     // Step 3: Fetch manufacturers matching the machine type
     const matchingManufacturers = await this.machineRepository
@@ -59,7 +52,7 @@ export class RecommendationService {
         .createQueryBuilder('o')
         .select('o.manufacturerId')
         .where('o.exporterId = :exporterId', { exporterId })
-        .andWhere('o.status = :status', { status: 'Completed' })
+        .andWhere('o.status = :status', { status: STATUS.COMPLETED })
         .andWhere('o.manufacturerId IN (:...manufacturerIds)', {
           manufacturerIds: manufacturerIds.length ? manufacturerIds : [0], // Avoid empty IN ()
         })
@@ -84,7 +77,7 @@ export class RecommendationService {
         .groupBy('r.reviewTakerId')
         .getRawMany();
     }
-    
+
     // Step 6: Combine and prioritize recommendations
     return matchingManufacturers
       .map((manufacturer) => {
@@ -100,7 +93,7 @@ export class RecommendationService {
             Number(manufacturer.userid),
           )
             ? 1
-            : 0, 
+            : 0,
         };
       })
       .sort(
@@ -109,6 +102,6 @@ export class RecommendationService {
           b.avgRating - a.avgRating ||
           b.totalReviews - a.totalReviews,
       )
-      .slice(0, 10); 
+      .slice(0, 10);
   }
 }

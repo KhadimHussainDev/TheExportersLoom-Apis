@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { Packaging } from './entities/packaging.entity';
-import { CreatePackagingDto } from './dto/create-packaging.dto';
+import { EntityManager, Repository } from 'typeorm';
+import { BidService } from '../../bid/bid.service';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES } from '../../common';
 import { PackagingBags } from '../../entities/packaging-bags.entity';
 import { Project } from '../../project/entities/project.entity';
+import { CreatePackagingDto } from './dto/create-packaging.dto';
 import { UpdatePackagingDto } from './dto/update-packaging.dto';
-import { BidService } from '../../bid/bid.service';
+import { Packaging } from './entities/packaging.entity';
 
 @Injectable()
 export class PackagingService {
@@ -169,11 +170,11 @@ export class PackagingService {
       );
     }
 
-    const userId = user.user_id; 
+    const userId = user.user_id;
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
-      const title = 'Packaging Module Bid';
-      const description = ''; 
+      const title = MODULE_TITLES.PACKAGING;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = packagingModule.cost;
 
       // Create a new bid using the BidService

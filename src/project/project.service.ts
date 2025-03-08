@@ -7,6 +7,7 @@ import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printin
 import { Packaging } from 'modules/packaging module/entities/packaging.entity';
 import { Stitching } from 'modules/stitching module/entities/stitching.entity';
 import { DataSource, EntityManager, Not, Repository } from 'typeorm';
+import { MAX_TOTAL_COST } from '../common';
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
 import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
@@ -362,7 +363,6 @@ export class ProjectService {
         packagingCostValue;
 
 
-      const MAX_TOTAL_COST = 9999999999999.99;
       if (totalCost > MAX_TOTAL_COST) {
         console.error('Total cost exceeds the database limit!');
         throw new Error('Total project cost exceeds the allowed limit.');

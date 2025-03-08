@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { Cutting } from './entities/cutting.entity';
-import { CreateCuttingDto } from './dto/create-cutting.dto';
-import { RegularCutting, SublimationCutting } from '../../entities';
-import { UpdateCuttingDto } from './dto/update-cutting.dto';
+import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES } from '../../common';
+import { RegularCutting, SublimationCutting } from '../../entities';
+import { CreateCuttingDto } from './dto/create-cutting.dto';
+import { UpdateCuttingDto } from './dto/update-cutting.dto';
+import { Cutting } from './entities/cutting.entity';
 
 @Injectable()
 export class CuttingService {
@@ -197,12 +198,12 @@ export class CuttingService {
       );
     }
 
-    const userId = user.user_id; 
+    const userId = user.user_id;
 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
-      const title = 'Cutting Module Bid';
-      const description = ''; // Add description if needed
+      const title = MODULE_TITLES.CUTTING;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = cuttingModule.cost;
 
       // Create a new bid using the BidService
@@ -212,7 +213,7 @@ export class CuttingService {
         title,
         description,
         price,
-        'Active', 
+        'Active',
         'CuttingModule', // Type of the module
       );
     }

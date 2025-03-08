@@ -4,6 +4,7 @@ import { BidService } from 'bid/bid.service';
 import { MachineService } from 'machines/machine.service';
 import { Repository } from 'typeorm';
 import { UsersService } from 'users/users.service';
+import { STATUS } from '../common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { UpdateOrderDto } from './dtos/update-order.dto';
 import { Order } from './entities/order.entity';
@@ -43,8 +44,8 @@ export class OrderService {
     }
 
     // Validate bid status
-    if (bid.status !== 'Active') {
-      throw new BadRequestException('Cannot create order: Bid is not active');
+    if (bid.status !== STATUS.ACTIVE) {
+      throw new BadRequestException(`Cannot create order: Bid is not ${STATUS.ACTIVE}`);
     }
 
     // Create and save the order
