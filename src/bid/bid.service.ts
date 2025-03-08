@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MODULE_TYPES, STATUS } from '../common';
@@ -130,7 +130,7 @@ export class BidService {
       // Retrieve all bids from the Bid repository
       return await this.bidRepository.find({
         where: { status: 'Active' },
-        relations: ['user'], // Include relations if necessary, such as the user related to the bid
+        relations: ['user'],
         order: {
           created_at: 'DESC', // Optionally, order by creation date
         },
@@ -159,6 +159,12 @@ export class BidService {
 
     if (!bid) {
       throw new Error(`Bid with ID ${bidId} not found.`);
+    }
+    if (bid.status === 'inActive') {
+      throw new HttpException(
+        `Bid with ID ${bidId} is inactive and cannot be updated.`,
+        HttpStatus.FORBIDDEN, // 403: Operation not allowed
+      );
     }
 
     // Update the bid properties based on the provided data
