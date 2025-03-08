@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES } from '../../common';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { PackagingBags } from '../../entities/packaging-bags.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreatePackagingDto } from './dto/create-packaging.dto';
@@ -184,8 +184,8 @@ export class PackagingService {
         title,
         description,
         price,
-        'Active',
-        'PackagingModule',
+        STATUS.ACTIVE,
+        MODULE_TYPES.PACKAGING,
       );
     }
 

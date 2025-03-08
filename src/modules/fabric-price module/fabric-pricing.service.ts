@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
-import { MODULE_TITLES } from '../../common';
+import { MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { FabricPricing } from '../../entities/fabric-pricing.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
@@ -144,7 +144,7 @@ export class FabricPricingService {
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
-        status: 'draft',
+        status: STATUS.DRAFT,
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
 
@@ -269,7 +269,7 @@ export class FabricPricingService {
     }
 
     if (priceUpdated) {
-      existingFabricPricingModule.status = 'draft';
+      existingFabricPricingModule.status = STATUS.DRAFT;
     }
 
     // update other fields like status if provided in the DTO
@@ -323,8 +323,8 @@ export class FabricPricingService {
         title,
         description,
         price,
-        'Active',
-        'FabricPricingModule'
+        STATUS.ACTIVE,
+        MODULE_TYPES.FABRIC_PRICING,
       );
     }
 

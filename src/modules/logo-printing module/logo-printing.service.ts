@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, SIZE_MAPPINGS } from '../../common';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, SIZE_MAPPINGS, STATUS } from '../../common';
 import { LogoSizes } from '../../entities/logo-sizes.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
@@ -170,7 +170,7 @@ export class LogoPrintingService {
       projectId,
       sizes: dto.sizes,
       price: totalCost,
-      status: 'draft',
+      status: STATUS.DRAFT,
       logoDetails: dto.logoDetails,
 
     });
@@ -246,7 +246,7 @@ export class LogoPrintingService {
         existingLogoPrintingModule.logoDetails = updatedDto.logoDetails;
         existingLogoPrintingModule.sizes = updatedDto.sizes;
         existingLogoPrintingModule.price = totalCost;
-        existingLogoPrintingModule.status = 'draft';
+        existingLogoPrintingModule.status = STATUS.DRAFT;
 
         // Save the updated module
         return manager.save(existingLogoPrintingModule);
@@ -261,7 +261,7 @@ export class LogoPrintingService {
         logoDetails: updatedDto.logoDetails,
         sizes: updatedDto.sizes,
         price: totalCost,
-        status: 'draft',
+        status: STATUS.DRAFT,
       });
 
       // Save and return the new logo printing module
@@ -309,8 +309,8 @@ export class LogoPrintingService {
         title,
         description,
         price,
-        'Active',
-        'LogoPrintingModule',
+        STATUS.ACTIVE,
+        MODULE_TYPES.LOGO_PRINTING,
       );
     }
 

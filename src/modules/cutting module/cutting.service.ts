@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES } from '../../common';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { RegularCutting, SublimationCutting } from '../../entities';
 import { CreateCuttingDto } from './dto/create-cutting.dto';
 import { UpdateCuttingDto } from './dto/update-cutting.dto';
@@ -62,7 +62,7 @@ export class CuttingService {
 
     // Prepare the cutting record
     const cutting = manager.create(Cutting, {
-      status: 'Active',
+      status: STATUS.ACTIVE,
       projectId,
       quantity,
       ratePerShirt,
@@ -169,7 +169,7 @@ export class CuttingService {
     existingCuttingModule.ratePerShirt = ratePerShirt;
     existingCuttingModule.cost = totalCost;
     existingCuttingModule.cuttingStyle = cuttingStyle;
-    existingCuttingModule.status = 'Active';
+    existingCuttingModule.status = STATUS.ACTIVE;
 
     // Save the updated cutting module
     const updatedCutting = await manager.save(Cutting, existingCuttingModule);
@@ -213,8 +213,8 @@ export class CuttingService {
         title,
         description,
         price,
-        'Active',
-        'CuttingModule', // Type of the module
+        STATUS.ACTIVE,
+        MODULE_TYPES.CUTTING,
       );
     }
 

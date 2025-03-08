@@ -7,7 +7,7 @@ import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printin
 import { Packaging } from 'modules/packaging module/entities/packaging.entity';
 import { Stitching } from 'modules/stitching module/entities/stitching.entity';
 import { DataSource, EntityManager, Not, Repository } from 'typeorm';
-import { MAX_TOTAL_COST } from '../common';
+import { MAX_TOTAL_COST, STATUS } from '../common';
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
 import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
@@ -66,7 +66,7 @@ export class ProjectService {
           await this.fabricQuantityService.createFabricQuantityModule(
             {
               projectId: savedProject.id,
-              status: 'draft',
+              status: STATUS.DRAFT,
               categoryType: createProjectDto.fabricCategory,
               shirtType: createProjectDto.shirtType,
               sizes: createProjectDto.sizes?.map((size) => ({
@@ -144,7 +144,7 @@ export class ProjectService {
           {
             projectId: savedProject.id,
             quantity: totalQuantity,
-            status: 'active',
+            status: STATUS.ACTIVE,
             ratePerShirt: 0,
             cost: 0,
           },
@@ -158,7 +158,7 @@ export class ProjectService {
             {
               projectId: savedProject.id,
               quantity: totalQuantity,
-              status: 'active',
+              status: STATUS.ACTIVE,
             },
             manager,
           );
@@ -249,7 +249,7 @@ export class ProjectService {
         updatedProject.id,
         {
           categoryType: updateProjectDto.fabricCategory,
-          status: 'draft',
+          status: STATUS.DRAFT,
           shirtType: updateProjectDto.shirtType,
           sizes: updateProjectDto.sizes?.map((size) => ({
             size: size.size,
@@ -324,7 +324,7 @@ export class ProjectService {
           quantity: totalQuantity,
           ratePerShirt: 0,
           cost: 0,
-          status: 'active',
+          status: STATUS.ACTIVE,
         },
         manager,
       );
@@ -339,7 +339,7 @@ export class ProjectService {
           updatedProject.id,
           {
             quantity: totalQuantity,
-            status: 'active',
+            status: STATUS.ACTIVE,
           },
           manager,
         );
@@ -385,7 +385,7 @@ export class ProjectService {
   async getAllProjects(): Promise<Project[]> {
     return await this.projectRepository.find({
       where: {
-        status: Not('inactive'),
+        status: Not('STATUS.INACTIVE'),
       },
     });
   }
@@ -423,25 +423,25 @@ export class ProjectService {
           throw new NotFoundException(`Project with ID ${projectId} not found.`);
         }
         // Soft delete the project
-        project.status = 'inactive';
+        project.status = 'STATUS.INACTIVE';
         await manager.save(Project, project);
 
         // Soft delete all related modules by updating their status
         await this.softDeleteRelatedModules(projectId, manager);
 
-        return `Project with ID ${projectId} and its related modules have been marked as inactive->soft delete.`;
+        return `Project with ID ${projectId} and its related modules have been marked as STATUS.INACTIVE->soft delete.`;
       },
     );
   }
 
   // Update status of related modules
   private async softDeleteRelatedModules(projectId: number, manager: EntityManager) {
-    await manager.update(FabricPricingModule, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(FabricQuantity, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Cutting, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(LogoPrinting, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Stitching, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Packaging, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(FabricPricingModule, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(FabricQuantity, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Cutting, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(LogoPrinting, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Stitching, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Packaging, { project: { id: projectId } }, { status: STATUS.INACTIVE });
   }
 
 }
