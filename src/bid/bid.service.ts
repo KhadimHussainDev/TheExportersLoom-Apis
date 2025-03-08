@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bid } from './entities/bid.entity';
-import { FabricPricingModule } from '../modules/fabric-price module/entities/fabric-pricing-module.entity'; 
+import { FabricPricingModule } from '../modules/fabric-price module/entities/fabric-pricing-module.entity';
 import { FabricQuantity } from '../modules/fabric-quantity-module/entities/fabric-quantity.entity';
 import { Cutting } from '../modules/cutting module/entities/cutting.entity';
 import { User } from '../users/entities/user.entity';
@@ -31,7 +31,7 @@ export class BidService {
     @InjectRepository(Packaging)
     private readonly packagingRepository: Repository<Packaging>,
     @InjectRepository(Stitching)
-    private readonly stitchingRepository: Repository<Stitching>
+    private readonly stitchingRepository: Repository<Stitching>,
   ) {}
   async findOne(bidId: number): Promise<Bid> {
     // Find the bid by its ID
@@ -52,7 +52,13 @@ export class BidService {
     description: string,
     price: number,
     status: string,
-    module_type: 'FabricPricingModule' | 'FabricQuantity' | 'CuttingModule' | 'LogoPrintingModule' | 'PackagingModule' | 'StitchingModule', // Restrict module_type to valid types
+    module_type:
+      | 'FabricPricingModule'
+      | 'FabricQuantity'
+      | 'CuttingModule'
+      | 'LogoPrintingModule'
+      | 'PackagingModule'
+      | 'StitchingModule', // Restrict module_type to valid types
   ): Promise<Bid> {
     // Find the user
     const user = await this.userRepository.findOne({
@@ -63,7 +69,13 @@ export class BidService {
     }
 
     // Validate and fetch the appropriate module based on the module_type
-    let moduleEntity: FabricPricingModule | FabricQuantity | CuttingModule | LogoPrintingModule | Packaging | Stitching;
+    let moduleEntity:
+      | FabricPricingModule
+      | FabricQuantity
+      | CuttingModule
+      | LogoPrintingModule
+      | Packaging
+      | Stitching;
     if (module_type === 'FabricPricingModule') {
       moduleEntity = await this.fabricPricingRepository.findOne({
         where: { id: moduleId },
@@ -78,7 +90,7 @@ export class BidService {
       if (!moduleEntity) {
         throw new Error(`FabricQuantityModule with ID ${moduleId} not found.`);
       }
-    }else if (module_type === 'CuttingModule') {
+    } else if (module_type === 'CuttingModule') {
       moduleEntity = await this.cuttingRepository.findOne({
         where: { id: moduleId },
       });
@@ -129,7 +141,7 @@ export class BidService {
       // Retrieve all bids from the Bid repository
       return await this.bidRepository.find({
         where: { status: 'Active' },
-        relations: ['user'], // Include relations if necessary, such as the user related to the bid
+        relations: ['user'],
         order: {
           created_at: 'DESC', // Optionally, order by creation date
         },
@@ -159,13 +171,18 @@ export class BidService {
     if (!bid) {
       throw new Error(`Bid with ID ${bidId} not found.`);
     }
+    if (bid.status === 'inActive') {
+      throw new HttpException(
+        `Bid with ID ${bidId} is inactive and cannot be updated.`,
+        HttpStatus.FORBIDDEN, // 403: Operation not allowed
+      );
+    }
 
     // Update the bid properties based on the provided data
     bid.title = updateBidDto.title || bid.title; // Only update if new value is provided
     bid.description = updateBidDto.description || bid.description;
     bid.price = updateBidDto.price || bid.price;
     bid.status = updateBidDto.status || bid.status; // Optionally update status
-    
 
     // Save the updated bid
     return this.bidRepository.save(bid);
