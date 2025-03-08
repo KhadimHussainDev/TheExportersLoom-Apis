@@ -128,6 +128,7 @@ export class BidService {
     try {
       // Retrieve all bids from the Bid repository
       return await this.bidRepository.find({
+        where: { status: 'Active' },
         relations: ['user'], // Include relations if necessary, such as the user related to the bid
         order: {
           created_at: 'DESC', // Optionally, order by creation date
