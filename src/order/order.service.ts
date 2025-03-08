@@ -43,7 +43,7 @@ export class OrderService {
     }
 
     // Validate bid status
-    if (bid.status !== 'active') {
+    if (bid.status !== 'Active') {
       throw new BadRequestException('Cannot create order: Bid is not active');
     }
 

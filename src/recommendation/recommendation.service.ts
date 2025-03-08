@@ -41,7 +41,9 @@ export class RecommendationService {
       .leftJoin('m.machine_owner', 'u')
       .where('m.machine_type = :machineType', { machineType })
       .andWhere('u.userType = :type', { type: 'manufacturer' })
+      .andWhere('m.availability_status = :status', { status: 'true' })
       .select(['u.user_id AS userId', 'u.username'])
+      .distinctOn(['u.user_id'])
       .getRawMany();
 
     if (matchingManufacturers.length === 0) {
