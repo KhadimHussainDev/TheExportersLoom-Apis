@@ -1,22 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager, Not } from 'typeorm';
-import { Project } from './entities/project.entity';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
-import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
-import { LogoPrintingService } from '../modules/logo-printing module/logo-printing.service';
-import { CuttingService } from '../modules/cutting module/cutting.service';
-import { StitchingService } from '../modules/stitching module/stitching.service';
-import { PackagingService } from '../modules/packaging module/packaging.service';
-import { User } from '../users/entities/user.entity';
+import { Cutting } from 'modules/cutting module/entities/cutting.entity';
 import { FabricPricingModule } from 'modules/fabric-price module/entities/fabric-pricing-module.entity';
 import { FabricQuantity } from 'modules/fabric-quantity-module/entities/fabric-quantity.entity';
-import { Cutting } from 'modules/cutting module/entities/cutting.entity';
 import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
-import { Stitching } from 'modules/stitching module/entities/stitching.entity';
 import { Packaging } from 'modules/packaging module/entities/packaging.entity';
+import { Stitching } from 'modules/stitching module/entities/stitching.entity';
+import { DataSource, EntityManager, Not, Repository } from 'typeorm';
+import { MAX_TOTAL_COST, STATUS } from '../common';
+import { CuttingService } from '../modules/cutting module/cutting.service';
+import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
+import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
+import { LogoPrintingService } from '../modules/logo-printing module/logo-printing.service';
+import { PackagingService } from '../modules/packaging module/packaging.service';
+import { StitchingService } from '../modules/stitching module/stitching.service';
+import { User } from '../users/entities/user.entity';
+import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { Project } from './entities/project.entity';
 
 @Injectable()
 export class ProjectService {
@@ -34,149 +35,156 @@ export class ProjectService {
 
   async createProject(createProjectDto: CreateProjectDto): Promise<Project> {
     return await this.dataSource.transaction(async (manager) => {
-      // Step 1: Fetch the user by userId from the database
-      const user = await manager.findOne(User, {
-        where: { user_id: createProjectDto.userId },
-      });
+      try {
+        // Step 1: Fetch the user by userId from the database
+        const user = await manager.findOne(User, {
+          where: { user_id: createProjectDto.userId },
+        });
 
-      // If no user found, throw an error
-      if (!user) {
-        throw new Error(`User with ID ${createProjectDto.userId} not found.`);
-      }
+        // If no user found, throw an error
+        if (!user) {
+          throw new NotFoundException(`User with ID ${createProjectDto.userId} not found.`);
+        }
 
-      // Calculate total quantity from sizes array
-      const totalQuantity = createProjectDto.sizes.reduce(
-        (sum, size) => sum + size.quantity,
-        0,
-      );
-      console.log('Total Quantity:', totalQuantity);
-
-      // Step 2: Create the project entity with the user linked
-      const project = this.projectRepository.create({
-        ...createProjectDto,
-        user,
-        totalEstimatedCost: 0,
-      });
-      const savedProject = await manager.save(project);
-      console.log('Saved project:', savedProject);
-
-      // Fabric Quanitity Module
-      const { totalFabricQuantityCost } =
-        await this.fabricQuantityService.createFabricQuantityModule(
-          {
-            projectId: savedProject.id,
-            status: 'draft',
-            categoryType: createProjectDto.fabricCategory,
-            shirtType: createProjectDto.shirtType,
-            sizes: createProjectDto.sizes?.map((size) => ({
-              size: size.fabricSize,
-              quantityRequired: size.quantity,
-            })) || [],
-          },
-          manager,
+        // Calculate total quantity from sizes array
+        const totalQuantity = createProjectDto.sizes.reduce(
+          (sum, size) => sum + size.quantity,
+          0,
         );
-      console.log('Fabric Quantity Cost:', totalFabricQuantityCost);
 
+        // Step 2: Create the project entity with the user linked
+        const project = this.projectRepository.create({
+          ...createProjectDto,
+          user,
+          totalEstimatedCost: 0,
+        });
+        const savedProject = await manager.save(project);
+        console.log('Saved project:', savedProject);
 
-      // Fabric Pricing Module
-      const fabricPricingCost =
-        await this.fabricPriceService.createFabricPricing(
-          savedProject,
-          {
-            category: createProjectDto.fabricCategory,
-            subCategory: createProjectDto.fabricSubCategory,
-            fabricQuantityCost: totalFabricQuantityCost,
-          },
-          manager,
-        );
-      console.log('Fabric Pricing Cost: ', fabricPricingCost);
-
-      // Logo Printing Module
-      let logoPrintingCost = 0;
-      // Check if logoDetails and sizes arrays exist and are not empty
-      if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
-        try {
-          logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
-            savedProject.id,
+        // Fabric Quanitity Module
+        const { totalFabricQuantityCost } =
+          await this.fabricQuantityService.createFabricQuantityModule(
             {
               projectId: savedProject.id,
-              logoDetails: createProjectDto.logoDetails.map((logo) => ({
-                logoPosition: logo.logoPosition,
-                printingMethod: logo.PrintingStyle,
-              })),
+              status: STATUS.DRAFT,
+              categoryType: createProjectDto.fabricCategory,
+              shirtType: createProjectDto.shirtType,
               sizes: createProjectDto.sizes?.map((size) => ({
                 size: size.fabricSize,
                 quantityRequired: size.quantity,
-              })),
+              })) || [],
             },
             manager,
           );
+        console.log('Fabric Quantity Cost:', totalFabricQuantityCost);
 
-          if (!logoPrintingCost) {
-            console.warn('Logo Printing Module creation failed.');
-          } else {
-            console.log('Logo Printing Cost:', logoPrintingCost);
+
+        // Fabric Pricing Module
+        const fabricPricingCost =
+          await this.fabricPriceService.createFabricPricing(
+            savedProject,
+            {
+              category: createProjectDto.fabricCategory,
+              subCategory: createProjectDto.fabricSubCategory,
+              fabricQuantityCost: totalFabricQuantityCost,
+            },
+            manager,
+          );
+        console.log('Fabric Pricing Cost: ', fabricPricingCost);
+
+        // Logo Printing Module
+        let logoPrintingCost = 0;
+        // Check if logoDetails and sizes arrays exist and are not empty
+        if (createProjectDto.logoDetails?.length && createProjectDto.sizes?.length) {
+          try {
+            logoPrintingCost = await this.logoPrintingService.createLogoPrintingModule(
+              savedProject.id,
+              {
+                projectId: savedProject.id,
+                logoDetails: createProjectDto.logoDetails.map((logo) => ({
+                  logoPosition: logo.logoPosition,
+                  printingMethod: logo.PrintingStyle,
+                })),
+                sizes: createProjectDto.sizes?.map((size) => ({
+                  size: size.fabricSize,
+                  quantityRequired: size.quantity,
+                })),
+              },
+              manager,
+            );
+
+            if (!logoPrintingCost) {
+              console.warn('Logo Printing Module creation failed.');
+            } else {
+              console.log('Logo Printing Cost:', logoPrintingCost);
+            }
+          } catch (error) {
+            console.error('Error creating Logo Printing Module:', error);
           }
-        } catch (error) {
-          console.error('Error creating Logo Printing Module:', error);
+        } else {
+          console.log('Logo printing not created (logoDetails or sizes array is missing or empty).');
         }
-      } else {
-        console.log('Logo printing not created (logoDetails or sizes array is missing or empty).');
-      }
 
-      // Cutting Module
-      const cuttingCost = await this.cuttingService.createCuttingModule(
-        {
-          projectId: savedProject.id,
-          cuttingStyle: createProjectDto.cuttingStyle as
-            | 'regular'
-            | 'sublimation',
-          quantity: totalQuantity,
-        },
-        manager,
-      );
-      console.log('Cutting Cost: ', cuttingCost);
-
-      // Stitching Module
-      const stitchingCost = await this.stitchingService.createStitching(
-        manager,
-        {
-          projectId: savedProject.id,
-          quantity: totalQuantity,
-          status: 'active',
-          ratePerShirt: 0,
-          cost: 0,
-        },
-      );
-      console.log('Stictching Cost: ', stitchingCost);
-
-      // Packaging Module
-      let packagingCost = 0;
-      if (createProjectDto.packagingRequired) {
-        packagingCost = await this.packagingService.createPackagingModule(
+        // Cutting Module
+        const cuttingCost = await this.cuttingService.createCuttingModule(
           {
             projectId: savedProject.id,
+            cuttingStyle: createProjectDto.cuttingStyle as
+              | 'regular'
+              | 'sublimation',
             quantity: totalQuantity,
-            status: 'active',
           },
           manager,
         );
-        console.log('Packaging Cost: ', packagingCost);
-      } else {
-        console.log('Packaging not required; skipping Packaging Module creation.');
+        console.log('Cutting Cost: ', cuttingCost);
+
+        // Stitching Module
+        const stitchingCost = await this.stitchingService.createStitching(
+          manager,
+          {
+            projectId: savedProject.id,
+            quantity: totalQuantity,
+            status: STATUS.ACTIVE,
+            ratePerShirt: 0,
+            cost: 0,
+          },
+        );
+        console.log('Stictching Cost: ', stitchingCost);
+
+        // Packaging Module
+        let packagingCost = 0;
+        if (createProjectDto.packagingRequired) {
+          packagingCost = await this.packagingService.createPackagingModule(
+            {
+              projectId: savedProject.id,
+              quantity: totalQuantity,
+              status: STATUS.ACTIVE,
+            },
+            manager,
+          );
+          console.log('Packaging Cost: ', packagingCost);
+        } else {
+          console.log('Packaging not required; skipping Packaging Module creation.');
+        }
+
+        // Project's total cost
+        const totalCost =
+          fabricPricingCost +
+          // logoPrintingCost +
+          cuttingCost +
+          stitchingCost +
+          packagingCost;
+        console.log('Calculated total cost:', totalCost);
+
+        savedProject.totalEstimatedCost = totalCost;
+        return manager.save(savedProject);
+      } catch (error) {
+        // If it's already a NestJS exception, rethrow it
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
+        throw new Error(`Failed to create project: ${error.message}`);
       }
-
-      // Project's total cost
-      const totalCost =
-        fabricPricingCost +
-        // logoPrintingCost +
-        cuttingCost +
-        stitchingCost +
-        packagingCost;
-      console.log('Calculated total cost:', totalCost);
-
-      savedProject.totalEstimatedCost = totalCost;
-      return manager.save(savedProject);
     });
   }
 
@@ -214,7 +222,7 @@ export class ProjectService {
       // Update Sizes
       if (updateProjectDto.sizes) {
         project.sizes = updateProjectDto.sizes.map(size => ({
-          fabricSize: size.size, 
+          fabricSize: size.size,
           quantity: size.quantityRequired,
         }));
       }
@@ -241,7 +249,7 @@ export class ProjectService {
         updatedProject.id,
         {
           categoryType: updateProjectDto.fabricCategory,
-          status: 'draft',
+          status: STATUS.DRAFT,
           shirtType: updateProjectDto.shirtType,
           sizes: updateProjectDto.sizes?.map((size) => ({
             size: size.size,
@@ -316,7 +324,7 @@ export class ProjectService {
           quantity: totalQuantity,
           ratePerShirt: 0,
           cost: 0,
-          status: 'active',
+          status: STATUS.ACTIVE,
         },
         manager,
       );
@@ -331,7 +339,7 @@ export class ProjectService {
           updatedProject.id,
           {
             quantity: totalQuantity,
-            status: 'active',
+            status: STATUS.ACTIVE,
           },
           manager,
         );
@@ -355,7 +363,6 @@ export class ProjectService {
         packagingCostValue;
 
 
-      const MAX_TOTAL_COST = 9999999999999.99;
       if (totalCost > MAX_TOTAL_COST) {
         console.error('Total cost exceeds the database limit!');
         throw new Error('Total project cost exceeds the allowed limit.');
@@ -378,7 +385,7 @@ export class ProjectService {
   async getAllProjects(): Promise<Project[]> {
     return await this.projectRepository.find({
       where: {
-        status: Not('inactive'),
+        status: Not('STATUS.INACTIVE'),
       },
     });
   }
@@ -413,28 +420,28 @@ export class ProjectService {
         });
 
         if (!project) {
-          throw new Error(`Project with ID ${projectId} not found.`);
+          throw new NotFoundException(`Project with ID ${projectId} not found.`);
         }
         // Soft delete the project
-        project.status = 'inactive';
+        project.status = 'STATUS.INACTIVE';
         await manager.save(Project, project);
 
         // Soft delete all related modules by updating their status
         await this.softDeleteRelatedModules(projectId, manager);
 
-        return `Project with ID ${projectId} and its related modules have been marked as inactive->soft delete.`;
+        return `Project with ID ${projectId} and its related modules have been marked as STATUS.INACTIVE->soft delete.`;
       },
     );
   }
 
   // Update status of related modules
   private async softDeleteRelatedModules(projectId: number, manager: EntityManager) {
-    await manager.update(FabricPricingModule, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(FabricQuantity, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Cutting, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(LogoPrinting, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Stitching, { project: { id: projectId } }, { status: 'inactive' });
-    await manager.update(Packaging, { project: { id: projectId } }, { status: 'inactive' });
+    await manager.update(FabricPricingModule, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(FabricQuantity, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Cutting, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(LogoPrinting, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Stitching, { project: { id: projectId } }, { status: 'STATUS.INACTIVE' });
+    await manager.update(Packaging, { project: { id: projectId } }, { status: STATUS.INACTIVE });
   }
 
 }

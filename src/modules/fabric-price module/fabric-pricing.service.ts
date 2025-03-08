@@ -1,16 +1,17 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { FabricPricing } from '../../entities/fabric-pricing.entity';
-import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
-import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
-import { Project } from '../../project/entities/project.entity';
-import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
+import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
+import { FabricPricing } from '../../entities/fabric-pricing.entity';
+import { Project } from '../../project/entities/project.entity';
+import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
+import { UpdateFabricPricingDto } from './dto/update-fabric-pricing.dto';
+import { FabricPricingModule } from './entities/fabric-pricing-module.entity';
 
 @Injectable()
 export class FabricPricingService {
@@ -143,7 +144,7 @@ export class FabricPricingService {
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
-        status: 'draft',
+        status: STATUS.DRAFT,
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
 
@@ -268,7 +269,7 @@ export class FabricPricingService {
     }
 
     if (priceUpdated) {
-      existingFabricPricingModule.status = 'draft';
+      existingFabricPricingModule.status = STATUS.DRAFT;
     }
 
     // update other fields like status if provided in the DTO
@@ -310,7 +311,7 @@ export class FabricPricingService {
 
     // Perform action only if fabricPricingModule and newStatus are valid
     if (newStatus === 'Posted') {
-      const title = 'Fabric Pricing MOdule Bid';
+      const title = MODULE_TITLES.FABRIC_PRICING;
       const description = fabricPricingModule.description || '';
       const price = fabricPricingModule.price;
 
@@ -322,8 +323,8 @@ export class FabricPricingService {
         title,
         description,
         price,
-        'Active',
-        'FabricPricingModule'
+        STATUS.ACTIVE,
+        MODULE_TYPES.FABRIC_PRICING,
       );
     }
 

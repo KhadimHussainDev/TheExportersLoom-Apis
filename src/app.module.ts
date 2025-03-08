@@ -1,24 +1,25 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BidModule } from './bid/bid.module';
+import { ExampleModule } from './common/examples/example.module';
+import { CostEstimationModule } from './cost-estimation/cost-estimation.module';
 import { MachineModule } from './machines/machine.module';
 import { MessagesModule } from './messages/messages.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { ProjectModule } from './project/project.module';
-import { SeederModule } from './scripts/seeder.module';
-import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
 import { CuttingModule } from './modules/cutting module/cutting.module';
-import { StitchingModule } from './modules/stitching module/stitching.module';
+import { LogoPrintingModule } from './modules/logo-printing module/logo-printing.module';
 import { PackagingModule } from './modules/packaging module/packaging.module';
-import { BidModule } from './bid/bid.module';
+import { StitchingModule } from './modules/stitching module/stitching.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrderModule } from './order/order.module';
-import { ReviewsModule } from './reviews/reviews.module';
-import { CostEstimationModule } from './cost-estimation/cost-estimation.module';
+import { ProjectModule } from './project/project.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { SeederModule } from './scripts/seeder.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -60,7 +61,8 @@ import { RecommendationModule } from './recommendation/recommendation.module';
     OrderModule,
     ReviewsModule,
     CostEstimationModule,
-    RecommendationModule
+    RecommendationModule,
+    ExampleModule
   ],
   controllers: [AppController],
   providers: [AppService],

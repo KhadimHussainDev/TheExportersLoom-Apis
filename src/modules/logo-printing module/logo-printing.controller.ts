@@ -1,10 +1,11 @@
-import { Controller, Post, Body, NotFoundException, Put, Param, UseGuards, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpStatus, NotFoundException, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { LogoPrintingService } from './logo-printing.service';
-import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
-import { LogoPrinting } from './entities/logo-printing.entity';
-import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
 import { JwtStrategy } from '../../auth/jwt.strategy';
+import { ApiResponseDto } from '../../common/dto/api-response.dto';
+import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
+import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { LogoPrinting } from './entities/logo-printing.entity';
+import { LogoPrintingService } from './logo-printing.service';
 
 @Controller('logo-printing')
 export class LogoPrintingController {
@@ -14,7 +15,7 @@ export class LogoPrintingController {
   ) { }
 
   @Post('calculate-price')
-  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<{ meanCost: number }> {
+  async calculateMeanCost(@Body() dto: CreateLogoPrintingDto): Promise<ApiResponseDto<{ meanCost: number }>> {
     if (!dto.logoDetails || dto.logoDetails.length === 0) {
       throw new BadRequestException('logoDetails array is required and cannot be empty.');
     }
@@ -38,12 +39,16 @@ export class LogoPrintingController {
         totalCost += costRange;
       }
     }
-    return { meanCost: totalCost };
+
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Mean cost calculated successfully',
+      { meanCost: totalCost }
+    );
   }
 
-
-  @Post('create')
-  async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto) {
+  @Post()
+  async createLogoPrintingModule(@Body() dto: CreateLogoPrintingDto): Promise<ApiResponseDto<number>> {
     if (!dto.projectId) {
       throw new BadRequestException('projectId is required.');
     }
@@ -53,21 +58,33 @@ export class LogoPrintingController {
     if (!dto.sizes || dto.sizes.length === 0) {
       throw new BadRequestException('sizes array is required and cannot be empty.');
     }
-    const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
-  }
 
+    const manager = this.dataSource.createEntityManager();
+    const logoPrinting = await this.logoPrintingService.createLogoPrintingModule(dto.projectId, dto, manager);
+
+    return ApiResponseDto.success(
+      HttpStatus.CREATED,
+      'Logo printing module created successfully',
+      logoPrinting
+    );
+  }
 
   @Put('edit/:projectId')
   async editLogoPrintingModule(
     @Param('projectId') projectId: number,
     @Body() dto: UpdateLogoPrintingDto,
-  ): Promise<LogoPrinting> {
+  ): Promise<ApiResponseDto<LogoPrinting>> {
     const manager = this.dataSource.createEntityManager();
-    return this.logoPrintingService.editLogoPrintingModule(
+    const updatedLogoPrinting = await this.logoPrintingService.editLogoPrintingModule(
       projectId,
       dto,
-      manager,
+      manager
+    );
+
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Logo printing module updated successfully',
+      updatedLogoPrinting
     );
   }
 
@@ -76,14 +93,18 @@ export class LogoPrintingController {
   async updateLogoPritingStatus(
     @Param('id') id: number,
     @Body('newStatus') newStatus: string,
-  ) {
+  ): Promise<ApiResponseDto<any>> {
     try {
-      const updatedlogoModule = await this.logoPrintingService.updateLogoPrintingStatus(
+      const result = await this.logoPrintingService.updateLogoPrintingStatus(
         id,
         newStatus,
       );
 
-      return updatedlogoModule;
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Logo printing status updated successfully',
+        result
+      );
     } catch (error) {
       throw new NotFoundException(
         `Error updating logo module: ${error.message}`,

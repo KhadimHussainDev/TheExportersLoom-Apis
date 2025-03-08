@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
-import { LogoPrinting } from './entities/logo-printing.entity';
-import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
-import { Project } from '../../project/entities/project.entity';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, SIZE_MAPPINGS, STATUS } from '../../common';
 import { LogoSizes } from '../../entities/logo-sizes.entity';
+import { Project } from '../../project/entities/project.entity';
+import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
 import { UpdateLogoPrintingDto } from './dto/update-logo-printing.dto';
+import { LogoPrinting } from './entities/logo-printing.entity';
+
 @Injectable()
 export class LogoPrintingService {
   private readonly tableMap: Record<string, string> = {
@@ -50,20 +52,11 @@ export class LogoPrintingService {
       .getRawOne();
 
     if (!logoSizeData) {
-      throw new NotFoundException(
-        `No size mapping found for logo position: ${position}`,
-      );
+      throw new NotFoundException(`Logo position "${position}" not found`);
     }
     // Normalize requiredSize to match database values
-    const sizeMapping = {
-      's': 'smallSize', 'small': 'smallSize',
-      'm': 'mediumSize', 'medium': 'mediumSize',
-      'l': 'largeSize', 'large': 'largeSize',
-      'xl': 'xlSize', 'extra large': 'xlSize', 'extralarge': 'xlSize'
-    };
-
     const normalizedSize = requiredSize.trim().toLowerCase();
-    const sizeColumnKey = sizeMapping[normalizedSize];
+    const sizeColumnKey = SIZE_MAPPINGS[normalizedSize];
 
     if (!sizeColumnKey) {
       throw new NotFoundException(
@@ -100,7 +93,7 @@ export class LogoPrintingService {
 
     const result = await manager
       .createQueryBuilder()
-      .select(`"${sizeColumn}"`)  
+      .select(`"${sizeColumn}"`)
       .from(tableName, tableName)
       .where('"printingMethod" = :printingMethod', { printingMethod })
       .getRawOne();
@@ -172,11 +165,12 @@ export class LogoPrintingService {
 
     console.log('Final Total Cost:', totalCost);
 
+    // Create and save the logo printing module
     const logoPrinting = manager.create(LogoPrinting, {
       projectId,
       sizes: dto.sizes,
       price: totalCost,
-      status: 'draft',
+      status: STATUS.DRAFT,
       logoDetails: dto.logoDetails,
 
     });
@@ -252,7 +246,7 @@ export class LogoPrintingService {
         existingLogoPrintingModule.logoDetails = updatedDto.logoDetails;
         existingLogoPrintingModule.sizes = updatedDto.sizes;
         existingLogoPrintingModule.price = totalCost;
-        existingLogoPrintingModule.status = 'draft';
+        existingLogoPrintingModule.status = STATUS.DRAFT;
 
         // Save the updated module
         return manager.save(existingLogoPrintingModule);
@@ -267,7 +261,7 @@ export class LogoPrintingService {
         logoDetails: updatedDto.logoDetails,
         sizes: updatedDto.sizes,
         price: totalCost,
-        status: 'draft',
+        status: STATUS.DRAFT,
       });
 
       // Save and return the new logo printing module
@@ -304,8 +298,8 @@ export class LogoPrintingService {
 
     // Create a bid if the status is 'Posted'
     if (newStatus === 'Posted') {
-      const title = 'Logo Priniting Module Bid';
-      const description = '';
+      const title = MODULE_TITLES.LOGO_PRINTING;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = logoPrintingModule.price;
 
       // Create a new bid using the BidService
@@ -315,8 +309,8 @@ export class LogoPrintingService {
         title,
         description,
         price,
-        'Active',
-        'LogoPrintingModule',
+        STATUS.ACTIVE,
+        MODULE_TYPES.LOGO_PRINTING,
       );
     }
 

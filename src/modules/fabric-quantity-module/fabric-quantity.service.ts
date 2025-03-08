@@ -1,16 +1,17 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { FabricQuantity } from './entities/fabric-quantity.entity';
-import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
-import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 import { BidService } from 'bid/bid.service';
-import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
 import { Project } from 'project/entities/project.entity';
+import { EntityManager, Repository } from 'typeorm';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
+import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
+import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
+import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
+import { FabricQuantity } from './entities/fabric-quantity.entity';
 
 @Injectable()
 export class FabricQuantityService {
@@ -301,8 +302,8 @@ export class FabricQuantityService {
   async updateFabricQuantityStatus(id: number, newStatus: string) {
     // Retrieve fabricPricingModule and load the project and user relations
     const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
-      where: { id }, 
-      relations: ['project', 'project.user'], 
+      where: { id },
+      relations: ['project', 'project.user'],
     });
 
     console.log(`Updating status for fabricQuantityModule ID: ${id}`);
@@ -314,7 +315,7 @@ export class FabricQuantityService {
 
     // Ensure 'project' and 'user' relations are loaded
     const project = fabricQuantityModule.project;
-    const user = project?.user; 
+    const user = project?.user;
 
     if (!user) {
       throw new Error(`User related to fabricQuantityModule with id ${id} not found`);
@@ -325,9 +326,9 @@ export class FabricQuantityService {
     const userId = user.user_id;
 
     // Perform action only if fabricPricingModule and newStatus are valid
-    if (newStatus === 'Posted') {
-      const title = 'Fabric Quantity Module';
-      const description = '';
+    if (newStatus === STATUS.POSTED) {
+      const title = MODULE_TITLES.FABRIC_QUANTITY;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = fabricQuantityModule.fabricQuantityCost;
 
       console.log(`Creating bid for fabricQuantityModule ID: ${id}, userId: ${userId}`);
@@ -338,8 +339,8 @@ export class FabricQuantityService {
         title,
         description,
         price,
-        'Active',
-        'FabricQuantity'
+        STATUS.ACTIVE,
+        MODULE_TYPES.FABRIC_QUANTITY
       );
     }
 
