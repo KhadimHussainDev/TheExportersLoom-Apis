@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
-import { DataSource, MoreThan, Repository } from 'typeorm';
+import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { VERIFICATION } from '../common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -331,7 +331,7 @@ export class UsersService {
   // find user by email in UserRepository with UserAuthentication relation
   async findByEmailWithAuth(email: string): Promise<User> {
     return await this.userRepository.findOne({
-      where: { email },
+      where: { email: ILike(email) },
       relations: ['userAuth'],
     });
   }
