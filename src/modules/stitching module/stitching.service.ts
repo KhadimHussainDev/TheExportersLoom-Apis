@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { Stitching } from './entities/stitching.entity';
-import { CreateStitchingDto } from './dto/create-stitching.dto';
-import { Project } from '../../project/entities/project.entity';
-import { UpdateStitchingDto } from './dto/update-stitchign.dto';
+import { EntityManager, Repository } from 'typeorm';
 import { BidService } from '../../bid/bid.service';
+import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
+import { Project } from '../../project/entities/project.entity';
+import { CreateStitchingDto } from './dto/create-stitching.dto';
+import { UpdateStitchingDto } from './dto/update-stitchign.dto';
+import { Stitching } from './entities/stitching.entity';
 
 @Injectable()
 export class StitchingService {
@@ -16,7 +17,7 @@ export class StitchingService {
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly bidService: BidService,
-  ) {}
+  ) { }
 
   // Create stitching module and calculate cost
   async createStitching(
@@ -162,11 +163,11 @@ export class StitchingService {
     }
 
     const userId = user.user_id;
-    
+
     // Create a bid if the status is 'Posted'
-    if (newStatus === 'Posted') {
-      const title = 'Stitching Module Bid';
-      const description = ''; 
+    if (newStatus === STATUS.POSTED) {
+      const title = MODULE_TITLES.STITCHING;
+      const description = DEFAULT_DESCRIPTIONS.EMPTY;
       const price = stitchingModule.cost;
 
       // Create a new bid using the BidService
@@ -176,8 +177,8 @@ export class StitchingService {
         title,
         description,
         price,
-        'Active', 
-        'StitchingModule', 
+        STATUS.ACTIVE,
+        MODULE_TYPES.STITCHING,
       );
     }
 

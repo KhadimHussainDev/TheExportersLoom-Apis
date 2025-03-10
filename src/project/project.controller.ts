@@ -1,10 +1,19 @@
 import {
-  Controller, Post, Body, NotFoundException, Get, Param, Delete, Put
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Post,
+  Put
 } from '@nestjs/common';
-import { ProjectService } from './project.service';
+import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './entities/project.entity';
+import { ProjectService } from './project.service';
 
 @Controller('projects')
 export class ProjectController {
@@ -12,56 +21,98 @@ export class ProjectController {
 
   /** Create a new project */
   @Post()
-  async createProject(@Body() createProjectDto: CreateProjectDto): Promise<Project> {
-    return await this.projectService.createProject(createProjectDto);
+  async createProject(@Body() createProjectDto: CreateProjectDto): Promise<ApiResponseDto<Project>> {
+    const project = await this.projectService.createProject(createProjectDto);
+    return ApiResponseDto.success(
+      HttpStatus.CREATED,
+      'Project created successfully',
+      project
+    );
   }
 
   /** Get all projects */
   @Get()
-  async getAllProjects(): Promise<Project[]> {
-    const projects = await this.projectService.getAllProjects();
+  async getAllProjects(): Promise<ApiResponseDto<Project[]>> {
+    try {
+      const projects = await this.projectService.getAllProjects();
 
-    if (!projects || projects.length === 0) {
-      throw new NotFoundException('No projects found.');
+      if (!projects || projects.length === 0) {
+        throw new NotFoundException('No projects found.');
+      }
+
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Projects retrieved successfully',
+        projects
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to retrieve projects: ${error.message}`);
     }
-    return projects;
   }
 
   /** Get project by ID */
   @Get(':id')
-  async getProjectById(@Param('id') id: number): Promise<Project> {
-    const project = await this.projectService.getProjectById(id);
+  async getProjectById(@Param('id') id: number): Promise<ApiResponseDto<Project>> {
+    try {
+      const project = await this.projectService.getProjectById(id);
 
-    if (!project) {
-      throw new NotFoundException(`Project with ID ${id} not found.`);
+      if (!project) {
+        throw new NotFoundException(`Project with ID ${id} not found.`);
+      }
+
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Project retrieved successfully',
+        project
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to retrieve project: ${error.message}`);
     }
-
-    return project;
   }
 
-  /** Delete project by ID */
+  /** Delete a project */
   @Delete(':id')
-  async deleteProject(@Param('id') projectId: number): Promise<{ message: string }> {
+  async deleteProject(@Param('id') projectId: number): Promise<ApiResponseDto<any>> {
     try {
       await this.projectService.deleteProject(projectId);
-      return { message: `Project with ID ${projectId} deleted successfully.` };
+
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Project deleted successfully'
+      );
     } catch (error) {
-      throw new NotFoundException(error.message);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to delete project: ${error.message}`);
     }
   }
 
-  /** Edit project by ID */
+  /** Edit a project */
   @Put(':projectId')
   async editProject(
     @Param('projectId') projectId: number,
     @Body() updateProjectDto: UpdateProjectDto
-  ): Promise<Project> {
-    const updatedProject = await this.projectService.editProject(projectId, updateProjectDto);
+  ): Promise<ApiResponseDto<Project>> {
+    try {
+      const updatedProject = await this.projectService.editProject(projectId, updateProjectDto);
 
-    if (!updatedProject) {
-      throw new NotFoundException(`Project with ID ${projectId} not found.`);
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Project updated successfully',
+        updatedProject
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to update project: ${error.message}`);
     }
-
-    return updatedProject;
   }
 }

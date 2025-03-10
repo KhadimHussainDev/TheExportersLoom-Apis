@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsNumber, IsIn, IsNotEmpty, IsDecimal } from 'class-validator';
+import { STATUS } from 'common';
 
 export class UpdateFabricPricingDto {
   @IsOptional()
@@ -20,7 +21,7 @@ export class UpdateFabricPricingDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['draft', 'active', 'completed'])
+  @IsIn([STATUS.DRAFT, STATUS.ACTIVE, STATUS.COMPLETED])
   status?: string;
 
   @IsNotEmpty()

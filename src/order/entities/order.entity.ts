@@ -12,7 +12,7 @@ export class Order {
   @OneToOne(() => Bid)
   @JoinColumn({ name: 'bidId' })
   bid: Bid;
-   
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'exporterId' })
   exporter: User;

@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,OneToMany } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 import { Bid } from '../../../bid/entities/bid.entity';
+import { STATUS } from 'common';
 
 @Entity('fabric_pricing_module')
 export class FabricPricingModule {
@@ -19,7 +20,7 @@ export class FabricPricingModule {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255,default: 'draft' })
+  @Column({ type: 'varchar', length: 255, default: STATUS.DRAFT })
   status: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
