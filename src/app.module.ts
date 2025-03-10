@@ -15,6 +15,7 @@ import { PackagingModule } from './modules/packaging module/packaging.module';
 import { StitchingModule } from './modules/stitching module/stitching.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OrderModule } from './order/order.module';
+import { ProductConfigurationModule } from './product-configuration/product-configuration.module';
 import { ProjectModule } from './project/project.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
 import { ReviewsModule } from './reviews/reviews.module';
@@ -62,6 +63,7 @@ import { UsersModule } from './users/users.module';
     ReviewsModule,
     CostEstimationModule,
     RecommendationModule,
+    ProductConfigurationModule,
     ExampleModule
   ],
   controllers: [AppController],
