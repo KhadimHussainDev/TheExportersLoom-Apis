@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BottomHem } from '../entities/bottom-hem.entity';
 import { FabricPricing } from '../entities/fabric-pricing.entity';
+import { FabricSizeCalculation } from '../entities/fabric-size-calculation.entity';
 import { LogoSizes } from '../entities/logo-sizes.entity';
 import { ShirtTypes } from '../entities/shirt-type.entity';
 
@@ -20,6 +21,9 @@ export class ProductConfigurationService {
 
     @InjectRepository(ShirtTypes)
     private shirtTypesRepository: Repository<ShirtTypes>,
+
+    @InjectRepository(FabricSizeCalculation)
+    private fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
   ) { }
 
   /**
@@ -47,15 +51,16 @@ export class ProductConfigurationService {
   }
 
   /**
-   * Get all unique categories 
+   * Get all fabric types that can be used for a specific shirt type
    */
-  async getCategories(): Promise<string[]> {
-    const result = await this.fabricPricingRepository
-      .createQueryBuilder('fabric_pricing')
-      .select('DISTINCT fabric_pricing.category', 'category')
+  async getCategories(shirtType: string): Promise<string[]> {
+    const result = await this.fabricSizeCalculationRepository
+      .createQueryBuilder('fabric_size_calculation')
+      .select('DISTINCT fabric_size_calculation.fabricType', 'fabricType')
+      .where('LOWER(fabric_size_calculation.shirtType) = LOWER(:shirtType)', { shirtType })
       .getRawMany();
 
-    return result.map(item => item.category);
+    return result.map(item => item.fabricType);
   }
 
   /**

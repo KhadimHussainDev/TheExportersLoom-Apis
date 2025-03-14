@@ -103,7 +103,7 @@ export class ProjectService {
                 projectId: savedProject.id,
                 logoDetails: createProjectDto.logoDetails.map((logo) => ({
                   logoPosition: logo.logoPosition,
-                  printingMethod: logo.PrintingStyle,
+                  printingMethod: logo.printingStyle,
                 })),
                 sizes: createProjectDto.sizes?.map((size) => ({
                   size: size.fabricSize,
