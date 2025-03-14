@@ -13,7 +13,7 @@ class LogoDetailDto {
   logoPosition: string;
 
   @IsString()
-  PrintingStyle: string;
+  printingStyle: string;
 }
 
 class SizeDetailDto {

@@ -18,8 +18,8 @@ export class ProductConfigurationController {
   }
 
   @Get('categories')
-  async getCategories(): Promise<string[]> {
-    return this.productConfigurationService.getCategories();
+  async getCategories(@Query('shirtType') shirtType: string): Promise<string[]> {
+    return this.productConfigurationService.getCategories(shirtType);
   }
 
   @Get('subcategories')

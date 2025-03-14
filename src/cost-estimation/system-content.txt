@@ -1,75 +1,76 @@
 
-Analyze the following input prompt and fill out the JSON template provided below. Extract specific details mentioned in the prompt and assign them to the corresponding attributes in the JSON structure. If any attribute is missing or not explicitly stated in the prompt, set its value to `"undefined"`.  
+Analyze the following input prompt and fill out the JSON template provided below. Extract specific details mentioned in the prompt and assign them to the corresponding attributes in the JSON structure. If any attribute is missing or not explicitly stated in the prompt, set its value to `"null"`.  
 
 **Output JSON Template:**  
 ```json
 {
-  "fabricType": "<Extracted value or 'undefined'>",
-  "fabricSubType" : "<Extracted value or 'undefined'>",
-  "cuttingStyle" : "<Extracted value or 'undefined'>",
-  "labelType": "<Extracted value or 'undefined'>",
-  "labelsRequired": <true/false/undefined>,
-  "numberOfLogos": <Number or 'undefined'>,
+  "fabricType": "<Extracted value or 'null'>",
+  "fabricSubType" : "<Extracted value or 'null'>",
+  "cuttingStyle" : "<Extracted value or 'null'>",
+  "labelType": "<Extracted value or 'null'>",
+  "labelsRequired": <true/false/null>,
+  "numberOfLogos": <Number or 'null'>,
   "logoDetails": [
     //Depens on numberOfLogos
     {
-      "position": "<Extracted value or 'undefined'>",
-      "type": "<Extracted value or 'undefined'>"
+      "position": "<Extracted value or 'null'>",
+      "type": "<Extracted value or 'null'>"
     },
   ],
-  "packagingRequired": <true/false/undefined>,
-  "packagingType": "<Extracted value or 'undefined'>",
-  "patternRequired": <true/false/undefined>,
-  "productType": "<Extracted value or 'undefined'>",
+  "packagingRequired": <true/false/null>,
+  "packagingType": "<Extracted value or 'null'>",
+  "patternRequired": <true/false/null>,
+  "productType": "<Extracted value or 'null'>",
   "sizes": [
     {
-      "quantity": "<Extracted value or 'undefined'>",
-      "size": "<Extracted value or 'undefined'>"
+      "quantity": "<Extracted value or 'null'>",
+      "size": "<Extracted value or 'null'>"
     },
     {
-      "quantity": "<Extracted value or 'undefined'>",
-      "size": "<Extracted value or 'undefined'>"
+      "quantity": "<Extracted value or 'null'>",
+      "size": "<Extracted value or 'null'>"
     }
   ],
-  "tagCardsRequired": <true/false/undefined>
+  "tagCardsRequired": <true/false/null>
 }
 ```
 
 **Extraction Rules:**  
 1. Identify and explicitly state the **fabric type**, **product type**, and any requirements such as **labels**, **logos**, **packaging**, **patterns**, and **tag cards**. 
 2. Extract logo details, including their **positions** and **types**, ensuring each logo detail is accurately matched.  
-3. Extract sizes and quantities for each size mentioned, ensuring that each size entry in the JSON corresponds to a specific size and its quantity. Use XS,S,M,L,XL for sizes.
-4. If the prompt does not mention a specific attribute, explicitly set it to `"undefined"`.  
+3. Extract sizes and quantities for each size mentioned, ensuring that each size entry in the JSON corresponds to a specific size and its quantity. 
+3. Use S,S,M,L,XL,XXL for sizes.
+4. If the prompt does not mention a specific attribute, explicitly set it to `"null"`.  
 5. Use boolean values (`true`/`false`) for yes/no requirements like `labelsRequired`, `packagingRequired`, `patternRequired`, and `tagCardsRequired`.  
 6. Ensure the output adheres strictly to the JSON format.
 
 Note::
-If any of above not found in provided prompt mark that as undefined. 
+If any of above not found in provided prompt mark that as null. 
 
 Following is output if nothing matched in prompt
 
 {
-  fabricType: undefined,
-  fabricSubType : undefined,
-  cuttingStyle : undefined,
-  labelType: undefined,
-  labelsRequired: undefined,
-  numberOfLogos: undefined,
+  fabricType: null,
+  fabricSubType : null,
+  cuttingStyle : null,
+  labelType: null,
+  labelsRequired: null,
+  numberOfLogos: null,
   logoDetails: [
     {
-      position: undefined,
-      type: undefined
+      position: null,
+      type: null
     }
   ],
-  packagingRequired: undefined,
-  packagingType: undefined,
-  patternRequired: undefined,
-  productType: undefined,
+  packagingRequired: null,
+  packagingType: null,
+  patternRequired: null,
+  productType: null,
   sizes: [
     {
-      quantity: undefined,
-      size: undefined
+      quantity: null,
+      size: null
     }
   ],
-  tagCardsRequired: undefined
+  tagCardsRequired: null
 }

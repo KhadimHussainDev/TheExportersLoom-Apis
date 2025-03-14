@@ -309,6 +309,7 @@ export class UsersService {
       user_id: user.user_id,
       username: user.username,
       userType: user.userType,
+      
     };
     return this.jwtService.sign(payload);
   }

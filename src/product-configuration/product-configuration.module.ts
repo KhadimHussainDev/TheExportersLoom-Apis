@@ -6,6 +6,7 @@ import { LogoSizes } from '../entities/logo-sizes.entity';
 import { ShirtTypes } from '../entities/shirt-type.entity';
 import { ProductConfigurationController } from './product-configuration.controller';
 import { ProductConfigurationService } from './product-configuration.service';
+import { FabricSizeCalculation } from 'entities/fabric-size-calculation.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ProductConfigurationService } from './product-configuration.service';
       BottomHem,
       FabricPricing,
       ShirtTypes,
+      FabricSizeCalculation
     ]),
   ],
   controllers: [ProductConfigurationController],
