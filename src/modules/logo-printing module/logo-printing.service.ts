@@ -152,13 +152,13 @@ export class LogoPrintingService {
       const { size: requiredSize } = sizeData;
 
       for (const logo of dto.logoDetails) {
-        const { logoPosition, printingMethod } = logo;
+        const { logoPosition, printingStyle } = logo;
         const sizeColumn = await this.getSizeColumn(manager, logoPosition, requiredSize);
 
         if (!sizeColumn) {
           throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
         }
-        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingStyle);
         totalCost += cost;
       }
     }
@@ -218,7 +218,7 @@ export class LogoPrintingService {
       const { size: requiredSize } = sizeData;
 
       for (const logo of updatedDto.logoDetails) {
-        const { logoPosition, printingMethod } = logo;
+        const { logoPosition, printingStyle } = logo;
 
         // Retrieve size column based on position and required size
         const sizeColumn = await this.getSizeColumn(manager, logoPosition, requiredSize);
@@ -228,7 +228,7 @@ export class LogoPrintingService {
         }
 
         // Fetch cost based on position, size, and printing method
-        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        const cost = await this.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingStyle);
         totalCost += cost;
       }
     }

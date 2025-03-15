@@ -10,7 +10,7 @@ import { User } from '../users/entities/user.entity';
 
 interface JwtUserPayload {
   email: string;
-  user_id: number;
+  userId: number;
   userType: string;
 }
 
@@ -36,7 +36,7 @@ export class AuthService {
     user: JwtUserPayload,
   ): Promise<{ accessToken: string; refreshToken?: string }> {
     const payload = {
-      user_id: user.user_id,
+      userId: user.userId,
       username: user.email,
       userType: user.userType,
     };

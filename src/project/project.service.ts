@@ -34,7 +34,7 @@ export class ProjectService {
   ) { }
 
   async createProject(createProjectDto: CreateProjectDto): Promise<Project> {
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       try {
         // Step 1: Fetch the user by userId from the database
         const user = await manager.findOne(User, {
@@ -70,8 +70,8 @@ export class ProjectService {
               categoryType: createProjectDto.fabricCategory,
               shirtType: createProjectDto.shirtType,
               sizes: createProjectDto.sizes?.map((size) => ({
-                size: size.fabricSize,
-                quantityRequired: size.quantity,
+                size: size.size,
+                quantity: size.quantity,
               })) || [],
             },
             manager,
@@ -103,11 +103,11 @@ export class ProjectService {
                 projectId: savedProject.id,
                 logoDetails: createProjectDto.logoDetails.map((logo) => ({
                   logoPosition: logo.logoPosition,
-                  printingMethod: logo.printingStyle,
+                  printingStyle: logo.printingStyle,
                 })),
                 sizes: createProjectDto.sizes?.map((size) => ({
-                  size: size.fabricSize,
-                  quantityRequired: size.quantity,
+                  size: size.size,
+                  quantity: size.quantity,
                 })),
               },
               manager,
@@ -186,11 +186,12 @@ export class ProjectService {
         throw new Error(`Failed to create project: ${error.message}`);
       }
     });
+    return this.getProjectById(result.id);
   }
 
   // Update project 
   async editProject(projectId: number, updateProjectDto: UpdateProjectDto): Promise<Project> {
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       // Step 1: Fetch the existing project
       const project = await manager.findOne(Project, {
         where: { id: projectId },
@@ -214,7 +215,7 @@ export class ProjectService {
 
       // Calculate total quantity from sizes array
       const totalQuantity = updateProjectDto.sizes?.reduce(
-        (sum, size) => sum + size.quantityRequired,
+        (sum, size) => sum + size.quantity,
         0
       ) || 0;
       console.log('Total Quantity:', totalQuantity);
@@ -222,8 +223,8 @@ export class ProjectService {
       // Update Sizes
       if (updateProjectDto.sizes) {
         project.sizes = updateProjectDto.sizes.map(size => ({
-          fabricSize: size.size,
-          quantity: size.quantityRequired,
+          size: size.size,
+          quantity: size.quantity,
         }));
       }
 
@@ -231,7 +232,7 @@ export class ProjectService {
       if (updateProjectDto.logoDetails) {
         project.logoDetails = updateProjectDto.logoDetails.map(logo => ({
           logoPosition: logo.logoPosition,
-          printingStyle: logo.PrintingStyle,
+          printingStyle: logo.printingStyle,
         }));
       }
 
@@ -253,7 +254,7 @@ export class ProjectService {
           shirtType: updateProjectDto.shirtType,
           sizes: updateProjectDto.sizes?.map((size) => ({
             size: size.size,
-            quantityRequired: size.quantityRequired,
+            quantity: size.quantity,
           })) || [],
         },
         manager,
@@ -284,11 +285,11 @@ export class ProjectService {
           projectId: updatedProject.id,
           logoDetails: updateProjectDto.logoDetails?.map((logo) => ({
             logoPosition: logo.logoPosition,
-            printingMethod: logo.PrintingStyle,
+            printingStyle: logo.printingStyle,
           })) || [],
           sizes: updateProjectDto.sizes?.map((size) => ({
             size: size.size,
-            quantityRequired: size.quantityRequired,
+            quantity: size.quantity,
           })) || [],
         },
         manager,
@@ -376,6 +377,7 @@ export class ProjectService {
 
       return updatedProject;
     });
+    return this.getProjectById(result.id);
   }
 
 

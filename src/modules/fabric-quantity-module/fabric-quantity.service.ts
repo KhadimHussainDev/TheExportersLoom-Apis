@@ -80,9 +80,9 @@ export class FabricQuantityService {
     // Track index for updating existing records
     let existingIndex = 0;
     for (const sizeObj of sizes) {
-      let { size, quantityRequired } = sizeObj;
+      let { size, quantity } = sizeObj;
 
-      if (!size || !quantityRequired || quantityRequired <= 0) {
+      if (!size || !quantity || quantity <= 0) {
         throw new BadRequestException(
           `Invalid fabric size or quantity: ${JSON.stringify(sizeObj)}`,
         );
@@ -114,14 +114,14 @@ export class FabricQuantityService {
           throw new BadRequestException(`Invalid fabric size: ${size}`);
       }
 
-      const fabricQuantityCost = fabricSizeCost * quantityRequired;
+      const fabricQuantityCost = fabricSizeCost * quantity;
       totalFabricQuantityCost += fabricQuantityCost;
 
       // Update existing fabric quantity record
       if (existingIndex < existingFabricQuantities.length) {
         let fabricQuantity = existingFabricQuantities[existingIndex];
         fabricQuantity.fabricSize = normalizedSize;
-        fabricQuantity.quantityRequired = quantityRequired;
+        fabricQuantity.quantityRequired =   quantity;
         fabricQuantity.fabricQuantityCost = fabricQuantityCost;
         fabricQuantity.categoryType = categoryType;
         fabricQuantity.shirtType = shirtType;
@@ -140,7 +140,7 @@ export class FabricQuantityService {
           categoryType,
           shirtType,
           fabricSize: normalizedSize,
-          quantityRequired,
+          quantityRequired: quantity,
           fabricQuantityCost,
         });
 
@@ -159,8 +159,8 @@ export class FabricQuantityService {
     }
 
     project.sizes = sizes.map(sizeObj => ({
-      fabricSize: sizeObj.size,
-      quantity: sizeObj.quantityRequired,
+      size: sizeObj.size,
+      quantity: sizeObj.quantity,
     }));
 
     if (manager) {
@@ -209,9 +209,9 @@ export class FabricQuantityService {
     };
 
     for (const sizeObj of sizes) {
-      let { size, quantityRequired } = sizeObj;
+      let { size, quantity } = sizeObj;
 
-      if (!size || !quantityRequired || quantityRequired <= 0) {
+      if (!size || !quantity || quantity <= 0) {
         throw new BadRequestException(
           `Invalid fabric size or quantity: ${JSON.stringify(sizeObj)}`,
         );
@@ -255,7 +255,7 @@ export class FabricQuantityService {
       }
 
       // Calculate total cost
-      const fabricQuantityCost = fabricSizeCost * quantityRequired;
+      const fabricQuantityCost = fabricSizeCost * quantity;
       totalFabricQuantityCost += fabricQuantityCost;
 
       // Create entity
@@ -265,7 +265,7 @@ export class FabricQuantityService {
         categoryType,
         shirtType,
         fabricSize: normalizedSize, // Save standardized size
-        quantityRequired: quantityRequired,
+        quantityRequired: quantity,
         fabricQuantityCost,
       });
 

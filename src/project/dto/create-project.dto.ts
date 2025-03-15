@@ -7,22 +7,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { LogoDetailDto } from 'modules/logo-printing module/dto/logo-details.dto';
+import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
 
-class LogoDetailDto {
-  @IsString()
-  logoPosition: string;
 
-  @IsString()
-  printingStyle: string;
-}
-
-class SizeDetailDto {
-  @IsInt()
-  quantity: number;
-
-  @IsString()
-  fabricSize: string;
-}
 
 export class CreateProjectDto {
   @IsInt()
@@ -77,6 +65,6 @@ export class CreateProjectDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SizeDetailDto)
-  sizes: SizeDetailDto[];
+  @Type(() => FabricSizeDetailDto)
+  sizes: FabricSizeDetailDto[];
 }
