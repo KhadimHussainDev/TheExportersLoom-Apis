@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BidService } from 'bid/bid.service';
 import { MachineService } from 'machines/machine.service';
@@ -15,7 +15,10 @@ export class OrderService {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     private readonly bidService: BidService,
+
+    @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
+
     private readonly machineService: MachineService,
   ) { }
 

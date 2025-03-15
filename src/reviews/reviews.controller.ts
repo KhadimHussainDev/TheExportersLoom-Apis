@@ -29,6 +29,26 @@ export class ReviewsController {
     );
   }
 
+  @Get('user/:userId')
+  async getAllReviewsOfUser(@Param('userId') userId: number): Promise<ApiResponseDto<Reviews[]>> {
+    const reviews = await this.reviewService.getAllReviewsOfUser(userId);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Reviews retrieved successfully',
+      reviews
+    );
+  }
+
+  @Get('average-rating/:userId')
+  async getUserAverageRating(@Param('userId') userId: number): Promise<ApiResponseDto<{ avgRating: number }>> {
+    const averageRating = await this.reviewService.getUserAverageRating(userId);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'User average rating retrieved successfully',
+      averageRating
+    );
+  }
+  
   @Get()
   async getAllReviews(): Promise<ApiResponseDto<Reviews[]>> {
     const reviews = await this.reviewService.getAllReviews();

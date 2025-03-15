@@ -97,6 +97,12 @@ export class UsersController {
     // }
   }
 
+  @Get('profile/:id')
+  async getUserProfile(@Param('id') id: number): Promise<ApiResponseDto<User>> {
+    const user = await this.usersService.getUserProfile(id);
+    return ApiResponseDto.success(HttpStatus.OK, 'User profile retrieved successfully', user);
+  }
+
   @Delete(':id')
   async deleteUser(
     @Req() req: Request,
