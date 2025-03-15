@@ -14,6 +14,9 @@ export class UserProfile {
 
   @Column({ nullable: true })
   name: string;
+  
+  @Column({ nullable: true })
+  bio: string;
 
   @Column({ nullable: true })
   company_name: string;

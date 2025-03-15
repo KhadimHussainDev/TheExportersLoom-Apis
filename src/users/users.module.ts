@@ -9,6 +9,7 @@ import { ResetToken } from './entities/reset-token.entity';
 import { AuthModule } from '../auth/auth.module';
 import { MailService } from './services/mail.service';
 import { EmailVerificationToken } from './entities/email-verification.entity';
+import { ReviewsModule } from 'reviews/reviews.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EmailVerificationToken } from './entities/email-verification.entity';
       EmailVerificationToken,
     ]),
     forwardRef(() => AuthModule),
+    forwardRef(() => ReviewsModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, MailService],

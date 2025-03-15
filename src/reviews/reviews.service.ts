@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MachineService } from 'machines/machine.service';
 import { Repository } from 'typeorm';
@@ -12,8 +12,13 @@ export class ReviewsService {
   constructor(
     @InjectRepository(Reviews)
     private readonly reviewRepository: Repository<Reviews>,
+
+    @Inject(forwardRef(() => OrderService))
     private readonly orderService: OrderService,
+
+    @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
+
     private readonly machineService: MachineService,
   ) { }
 
@@ -73,8 +78,50 @@ export class ReviewsService {
 
   async getAllReviews(): Promise<Reviews[]> {
     return await this.reviewRepository.find({
-      relations: ['order', 'reviewGiver', 'reviewTaker', 'machine']
+      relations: ['reviewTaker']
     });
+  }
+
+  async getAllReviewsOfUser(userId: number): Promise<any[]> {
+    const reviews = await this.reviewRepository.find({
+      where: {
+        reviewTaker: { user_id: userId }
+      },
+      relations: ['reviewGiver', 'reviewGiver.profile', 'order']
+    });
+
+    // Map the reviews to include the necessary fields
+    return reviews.map(review => ({
+      reviewId: review.reviewId,
+      orderId: review.order.orderId,
+      rating: review.rating,
+      reviewText: review.reviewText,
+      reviewDate: review.reviewDate,
+      reviewGiver: {
+        name: review.reviewGiver.profile.name,
+        picture: review.reviewGiver.profile.profile_picture
+      }
+    }));
+  }
+
+  async getUserAverageRating(userId: number): Promise<{ avgRating: number }> {
+    const reviews = await this.reviewRepository.find({
+      where: {
+        reviewTaker: { user_id: userId }
+      },
+      select: ['rating']
+    });
+
+    if (reviews.length === 0) {
+      return { avgRating: 0 }; // Return 0 if the user has no reviews
+    }
+
+    // Calculate the average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRating / reviews.length;
+
+    // Round to 1 decimal place
+    return { avgRating: Math.round(averageRating * 10) / 10 };
   }
 
   async updateReview(reviewId: number, updateReviewDto: Partial<Reviews>): Promise<Reviews> {

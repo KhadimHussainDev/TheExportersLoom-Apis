@@ -2,14 +2,17 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
   NotFoundException,
-  UnauthorizedException
+  UnauthorizedException,
+  forwardRef
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
+import { ReviewsService } from 'reviews/reviews.service';
 import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { VERIFICATION } from '../common';
@@ -37,6 +40,9 @@ export class UsersService {
     private resetTokenRepo: Repository<ResetToken>,
     @InjectRepository(EmailVerificationToken)
     private emailVerificationTokenRepo: Repository<EmailVerificationToken>,
+
+    @Inject(forwardRef(() => ReviewsService))
+    private readonly reviewService: ReviewsService,
 
     private jwtService: JwtService,
     private dataSource: DataSource,
@@ -122,6 +128,31 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async getUserProfile(id: number): Promise<any> {
+    const user = await this.userRepository.findOne({
+      where: { user_id: id },
+      relations: ['profile'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    // get average rating of the user
+    const averageRating = await this.reviewService.getUserAverageRating(id);
+    return {
+      name: user.profile.name,
+      username: user.username,
+      email: user.email,
+      phoneNo: user.profile.phone_number,
+      address: user.profile.address,
+      picture: user.profile.profile_picture || user.picture,
+      companyName: user.profile.company_name,
+      cnic: user.profile.cnic,
+      bio: user.profile.bio,
+      averageRating: averageRating.avgRating,
+    };
   }
 
   // Method to handle forgot password and generate a reset token
@@ -309,7 +340,7 @@ export class UsersService {
       userId: user.user_id,
       username: user.username,
       userType: user.userType,
-      
+
     };
     return this.jwtService.sign(payload);
   }
@@ -369,6 +400,7 @@ export class UsersService {
       // Update User fields
       if (updateUserDto.username) user.username = updateUserDto.username;
       if (updateUserDto.email) user.email = updateUserDto.email;
+      if (updateUserDto.picture) user.picture = updateUserDto.picture;
 
       // Update UserProfile fields
       if (user.profile) {
@@ -379,6 +411,8 @@ export class UsersService {
           user.profile.phone_number = updateUserDto.phone_number;
         if (updateUserDto.cnic) user.profile.cnic = updateUserDto.cnic;
         if (updateUserDto.address) user.profile.address = updateUserDto.address;
+        if (updateUserDto.bio) user.profile.bio = updateUserDto.bio;
+        if (updateUserDto.picture) user.profile.profile_picture = updateUserDto.picture;
 
         // Save updated profile
         await queryRunner.manager.save(user.profile);

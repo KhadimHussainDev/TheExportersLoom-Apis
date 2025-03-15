@@ -12,6 +12,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()
@@ -29,4 +33,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
+  picture?: string;
 }
