@@ -30,12 +30,12 @@ export class LogoPrintingController {
       const { size: requiredSize } = sizeData;
 
       for (const logo of dto.logoDetails) {
-        const { logoPosition, printingMethod } = logo;
+        const { logoPosition, printingStyle } = logo;
         const sizeColumn = await this.logoPrintingService.getSizeColumn(manager, logoPosition, requiredSize);
         if (!sizeColumn) {
           throw new NotFoundException(`Invalid size mapping for ${requiredSize} at position ${logoPosition}`);
         }
-        const costRange = await this.logoPrintingService.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingMethod);
+        const costRange = await this.logoPrintingService.getCostByPositionAndSize(manager, logoPosition, sizeColumn, printingStyle);
         totalCost += costRange;
       }
     }

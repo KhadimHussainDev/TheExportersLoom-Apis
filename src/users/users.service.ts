@@ -306,7 +306,7 @@ export class UsersService {
   // Generate JWT token after successful login
   generateToken(user: User): string {
     const payload = {
-      user_id: user.user_id,
+      userId: user.user_id,
       username: user.username,
       userType: user.userType,
       

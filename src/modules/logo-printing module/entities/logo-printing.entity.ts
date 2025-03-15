@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
-import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/create-fabric-quantity.dto';
+import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
+import { LogoDetailDto } from '../dto/logo-details.dto';
 
 @Entity('logo_printing')
 export class LogoPrinting {
@@ -9,7 +10,7 @@ export class LogoPrinting {
 
   
   @Column({ type: 'jsonb', nullable: true }) 
-  logoDetails: { logoPosition: string; printingMethod: string }[];
+  logoDetails: LogoDetailDto[];
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 

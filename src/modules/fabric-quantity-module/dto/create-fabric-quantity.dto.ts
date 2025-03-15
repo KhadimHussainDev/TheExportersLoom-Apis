@@ -1,14 +1,9 @@
 import { IsString, IsInt, IsDecimal, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { FabricSizeDetailDto } from './fabricSizeDetails.dto';
 
 
-export class FabricSizeDetailDto {
-  @IsString()
-  size: string;
 
-  @IsInt()
-  quantityRequired: number;
-}
 
 export class CreateFabricQuantityDto {
   @IsString()

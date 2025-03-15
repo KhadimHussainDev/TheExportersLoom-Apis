@@ -13,6 +13,8 @@ import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-p
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { Packaging } from '../../modules/packaging module/entities/packaging.entity';
 import { User } from '../../users/entities/user.entity';
+import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
+import { LogoDetailDto } from 'modules/logo-printing module/dto/logo-details.dto';
 
 @Entity('project')
 export class Project {
@@ -60,10 +62,10 @@ export class Project {
   tagCardsRequired: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
-  logoDetails: { logoPosition: string; printingStyle: string; }[];
+  logoDetails: LogoDetailDto[];
 
   @Column({ type: 'jsonb', nullable: true })
-  sizes: { quantity: number; fabricSize: string }[];
+  sizes: FabricSizeDetailDto[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalEstimatedCost: number;
