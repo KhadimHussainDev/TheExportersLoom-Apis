@@ -388,7 +388,9 @@ export class ProjectService {
     return await this.projectRepository.find({
       where: {
         status: Not('STATUS.INACTIVE'),
+
       },
+      relations: ['user']
     });
   }
 
@@ -446,4 +448,240 @@ export class ProjectService {
     await manager.update(Packaging, { project: { id: projectId } }, { status: STATUS.INACTIVE });
   }
 
+  async getProjectsByUserId(userId: number): Promise<any[]> {
+    // First check if user exists
+    const user = await this.dataSource.manager.findOne(User, {
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found.`);
+    }
+
+    // Get all projects for this user
+    const projects = await this.projectRepository.find({
+      where: { user: { user_id: userId } },
+      relations: ['user', 'fabricQuantities', 'fabricPriceModules', 'logoPrintingModules', 'cuttings', 'stitchingModules', 'packagingModules'],
+    });
+
+    // Transform projects to match the format expected by the frontend
+    return projects.map(project => {
+      // Calculate or set default values for fields needed by ProjectCard
+      let quantity = 0;
+      let size = '';
+
+      // Try to extract quantity and size from the sizes array
+      if (project.sizes && project.sizes.length > 0) {
+        // Sum up quantities across all sizes for total quantity
+        quantity = project.sizes.reduce((total, sizeObj) => total + (sizeObj.quantity || 0), 0);
+
+        // Format multiple sizes for the name (e.g., "3 XL + 50 S")
+        const sizeText = project.sizes
+          .filter(sizeObj => sizeObj.size && sizeObj.quantity > 0)
+          .map(sizeObj => `${sizeObj.quantity} ${sizeObj.size}`)
+          .join(' + ');
+
+        size = sizeText;
+      }
+
+      const baseType = project.shirtType || 'Products';
+
+      // Create a more unique name with quantity and size info
+      const name = size ? `${size} ${baseType}` : baseType;
+
+      const description = `${project.fabricCategory || ''} (${project.fabricSubCategory || ''}) project`;
+      const budget = project.totalEstimatedCost || 0;
+
+      // Count modules by status
+      let completedModulesCount = 0;
+      let ongoingModulesCount = 0;
+      let todoModulesCount = 0;
+      let totalModulesCount = 0;
+
+      // Helper function to classify and count modules
+      const countModuleStatus = (modules) => {
+        if (!modules || modules.length === 0) return;
+
+        totalModulesCount++;
+
+        if (modules.some(m => m.status === STATUS.COMPLETED)) {
+          completedModulesCount++;
+        } else if (modules.some(m => m.status === STATUS.POSTED)) {
+          ongoingModulesCount++;
+        } else {
+          todoModulesCount++;
+        }
+      };
+
+      // Check all module types
+      countModuleStatus(project.fabricQuantities);
+      countModuleStatus(project.fabricPriceModules);
+      countModuleStatus(project.logoPrintingModules);
+      countModuleStatus(project.cuttings);
+      countModuleStatus(project.stitchingModules);
+      countModuleStatus(project.packagingModules);
+
+      // Calculate progress percentage
+      const progress = totalModulesCount > 0 ? (completedModulesCount / totalModulesCount) * 100 : 0;
+
+      // Return only the essential fields
+      return {
+        id: project.id,
+        name,
+        description,
+        budget,
+        status: project.status,
+        completedModules: completedModulesCount,
+        ongoingModules: ongoingModulesCount,
+        todoModules: todoModulesCount,
+        totalModules: totalModulesCount,
+        progress
+      };
+    });
+  }
+
+  async getProjectStatistics(): Promise<any> {
+    const projects = await this.projectRepository.find();
+    return this.calculateProjectStatistics(projects);
+  }
+
+  async getUserProjectStatistics(userId: number): Promise<any> {
+    // First check if user exists
+    const user = await this.dataSource.manager.findOne(User, {
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found.`);
+    }
+
+    // Get all projects for this user with optimized data
+    const userProjects = await this.getProjectsByUserId(userId);
+
+    // Calculate project statistics
+    let completed = 0;
+    let active = 0;
+    let pending = 0;
+    let draft = 0;
+    let cancelled = 0;
+
+    // For module-level statistics
+    let totalModulesCount = 0;
+    let completedModulesCount = 0;
+    let ongoingModulesCount = 0;
+    let todoModulesCount = 0;
+
+    userProjects.forEach(project => {
+      const status = project.status ? project.status.toLowerCase() : '';
+
+      // Project status statistics
+      if (status.includes('complete')) {
+        completed++;
+      } else if (status.includes('active')) {
+        active++;
+      } else if (status.includes('pending')) {
+        pending++;
+      } else if (status.includes('draft')) {
+        draft++;
+      } else if (status.includes('cancel')) {
+        cancelled++;
+      }
+
+      // Module statistics - directly use the categorized modules
+      totalModulesCount += project.totalModules || 0;
+      completedModulesCount += project.completedModules || 0;
+      ongoingModulesCount += project.ongoingModules || 0;
+      todoModulesCount += project.todoModules || 0;
+    });
+
+    const total = userProjects.length;
+
+    // Calculate percentages for project pie chart
+    const completedPercentage = total > 0 ? (completed / total) * 100 : 0;
+    const ongoingPercentage = total > 0 ? ((active + pending) / total) * 100 : 0;
+    const todoPercentage = total > 0 ? ((draft + cancelled) / total) * 100 : 0;
+
+    // Calculate percentages for module pie chart
+    const moduleCompletedPercentage = totalModulesCount > 0 ? (completedModulesCount / totalModulesCount) * 100 : 0;
+    const moduleOngoingPercentage = totalModulesCount > 0 ? (ongoingModulesCount / totalModulesCount) * 100 : 0;
+    const moduleTodoPercentage = totalModulesCount > 0 ? (todoModulesCount / totalModulesCount) * 100 : 0;
+
+    return {
+      // Project-level statistics
+      projectCompletedPercentage: completedPercentage,
+      projectOngoingPercentage: ongoingPercentage,
+      projectTodoPercentage: todoPercentage,
+      totalProjects: total,
+      completedProjects: completed,
+      ongoingProjects: active + pending,
+      todoProjects: draft + cancelled,
+
+      // Module-level statistics
+      completedPercentage: moduleCompletedPercentage,
+      ongoingPercentage: moduleOngoingPercentage,
+      todoPercentage: moduleTodoPercentage,
+      total: totalModulesCount,
+      completed: completedModulesCount,
+      ongoing: ongoingModulesCount,
+      todo: todoModulesCount,
+
+      // Additional detailed stats
+      active,
+      pending,
+      draft,
+      cancelled
+    };
+  }
+
+  private calculateProjectStatistics(projects: Project[]): any {
+    let completed = 0;
+    let active = 0;
+    let pending = 0;
+    let draft = 0;
+    let cancelled = 0;
+
+    projects.forEach(project => {
+      switch (project.status) {
+        case STATUS.COMPLETED:
+          completed++;
+          break;
+        case STATUS.ACTIVE:
+          active++;
+          break;
+        case STATUS.PENDING:
+          pending++;
+          break;
+        case STATUS.DRAFT:
+          draft++;
+          break;
+        case STATUS.CANCELLED:
+          cancelled++;
+          break;
+        default:
+          break;
+      }
+    });
+
+    const total = projects.length;
+
+    // Calculate percentages for pie chart
+    const completedPercentage = total > 0 ? (completed / total) * 100 : 0;
+    const ongoingPercentage = total > 0 ? ((active + pending) / total) * 100 : 0;
+    const todoPercentage = total > 0 ? ((draft + cancelled) / total) * 100 : 0;
+
+    return {
+      completedPercentage,
+      ongoingPercentage,
+      todoPercentage,
+      total,
+      completed,
+      ongoing: active + pending,
+      todo: draft + cancelled,
+      // Additional detailed stats
+      active,
+      pending,
+      draft,
+      cancelled
+    };
+  }
 }
