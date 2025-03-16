@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { UpdateOrderDto } from './dtos/update-order.dto';
@@ -11,12 +11,12 @@ export class OrderController {
   @Post()
   async createOrder(@Body() createOrderDto: CreateOrderDto): Promise<ApiResponseDto<any>> {
     // try {
-      const order = await this.orderService.createOrder(createOrderDto);
-      return ApiResponseDto.success(
-        HttpStatus.CREATED,
-        'Order created successfully',
-        order
-      );
+    const order = await this.orderService.createOrder(createOrderDto);
+    return ApiResponseDto.success(
+      HttpStatus.CREATED,
+      'Order created successfully',
+      order
+    );
     // } catch (error) {
     //   return ApiResponseDto.error(
     //     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -25,16 +25,32 @@ export class OrderController {
     //   );
     // }
   }
-
+  @Get('statistics')
+  async getOrderStatistics(): Promise<ApiResponseDto<any>> {
+    // try {
+    const statistics = await this.orderService.getOrderStatistics();
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Order statistics retrieved successfully',
+      statistics
+    );
+    // } catch (error) {
+    //   return ApiResponseDto.error(
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //     `Failed to get order statistics: ${error.message}`,
+    //     error
+    //   );
+    // }
+  }
   @Get(':id')
   async getOrderById(@Param('id') orderId: number): Promise<ApiResponseDto<any>> {
     // try {
-      const order = await this.orderService.getOrderById(orderId);
-      return ApiResponseDto.success(
-        HttpStatus.OK,
-        'Order retrieved successfully',
-        order
-      );
+    const order = await this.orderService.getOrderById(orderId);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Order retrieved successfully',
+      order
+    );
     // } catch (error) {
     //   return ApiResponseDto.error(
     //     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -45,14 +61,23 @@ export class OrderController {
   }
 
   @Get()
-  async getAllOrders(): Promise<ApiResponseDto<any>> {
+  async getAllOrders(@Query('userId') userId?: number): Promise<ApiResponseDto<any>> {
     // try {
-      const orders = await this.orderService.getAllOrders();
+    if (userId) {
+      const userOrders = await this.orderService.getOrdersByUserId(userId);
       return ApiResponseDto.success(
         HttpStatus.OK,
-        'Orders retrieved successfully',
-        orders
+        'User orders retrieved successfully',
+        userOrders
       );
+    }
+
+    const orders = await this.orderService.getAllOrders();
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Orders retrieved successfully',
+      orders
+    );
     // } catch (error) {
     //   return ApiResponseDto.error(
     //     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -62,18 +87,38 @@ export class OrderController {
     // }
   }
 
+
+  @Get('statistics/user/:userId')
+  async getUserOrderStatistics(@Param('userId') userId: number): Promise<ApiResponseDto<any>> {
+    // try {
+    const statistics = await this.orderService.getUserOrderStatistics(userId);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'User order statistics retrieved successfully',
+      statistics
+    );
+    // } catch (error) {
+    //   return ApiResponseDto.error(
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //     `Failed to get user order statistics: ${error.message}`,
+    //     error
+    //   );
+    // }
+  }
+
+
   @Put(':id')
   async updateOrder(
     @Param('id') orderId: number,
     @Body() updateOrderDto: UpdateOrderDto
   ): Promise<ApiResponseDto<any>> {
     // try {
-      const updatedOrder = await this.orderService.updateOrder(orderId, updateOrderDto);
-      return ApiResponseDto.success(
-        HttpStatus.OK,
-        'Order updated successfully',
-        updatedOrder
-      );
+    const updatedOrder = await this.orderService.updateOrder(orderId, updateOrderDto);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Order updated successfully',
+      updatedOrder
+    );
     // } catch (error) {
     //   return ApiResponseDto.error(
     //     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -86,12 +131,12 @@ export class OrderController {
   @Delete(':id')
   async deleteOrder(@Param('id') orderId: number): Promise<ApiResponseDto<any>> {
     // try {
-      const result = await this.orderService.deleteOrder(orderId);
-      return ApiResponseDto.success(
-        HttpStatus.OK,
-        'Order deleted successfully',
-        result
-      );
+    const result = await this.orderService.deleteOrder(orderId);
+    return ApiResponseDto.success(
+      HttpStatus.OK,
+      'Order deleted successfully',
+      result
+    );
     // } catch (error) {
     //   return ApiResponseDto.error(
     //     HttpStatus.INTERNAL_SERVER_ERROR,

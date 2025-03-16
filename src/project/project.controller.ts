@@ -7,7 +7,8 @@ import {
   NotFoundException,
   Param,
   Post,
-  Put
+  Put,
+  Query
 } from '@nestjs/common';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -30,10 +31,28 @@ export class ProjectController {
     );
   }
 
-  /** Get all projects */
+  /** Get all projects or projects by user ID */
   @Get()
-  async getAllProjects(): Promise<ApiResponseDto<Project[]>> {
+  async getAllProjects(@Query('userId') userId?: number): Promise<ApiResponseDto<Project[]>> {
     try {
+      if (userId) {
+        const userProjects = await this.projectService.getProjectsByUserId(userId);
+
+        if (!userProjects || userProjects.length === 0) {
+          return ApiResponseDto.success(
+            HttpStatus.OK,
+            'No projects found for this user',
+            []
+          );
+        }
+
+        return ApiResponseDto.success(
+          HttpStatus.OK,
+          'User projects retrieved successfully',
+          userProjects
+        );
+      }
+
       const projects = await this.projectService.getAllProjects();
 
       if (!projects || projects.length === 0) {
@@ -50,6 +69,39 @@ export class ProjectController {
         throw error;
       }
       throw new Error(`Failed to retrieve projects: ${error.message}`);
+    }
+  }
+
+  /** Get project statistics */
+  @Get('statistics')
+  async getProjectStatistics(): Promise<ApiResponseDto<any>> {
+    try {
+      const statistics = await this.projectService.getProjectStatistics();
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'Project statistics retrieved successfully',
+        statistics
+      );
+    } catch (error) {
+      throw new Error(`Failed to retrieve project statistics: ${error.message}`);
+    }
+  }
+
+  /** Get project statistics for a specific user */
+  @Get('statistics/user/:userId')
+  async getUserProjectStatistics(@Param('userId') userId: number): Promise<ApiResponseDto<any>> {
+    try {
+      const statistics = await this.projectService.getUserProjectStatistics(userId);
+      return ApiResponseDto.success(
+        HttpStatus.OK,
+        'User project statistics retrieved successfully',
+        statistics
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to retrieve user project statistics: ${error.message}`);
     }
   }
 

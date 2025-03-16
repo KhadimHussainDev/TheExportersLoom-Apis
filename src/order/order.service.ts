@@ -85,6 +85,100 @@ export class OrderService {
     });
   }
 
+  async getOrdersByUserId(userId: number): Promise<any[]> {
+    // Validate user exists
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Get orders where user is either exporter or manufacturer
+    const orders = await this.orderRepository.find({
+      where: [
+        { exporter: { user_id: userId } },
+        { manufacturer: { user_id: userId } }
+      ],
+      relations: ['exporter', 'manufacturer', 'bid']
+    });
+
+    // Transform orders to include only the required fields
+    return orders.map(order => {
+      // Calculate completion percentage based on status
+      let completionPercentage = 0;
+      if (order.status) {
+        const lowerStatus = order.status.toLowerCase();
+        if (lowerStatus.includes('completed')) {
+          completionPercentage = 100;
+        } else if (lowerStatus.includes('active')) {
+          completionPercentage = 50; // Default for active
+        } else if (lowerStatus.includes('pending')) {
+          completionPercentage = 25; // Default for pending
+        }
+      }
+
+      return {
+        id: order.orderId,
+        orderId: `Order#${order.orderId}`, // Using order ID as the order name
+        exporterName: order.exporter?.username || 'Unknown Exporter',
+        price: order.bid?.price || 0, // Using bid price
+        deadline: order.deadline,
+        status: order.status,
+        completionPercentage: completionPercentage
+      };
+    });
+  }
+
+  async getOrderStatistics(): Promise<any> {
+    const orders = await this.orderRepository.find();
+
+    return this.calculateOrderStatistics(orders);
+  }
+
+  async getUserOrderStatistics(userId: number): Promise<any> {
+    // Validate user exists
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Get user orders
+    const userOrders = await this.getOrdersByUserId(userId);
+
+    return this.calculateOrderStatistics(userOrders);
+  }
+
+  private calculateOrderStatistics(orders: Order[]): any {
+    let completed = 0;
+    let ongoing = 0;
+    let todo = 0;
+
+    orders.forEach(order => {
+      if (order.status === STATUS.COMPLETED) {
+        completed++;
+      } else if (order.status === STATUS.ACTIVE) {
+        ongoing++;
+      } else if (order.status === STATUS.DRAFT || order.status === STATUS.PENDING) {
+        todo++;
+      }
+      else {
+        console.log(order.status);
+      }
+    });
+
+    const total = orders.length;
+
+
+    return {
+      completedPercentage: total > 0 ? (completed / total) * 100 : 0,
+      ongoingPercentage: total > 0 ? (ongoing / total) * 100 : 0,
+      todoPercentage: total > 0 ? (todo / total) * 100 : 0,
+      total,
+      completed,
+      ongoing,
+      todo
+    };
+  }
+
   async updateOrder(orderId: number, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const order = await this.getOrderById(orderId);
 
