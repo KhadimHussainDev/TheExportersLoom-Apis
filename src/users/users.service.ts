@@ -133,7 +133,7 @@ export class UsersService {
   async getUserProfile(id: number): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { user_id: id },
-      relations: ['profile'],
+      relations: ['profile' ,'exportedOrders','manufacturedOrders'],
     });
 
     if (!user) {
@@ -152,6 +152,7 @@ export class UsersService {
       cnic: user.profile.cnic,
       bio: user.profile.bio,
       averageRating: averageRating.avgRating,
+      totalOrders: user.exportedOrders.length + user.manufacturedOrders.length,
     };
   }
 
@@ -184,15 +185,19 @@ export class UsersService {
       await this.resetTokenRepo.save(resetTokenObj);
 
       // Send the email with the reset code
-      this.mailService.sendMail(
-        existingUser.email,
-        'Password Reset Code',
-        `Your password reset code is: ${resetCode} \n\nThis code will expire in 24 hours`,
-      );
+      try {
+        await this.mailService.sendMail(
+          existingUser.email,
+          'Password Reset Code',
+          `Your password reset code is: ${resetCode} \n\nThis code will expire in ${VERIFICATION.EXPIRY_HOURS} hours`,
+        );
+      } catch (error) {
+        console.error('Failed to send password reset email:', error);
+        throw new HttpException('Failed to send password reset email. Try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
 
       return {
-        message: 'Reset password code sent to the specified email',
-        resetCode,
+        message: 'Reset password code sent to the specified email'
       };
     } else {
       throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
@@ -312,7 +317,11 @@ export class UsersService {
 
   // Find user by email
   async findUserByEmail(email: string): Promise<User | undefined> {
-    return await this.userRepository.findOne({ where: { email } });
+    return await this.userRepository.findOne({ 
+      where: { 
+        email: ILike(email)
+      } 
+    });
   }
 
   // Validate user credentials for regular login
