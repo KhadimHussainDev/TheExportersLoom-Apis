@@ -10,6 +10,7 @@ import { AuthModule } from '../auth/auth.module';
 import { MailService } from './services/mail.service';
 import { EmailVerificationToken } from './entities/email-verification.entity';
 import { ReviewsModule } from 'reviews/reviews.module';
+import { OrderModule } from 'order/order.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ReviewsModule } from 'reviews/reviews.module';
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => ReviewsModule),
+    forwardRef(() => OrderModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, MailService],
