@@ -1,16 +1,16 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
-import { User } from './entities/user.entity';
-import { UserProfile } from './entities/user-profile.entity';
-import { UserAuthentication } from '../auth/entities/auth.entity';
-import { ResetToken } from './entities/reset-token.entity';
 import { AuthModule } from '../auth/auth.module';
-import { MailService } from './services/mail.service';
+import { UserAuthentication } from '../auth/entities/auth.entity';
+import { OrderModule } from '../order/order.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 import { EmailVerificationToken } from './entities/email-verification.entity';
-import { ReviewsModule } from 'reviews/reviews.module';
-import { OrderModule } from 'order/order.module';
+import { ResetToken } from './entities/reset-token.entity';
+import { UserProfile } from './entities/user-profile.entity';
+import { User } from './entities/user.entity';
+import { MailService } from './services/mail.service';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 @Module({
   imports: [
@@ -29,4 +29,4 @@ import { OrderModule } from 'order/order.module';
   providers: [UsersService, MailService],
   exports: [UsersService, TypeOrmModule],
 })
-export class UsersModule {}
+export class UsersModule { }

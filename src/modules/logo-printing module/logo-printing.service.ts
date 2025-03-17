@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, SIZE_MAPPINGS, STATUS } from '../../common';
+import { SIZE_MAPPINGS, STATUS } from '../../common';
 import { LogoSizes } from '../../entities/logo-sizes.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateLogoPrintingDto } from './dto/create-logo-printing.dto';
@@ -26,7 +25,6 @@ export class LogoPrintingService {
     @InjectRepository(LogoPrinting)
     private readonly logoPrintingRepository: Repository<LogoPrinting>,
     private readonly dataSource: DataSource,
-    private readonly bidService: BidService,
   ) { }
 
   // Method to get the size column based on logoPosition and required size
@@ -271,50 +269,17 @@ export class LogoPrintingService {
 
 
   async updateLogoPrintingStatus(id: number, newStatus: string) {
-    // Retrieve the cutting module and load relations (project, user)
+    // Find the logoPrintingModule by ID
     const logoPrintingModule = await this.logoPrintingRepository.findOne({
       where: { id },
       relations: ['project', 'project.user'],
     });
 
-    // Check if the cutting module was found
     if (!logoPrintingModule) {
-      throw new NotFoundException(
-        `logoPrintingModule with ID ${id} not found.`,
-      );
+      throw new NotFoundException(`LogoPrinting with ID ${id} not found.`);
     }
 
-    // Access the related project and user
-    const project = logoPrintingModule.project;
-    const user = project?.user;
-
-    if (!user) {
-      throw new NotFoundException(
-        `User related to logoPrintingModule with ID ${id} not found.`,
-      );
-    }
-
-    const userId = user.user_id;
-
-    // Create a bid if the status is 'Posted'
-    if (newStatus === 'Posted') {
-      const title = MODULE_TITLES.LOGO_PRINTING;
-      const description = DEFAULT_DESCRIPTIONS.EMPTY;
-      const price = logoPrintingModule.price;
-
-      // Create a new bid using the BidService
-      await this.bidService.createBid(
-        userId,
-        logoPrintingModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.LOGO_PRINTING,
-      );
-    }
-
-    // Update the status of the cutting module
+    // Update the status of the logo printing module
     logoPrintingModule.status = newStatus;
 
     await this.logoPrintingRepository.save(logoPrintingModule);

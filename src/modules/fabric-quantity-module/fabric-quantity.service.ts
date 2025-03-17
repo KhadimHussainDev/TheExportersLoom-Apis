@@ -4,10 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BidService } from 'bid/bid.service';
 import { Project } from 'project/entities/project.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';
 import { UpdateFabricQuantityDto } from './dto/update-fabric-quantity.dto';
@@ -22,8 +20,6 @@ export class FabricQuantityService {
     private fabricSizeCalculationRepository: Repository<FabricSizeCalculation>,
     @InjectRepository(Project) // Ensure this is properly injected
     private projectRepository: Repository<Project>,
-    private readonly bidService: BidService,
-
   ) { }
 
 
@@ -121,7 +117,7 @@ export class FabricQuantityService {
       if (existingIndex < existingFabricQuantities.length) {
         let fabricQuantity = existingFabricQuantities[existingIndex];
         fabricQuantity.fabricSize = normalizedSize;
-        fabricQuantity.quantityRequired =   quantity;
+        fabricQuantity.quantityRequired = quantity;
         fabricQuantity.fabricQuantityCost = fabricQuantityCost;
         fabricQuantity.categoryType = categoryType;
         fabricQuantity.shirtType = shirtType;
@@ -300,54 +296,20 @@ export class FabricQuantityService {
 
 
   async updateFabricQuantityStatus(id: number, newStatus: string) {
-    // Retrieve fabricPricingModule and load the project and user relations
+    // Find the fabricQuantityModule by ID
     const fabricQuantityModule = await this.fabricQuantityRepository.findOne({
       where: { id },
       relations: ['project', 'project.user'],
     });
 
-    console.log(`Updating status for fabricQuantityModule ID: ${id}`);
-
-    // Check if fabricPricingModule exists
     if (!fabricQuantityModule) {
-      throw new Error(`fabricQuantityModule with id ${id} not found`);
-    }
-
-    // Ensure 'project' and 'user' relations are loaded
-    const project = fabricQuantityModule.project;
-    const user = project?.user;
-
-    if (!user) {
-      throw new Error(`User related to fabricQuantityModule with id ${id} not found`);
-    }
-
-
-
-    const userId = user.user_id;
-
-    // Perform action only if fabricPricingModule and newStatus are valid
-    if (newStatus === STATUS.POSTED) {
-      const title = MODULE_TITLES.FABRIC_QUANTITY;
-      const description = DEFAULT_DESCRIPTIONS.EMPTY;
-      const price = fabricQuantityModule.fabricQuantityCost;
-
-      console.log(`Creating bid for fabricQuantityModule ID: ${id}, userId: ${userId}`);
-      // Create a new Bid
-      await this.bidService.createBid(
-        userId,
-        fabricQuantityModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.FABRIC_QUANTITY
-      );
+      throw new NotFoundException(`FabricQuantity with ID ${id} not found.`);
     }
 
     // Update status
     fabricQuantityModule.status = newStatus;
 
-    // Save the updated fabricPricingModule
+    // Save the updated fabricQuantityModule
     await this.fabricQuantityRepository.save(fabricQuantityModule);
   }
 

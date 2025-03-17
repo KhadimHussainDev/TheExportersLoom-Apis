@@ -133,7 +133,7 @@ export class UsersService {
   async getUserProfile(id: number): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { user_id: id },
-      relations: ['profile' ,'exportedOrders','manufacturedOrders'],
+      relations: ['profile', 'exportedOrders', 'manufacturedOrders'],
     });
 
     if (!user) {
@@ -317,10 +317,10 @@ export class UsersService {
 
   // Find user by email
   async findUserByEmail(email: string): Promise<User | undefined> {
-    return await this.userRepository.findOne({ 
-      where: { 
+    return await this.userRepository.findOne({
+      where: {
         email: ILike(email)
-      } 
+      }
     });
   }
 
@@ -346,7 +346,7 @@ export class UsersService {
   // Generate JWT token after successful login
   generateToken(user: User): string {
     const payload = {
-      userId: user.user_id,
+      user_id: user.user_id,
       username: user.username,
       userType: user.userType,
 

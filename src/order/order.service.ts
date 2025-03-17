@@ -1,10 +1,10 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BidService } from 'bid/bid.service';
-import { MachineService } from 'machines/machine.service';
 import { Repository } from 'typeorm';
-import { UsersService } from 'users/users.service';
+import { BidService } from '../bid/bid.service';
 import { STATUS } from '../common';
+import { MachineService } from '../machines/machine.service';
+import { UsersService } from '../users/users.service';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { UpdateOrderDto } from './dtos/update-order.dto';
 import { Order } from './entities/order.entity';
@@ -14,6 +14,8 @@ export class OrderService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
+
+    @Inject(forwardRef(() => BidService))
     private readonly bidService: BidService,
 
     @Inject(forwardRef(() => UsersService))
@@ -46,9 +48,9 @@ export class OrderService {
       throw new NotFoundException(`Machine with ID ${machineId} not found`);
     }
 
-    // Validate bid status
-    if (bid.status !== STATUS.ACTIVE) {
-      throw new BadRequestException(`Cannot create order: Bid is not ${STATUS.ACTIVE}`);
+    // Validate bid status - allow ACTIVE or ACCEPTED bids
+    if (bid.status !== STATUS.ACTIVE && bid.status !== STATUS.ACCEPTED) {
+      throw new BadRequestException(`Cannot create order: Bid is not ${STATUS.ACTIVE} or ${STATUS.ACCEPTED}`);
     }
 
     // Create and save the order
@@ -60,8 +62,10 @@ export class OrderService {
       ...rest,
     });
 
-    // Deactivate the bid after creating the order
-    await this.bidService.deactivateBid(bidId);
+    // Deactivate the bid after creating the order if it's still active
+    if (bid.status === STATUS.ACTIVE) {
+      await this.bidService.deactivateBid(bidId);
+    }
 
     return await this.orderRepository.save(newOrder);
   }

@@ -56,7 +56,8 @@ export const STATUS = {
   POSTED: 'Posted',
   DRAFT: 'Draft',
   APPROVED: 'Approved',
-  REJECTED: 'Rejected'
+  REJECTED: 'Rejected',
+  ACCEPTED: 'Accepted'
 };
 
 // Module types
