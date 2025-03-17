@@ -17,8 +17,8 @@ export class LogoPrintingService {
     'full back': 'full_back',
     'full front': 'full_front',
     'left chest': 'left_chest',
-    'oversized front': 'oversized_front',
-    sleeves: 'sleeves',
+    'oversize front': 'oversized_front',
+    'sleeves': 'sleeves',
     'upper back': 'upper_back',
   };
 
@@ -170,7 +170,7 @@ export class LogoPrintingService {
       projectId,
       sizes: dto.sizes,
       price: totalCost,
-      status: STATUS.DRAFT,
+      status: STATUS.ACTIVE,
       logoDetails: dto.logoDetails,
 
     });
@@ -261,7 +261,7 @@ export class LogoPrintingService {
         logoDetails: updatedDto.logoDetails,
         sizes: updatedDto.sizes,
         price: totalCost,
-        status: STATUS.DRAFT,
+        status: STATUS.ACTIVE,
       });
 
       // Save and return the new logo printing module

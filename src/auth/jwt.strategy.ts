@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('Payload received in validate:', payload); // Add this line for debugging
+    // console.log('Payload received in validate:', payload); // Add this line for debugging
     const user = {
       user_id: payload.user_id,
       username: payload.username,

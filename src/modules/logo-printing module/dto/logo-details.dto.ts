@@ -11,7 +11,7 @@ export class LogoDetailDto {
     'Full Back',
     'Full Front',
     'Left Chest',
-    'Oversized Front',
+    'Oversize Front',
     'Sleeves',
     'Upper Back',
   ])

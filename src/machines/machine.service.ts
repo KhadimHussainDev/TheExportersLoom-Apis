@@ -69,7 +69,7 @@ export class MachineService {
     updateMachineDto: UpdateMachineDto,
     user: User,
   ): Promise<Machine> {
-    console.log('User object:', user); // Debugging line
+    // console.log('User object:', user); // Debugging line
   
     if (!user) {
       throw new UnauthorizedException('User is not authenticated.');
