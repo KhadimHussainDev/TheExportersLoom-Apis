@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
+import { STATUS } from '../../common';
 import { RegularCutting, SublimationCutting } from '../../entities';
 import { CreateCuttingDto } from './dto/create-cutting.dto';
 import { UpdateCuttingDto } from './dto/update-cutting.dto';
@@ -17,7 +16,6 @@ export class CuttingService {
     private readonly regularCuttingRepository: Repository<RegularCutting>,
     @InjectRepository(SublimationCutting)
     private readonly sublimationCuttingRepository: Repository<SublimationCutting>,
-    private readonly bidService: BidService,
   ) { }
 
   // create a cutting module
@@ -177,45 +175,13 @@ export class CuttingService {
   }
 
   async updateCuttingStatus(id: number, newStatus: string) {
-    // Retrieve the cutting module and load relations (project, user)
+    // Find the cutting module by ID
     const cuttingModule = await this.cuttingRepository.findOne({
-      where: { id }, // Look up by ID
-      relations: ['project', 'project.user'], // Load relations
+      where: { id },
     });
 
-    // Check if the cutting module was found
     if (!cuttingModule) {
-      throw new NotFoundException(`CuttingModule with ID ${id} not found.`);
-    }
-
-    // Access the related project and user
-    const project = cuttingModule.project;
-    const user = project?.user;
-
-    if (!user) {
-      throw new NotFoundException(
-        `User related to CuttingModule with ID ${id} not found.`,
-      );
-    }
-
-    const userId = user.user_id;
-
-    // Create a bid if the status is 'Posted'
-    if (newStatus === 'Posted') {
-      const title = MODULE_TITLES.CUTTING;
-      const description = DEFAULT_DESCRIPTIONS.EMPTY;
-      const price = cuttingModule.cost;
-
-      // Create a new bid using the BidService
-      await this.bidService.createBid(
-        userId,
-        cuttingModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.CUTTING,
-      );
+      throw new NotFoundException(`Cutting module with ID ${id} not found.`);
     }
 
     // Update the status of the cutting module

@@ -1,19 +1,16 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RegularCutting, SublimationCutting } from '../../entities';
+import { CuttingController } from './cutting.controller';
 import { CuttingService } from './cutting.service';
 import { Cutting } from './entities/cutting.entity';
-import { CuttingController } from './cutting.controller';
-import { RegularCutting } from '../../entities/regular-cutting.entity';
-import { SublimationCutting } from '../../entities/sublimation-cutting.entity';
-import { BidModule } from '../../bid/bid.module';  
 
 @Module({
-  imports: [ 
+  imports: [
     TypeOrmModule.forFeature([Cutting, RegularCutting, SublimationCutting]),
-    forwardRef(() => BidModule),
   ],
   controllers: [CuttingController],
   providers: [CuttingService],
   exports: [CuttingService],
 })
-export class CuttingModule {}
+export class CuttingModule { }

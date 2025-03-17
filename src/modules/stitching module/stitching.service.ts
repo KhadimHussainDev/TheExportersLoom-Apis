@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { Project } from '../../project/entities/project.entity';
 import { CreateStitchingDto } from './dto/create-stitching.dto';
 import { UpdateStitchingDto } from './dto/update-stitchign.dto';
@@ -16,7 +14,6 @@ export class StitchingService {
 
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
-    private readonly bidService: BidService,
   ) { }
 
   // Create stitching module and calculate cost
@@ -141,51 +138,20 @@ export class StitchingService {
   }
 
   async updateStitchingStatus(id: number, newStatus: string) {
-    // Retrieve the cutting module and load relations (project, user)
+    // Find the stitchingModule by ID
     const stitchingModule = await this.stitchingRepository.findOne({
-      where: { id }, // Look up by ID
-      relations: ['project', 'project.user'], // Load relations
+      where: { id },
+      relations: ['project', 'project.user'],
     });
 
-    // Check if the cutting module was found
     if (!stitchingModule) {
-      throw new NotFoundException(`stitchingModule with ID ${id} not found.`);
+      throw new NotFoundException(`Stitching with ID ${id} not found.`);
     }
 
-    // Access the related project and user
-    const project = stitchingModule.project;
-    const user = project?.user;
-
-    if (!user) {
-      throw new NotFoundException(
-        `User related to stitchingModule with ID ${id} not found.`,
-      );
-    }
-
-    const userId = user.user_id;
-
-    // Create a bid if the status is 'Posted'
-    if (newStatus === STATUS.POSTED) {
-      const title = MODULE_TITLES.STITCHING;
-      const description = DEFAULT_DESCRIPTIONS.EMPTY;
-      const price = stitchingModule.cost;
-
-      // Create a new bid using the BidService
-      await this.bidService.createBid(
-        userId,
-        stitchingModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.STITCHING,
-      );
-    }
-
-    // Update the status of the cutting module
+    // Update the status of the stitching module
     stitchingModule.status = newStatus;
 
-    // Save the updated cutting module
+    // Save the updated stitching module
     await this.stitchingRepository.save(stitchingModule);
   }
 }
