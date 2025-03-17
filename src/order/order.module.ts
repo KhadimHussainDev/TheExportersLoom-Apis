@@ -1,8 +1,8 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BidModule } from 'bid/bid.module';
-import { MachineModule } from 'machines/machine.module';
-import { UsersModule } from 'users/users.module';
+import { BidModule } from '../bid/bid.module';
+import { MachineModule } from '../machines/machine.module';
+import { UsersModule } from '../users/users.module';
 import { Order } from './entities/order.entity';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
@@ -10,7 +10,7 @@ import { OrderService } from './order.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order]),
-    BidModule,
+    forwardRef(() => BidModule),
     forwardRef(() => UsersModule),
     MachineModule,
   ],

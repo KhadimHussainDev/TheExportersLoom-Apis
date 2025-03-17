@@ -1,11 +1,7 @@
-import { IsEnum, IsNotEmpty, isNumber, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { MODULE_TYPES } from '../../common';
 
 export class CreateBidDto {
-
-  @IsNumber()
-  userId : number;
-
   @IsNotEmpty()
   @IsNumber()
   moduleId: number;

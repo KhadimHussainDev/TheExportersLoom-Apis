@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { MODULE_TYPES, STATUS } from '../common';
@@ -8,6 +8,7 @@ import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-
 import { LogoPrintingService } from '../modules/logo-printing module/logo-printing.service';
 import { PackagingService } from '../modules/packaging module/packaging.service';
 import { StitchingService } from '../modules/stitching module/stitching.service';
+import { OrderService } from '../order/order.service';
 import { User } from '../users/entities/user.entity';
 import { CreateBidResponseDto } from './dto/create-bid-response.dto';
 import { UpdateBidResponseDto } from './dto/update-bid-response.dto';
@@ -29,7 +30,9 @@ export class BidService {
     private readonly cuttingService: CuttingService,
     private readonly logoPrintingService: LogoPrintingService,
     private readonly packagingService: PackagingService,
-    private readonly stitchingService: StitchingService
+    private readonly stitchingService: StitchingService,
+    @Inject(forwardRef(() => OrderService))
+    private readonly orderService: OrderService
   ) { }
   async findOne(bidId: number): Promise<Bid> {
     // Find the bid by its ID
@@ -163,7 +166,7 @@ export class BidService {
     manufacturerId: number,
     createBidResponseDto: CreateBidResponseDto,
   ): Promise<BidResponse> {
-    const { bid_id, price, message } = createBidResponseDto;
+    const { bid_id, price, message, machineId, deadline } = createBidResponseDto;
 
     // Find the bid
     const bid = await this.bidRepository.findOne({
@@ -206,6 +209,8 @@ export class BidService {
     bidResponse.manufacturer_id = manufacturerId;
     bidResponse.price = price;
     bidResponse.message = message;
+    bidResponse.machineId = machineId;
+    bidResponse.deadline = deadline;
     bidResponse.status = STATUS.PENDING;
 
     return this.bidResponseRepository.save(bidResponse);
@@ -275,7 +280,7 @@ export class BidService {
   async acceptBidResponse(responseId: number, exporterId: number): Promise<BidResponse> {
     const response = await this.bidResponseRepository.findOne({
       where: { id: responseId },
-      relations: ['bid', 'bid.user'],
+      relations: ['bid', 'bid.user', 'manufacturer'],
     });
 
     if (!response) {
@@ -303,6 +308,19 @@ export class BidService {
       { bid_id: response.bid_id, id: Not(responseId) },
       { status: STATUS.REJECTED },
     );
+
+    // Automatically create an order when a bid response is accepted
+    // Use the deadline provided by the manufacturer, or default to 30 days if not provided
+    const deadline = response.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await this.orderService.createOrder({
+      bidId: response.bid_id,
+      exporterId: exporterId,
+      manufacturerId: response.manufacturer_id,
+      machineId: response.machineId,
+      status: STATUS.ACTIVE,
+      deadline: deadline
+    });
 
     return this.bidResponseRepository.save(response);
   }

@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Bid } from './bid.entity';
+import { STATUS } from 'common';
 
 @Entity()
 export class BidResponse {
@@ -35,7 +36,13 @@ export class BidResponse {
   @Column({ type: 'text', nullable: true })
   message: string;
 
-  @Column({ default: 'pending' })
+  @Column()
+  machineId: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deadline: Date;
+
+  @Column({ default: STATUS.PENDING })
   status: string; // pending, accepted, rejected
 
   @CreateDateColumn({ type: 'timestamp' })

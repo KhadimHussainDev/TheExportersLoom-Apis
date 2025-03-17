@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 import { STATUS } from 'common';
 
 export class UpdateBidResponseDto {
@@ -11,6 +11,6 @@ export class UpdateBidResponseDto {
   message: string;
 
   @IsOptional()
-  @IsEnum([STATUS.PENDING, STATUS.ACCEPTED, STATUS.REJECTED])
+  @IsIn([STATUS.PENDING, STATUS.ACCEPTED, STATUS.REJECTED, STATUS.CANCELLED])
   status: string;
 } 

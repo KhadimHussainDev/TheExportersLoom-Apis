@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
-import { GetUser } from '../auth/get-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { GetUser, JwtAuthGuard } from '../auth';
 import { STATUS } from '../common';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { User } from '../users/entities/user.entity';
@@ -46,10 +45,11 @@ export class BidController {
 
   @Post()
   async createBid(
+    @GetUser() user: User,
     @Body() createBidDto: CreateBidDto,
-  ) {
-    return this.bidService.createBid(
-      createBidDto.userId,
+  ): Promise<ApiResponseDto<Bid>> {
+    const bid = await this.bidService.createBid(
+      user.user_id,
       createBidDto.moduleId,
       createBidDto.title,
       createBidDto.description,
@@ -57,6 +57,7 @@ export class BidController {
       STATUS.ACTIVE,
       createBidDto.moduleType,
     );
+    return ApiResponseDto.success(HttpStatus.CREATED, 'Bid created successfully', bid);
   }
 
   // Get a bid with its responses

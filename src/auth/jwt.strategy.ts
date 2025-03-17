@@ -1,32 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
-    const jwtSecret = configService.get<string>('JWT_SECRET');
-    // console.log('JWT_SECRET in JwtStrategy:', jwtSecret);
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
+    private configService: ConfigService,
+  ) {
+    const secret = process.env.JWT_SECRET || configService.get<string>('JWT_SECRET') || '123';
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      ignoreExpiration: false, // make true to not check expiration
+      secretOrKey: secret,
+      passReqToCallback: false,
     });
-    // console.log('JWT Secret:', configService.get<string>('JWT_SECRET'));
   }
 
   async validate(payload: any) {
-    // console.log('Payload received in validate:', payload); // Add this line for debugging
-    const user = {
-      user_id: payload.user_id,
-      username: payload.username,
-      userType: payload.userType,
-    };
-    return {
-      user_id: payload.user_id || payload.sub,
-      username: payload.username,
-      userType: payload.userType,
-    };
+    try {
+      // Support both userId and user_id in the payload
+      const userId = payload.userId || payload.user_id;
+
+      if (!userId) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+
+      // Use the UsersService to find the user
+      const user = await this.usersService.findOne(userId);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      throw new UnauthorizedException('Authentication failed');
+    }
   }
 }
