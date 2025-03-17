@@ -25,8 +25,8 @@ export class BidController {
     @Param('id') bidId: number,
     @Body() updateBidDto: UpdateBidDto,
   ): Promise<ApiResponseDto<Bid>> {
-    console.log(updateBidDto); // Log to see the actual data received
-    console.log('Received Price:', updateBidDto.price);
+    // console.log(updateBidDto); // Log to see the actual data received
+    // console.log('Received Price:', updateBidDto.price);
     if (updateBidDto.price) {
       updateBidDto.price = parseFloat(updateBidDto.price.toString()); // Convert to number if needed
     }

@@ -49,7 +49,7 @@ export class FabricPricingController {
         );
       });
 
-      console.log('Fabric pricing created successfully:', result);
+      // console.log('Fabric pricing created successfully:', result);
       return {
         message: 'Fabric pricing created successfully',
         data: result,

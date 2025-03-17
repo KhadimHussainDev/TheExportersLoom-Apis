@@ -93,8 +93,8 @@ export class FabricPricingService {
     manager: EntityManager,
   ): Promise<number> {
     try {
-      console.log(`Starting createFabricPricing for projectId: ${project.id}`);
-      console.log('Received DTO:', dto);
+      // console.log(`Starting createFabricPricing for projectId: ${project.id}`);
+      // console.log('Received DTO:', dto);
 
       if (!project) {
         throw new NotFoundException(`Project not provided.`);
@@ -137,14 +137,14 @@ export class FabricPricingService {
 
       const fabricPricePerUnit = parseFloat(priceMatch[0]);
       const totalCost = fabricPricePerUnit * fabricQuantityCost;
-      console.log('Total cost:', totalCost);
+      // console.log('Total cost:', totalCost);
 
       const fabricPricingModule = manager.create(FabricPricingModule, {
         project,
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
-        status: STATUS.DRAFT,
+        status: STATUS.ACTIVE,
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
 
@@ -167,7 +167,7 @@ export class FabricPricingService {
       });
 
     if (!fabricPricingModule) {
-      console.log('No fabric pricing found for the project.');
+      // console.log('No fabric pricing found for the project.');
       return 0;
     }
 
@@ -269,7 +269,7 @@ export class FabricPricingService {
     }
 
     if (priceUpdated) {
-      existingFabricPricingModule.status = STATUS.DRAFT;
+      existingFabricPricingModule.status = STATUS.ACTIVE;
     }
 
     // update other fields like status if provided in the DTO

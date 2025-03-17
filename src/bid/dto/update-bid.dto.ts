@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsDecimal, IsIn, IsNumberString } from 'class-validator';
+import { STATUS } from 'common';
 
 export class UpdateBidDto {
   @IsOptional() // Optional, as we don't need to update every field
@@ -14,6 +15,6 @@ export class UpdateBidDto {
   price?: number;  // Change price to string for validation purposes
 
   @IsOptional()
-  @IsIn(['active', 'inActive']) // Limit status to active or inactive
+  @IsIn([STATUS.ACTIVE, STATUS.INACTIVE]) // Limit status to active or inactive
   status?: string;
 }
