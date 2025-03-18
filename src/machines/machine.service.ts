@@ -3,6 +3,8 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  InternalServerErrorException,
+  BadRequestException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,36 +18,61 @@ export class MachineService {
   constructor(
     @InjectRepository(Machine)
     private machineRepository: Repository<Machine>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>
   ) {}
 
   async registerMachine(user: User, createMachineDto: CreateMachineDto): Promise<Machine> {
+    console.log('User received in service:', user);
     if (user.userType !== 'manufacturer') {
       throw new UnauthorizedException('Only manufacturers can register machines.');
     }
   
-    const { machine_type, machine_model } = createMachineDto;
+    const { machine_type, machine_model, location, availability_status, hourly_rate, description, machine_image } = createMachineDto;
   
-    // Check if the manufacturer has already registered this machine type and model
+    // Validate required fields
+    if (!machine_type || !machine_model || !location || !hourly_rate || !description || !machine_image) {
+      throw new BadRequestException('All machine fields are required.');
+    }
+  
+    // Fetch the user entity from the database
+    const userEntity = user;
+  
+    if (!userEntity) {
+      throw new NotFoundException('User not found.');
+    }
+  
+    // Check for existing machine
     const existingMachine = await this.machineRepository.findOne({
-      where: {
-        machine_type,
-        machine_model,
-        machine_owner: user,
-      },
+      where: { machine_type, machine_model, machine_owner: { user_id: user.user_id } },
     });
   
     if (existingMachine) {
       throw new UnauthorizedException('You have already registered this machine.');
     }
   
+    // Create the machine entity
     const machine = this.machineRepository.create({
-      ...createMachineDto,
-      machine_owner: user,
+      machine_type,
+      machine_model,
+      location,
+      availability_status,
+      hourly_rate,
+      description,
+      machine_image,
+      machine_owner: userEntity, // Assign the valid user entity
     });
   
-    return this.machineRepository.save(machine);
-  }  
+    console.log('Machine before save:', machine);
   
+    try {
+      const result = await this.machineRepository.save(machine);
+      return result; // Return the saved machine
+    } catch (error) {
+      console.error('Error while saving machine:', error);
+      throw new InternalServerErrorException('Failed to register machine. Please try again.');
+    }
+  }
   // Get all machines
   async findAll(): Promise<Machine[]> {
     return this.machineRepository.find({ relations: ['machine_owner'] });

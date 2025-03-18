@@ -29,6 +29,8 @@ export class MachineController {
     @Req() req,
     @Body() createMachineDto: CreateMachineDto,
   ): Promise<ApiResponseDto<any>> {
+    
+    console.log('Logged-in user:', req.user);
     const user = req.user as User;
     const machine = await this.machineService.registerMachine(user, createMachineDto);
     return ApiResponseDto.success(
