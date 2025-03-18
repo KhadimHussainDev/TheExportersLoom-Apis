@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,Unique, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,Unique,JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Order } from 'order/entities/order.entity';
 import { Reviews } from 'reviews/entities/reviews.entity';
@@ -32,6 +32,7 @@ export class Machine {
 
   // Many-to-One relationship with User (the machine owner)
   @ManyToOne(() => User, (user) => user.machines, { eager: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'machineOwnerUserId' })
   machine_owner: User;
 
   @OneToMany(() => Order, order => order.machine)

@@ -2,31 +2,43 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bid } from '../bid/entities/bid.entity';
-import { User } from '../users/entities/user.entity';
-import { STATUS } from '../common/constants'; // Assuming STATUS constants are defined
+import { Machine } from '../machines/entities/machine.entity'; // Ensure Machine entity is imported
+import { STATUS } from '../common/constants';
 
 @Injectable()
 export class RecommendBidsService {
   constructor(
     @InjectRepository(Bid) private readonly bidRepo: Repository<Bid>,
-    @InjectRepository(User) private readonly manufacturerRepo: Repository<User>,
+    @InjectRepository(Machine) private readonly machineRepo: Repository<Machine>,
   ) {}
 
   async getRecommendedBids(manufacturerId: number) {
-    const manufacturer = await this.manufacturerRepo.findOne({
-      where: { user_id: manufacturerId },
-      relations: ['machines'],
+    // Fetch the machines owned by the manufacturer
+    const machines = await this.machineRepo.find({
+      where: { machine_owner: { user_id: manufacturerId } }, // Correct relation lookup
+      relations: ['machine_owner'],
     });
 
-    if (!manufacturer) throw new NotFoundException('Manufacturer not found');
+    if (!machines.length) {
+      throw new NotFoundException('No machines found for this manufacturer');
+    }
 
-    const machineTypes = manufacturer.machines.map(machine => machine.machine_type);
+    // Extract machine types from the manufacturer's machines
+    const machineTypes = machines.map(machine => machine.machine_type);
 
-    const relevantBids = await this.bidRepo.createQueryBuilder('bid')
+    if (!machineTypes.length) {
+      throw new NotFoundException('No machine types found for this manufacturer');
+    }
+
+    // Fetch relevant bids where the associated machine type matches
+    const relevantBids = await this.bidRepo
+      .createQueryBuilder('bid')
+      .innerJoin('bid.machine', 'machine') // ✅ Join Machine table
       .where('bid.status = :status', { status: STATUS.ACTIVE })
-      .andWhere('bid.machineType IN (:...machineTypes)', { machineTypes })
+      .andWhere('bid.user_id != :manufacturerId', { manufacturerId }) // Exclude manufacturer's own bids
+      .andWhere('machine.machine_type IN (:...machineTypes)', { machineTypes }) // ✅ Correct reference
       .orderBy('bid.createdAt', 'DESC')
-      .take(10) // Limiting results to 10 for efficiency
+      .take(10) // Limit results
       .getMany();
 
     return relevantBids;
