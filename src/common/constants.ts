@@ -69,3 +69,9 @@ export const MODULE_TYPES = {
   PACKAGING: 'PackagingModule',
   FABRIC_QUANTITY: 'FabricQuantity'
 }; 
+
+// User Roles
+export const ROLES = {
+  MANUFACTURER: 'Manufacturer',
+  EXPORTER: 'Exporter'
+};
