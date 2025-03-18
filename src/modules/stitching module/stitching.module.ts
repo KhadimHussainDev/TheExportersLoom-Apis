@@ -1,15 +1,15 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Project } from '../../project/entities/project.entity';
 import { Stitching } from './entities/stitching.entity';
 import { StitchingController } from './stitching.controller';
 import { StitchingService } from './stitching.service';
-import { Project } from '../../project/entities/project.entity';
-import { BidModule } from '../../bid/bid.module'; 
+import { UsersModule } from 'users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Stitching, Project]),forwardRef(() => BidModule),],
+  imports: [TypeOrmModule.forFeature([Stitching, Project]), forwardRef(() => UsersModule),],
   controllers: [StitchingController],
   providers: [StitchingService],
   exports: [StitchingService],
 })
-export class StitchingModule {}
+export class StitchingModule { }

@@ -13,8 +13,8 @@ import { LogoPrinting } from '../../modules/logo-printing module/entities/logo-p
 import { Stitching } from '../../modules/stitching module/entities/stitching.entity';
 import { Packaging } from '../../modules/packaging module/entities/packaging.entity';
 import { User } from '../../users/entities/user.entity';
-import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
-import { LogoDetailDto } from 'modules/logo-printing module/dto/logo-details.dto';
+import { FabricSizeDetailDto } from '../../modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
+import { LogoDetailDto } from '../../modules/logo-printing module/dto/logo-details.dto';
 
 @Entity('project')
 export class Project {
@@ -25,6 +25,9 @@ export class Project {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  @Column({ nullable: true })
+  name: string;
+  
   @Column({ type: 'varchar', length: 50, default: 'pending' })
   status: string;
 

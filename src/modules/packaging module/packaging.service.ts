@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { BidService } from '../../bid/bid.service';
-import { DEFAULT_DESCRIPTIONS, MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
 import { PackagingBags } from '../../entities/packaging-bags.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreatePackagingDto } from './dto/create-packaging.dto';
@@ -16,9 +14,7 @@ export class PackagingService {
     private readonly packagingRepository: Repository<Packaging>,
     @InjectRepository(PackagingBags)
     private readonly packagingBagsRepository: Repository<PackagingBags>,
-    private readonly bidService: BidService,
   ) { }
-
 
   private async validateProject(
     manager: EntityManager,
@@ -149,50 +145,20 @@ export class PackagingService {
 
 
   async updatePackagingBagsStatus(id: number, newStatus: string) {
-    // Retrieve the cutting module and load relations (project, user)
+    // Find the packagingModule by ID
     const packagingModule = await this.packagingRepository.findOne({
       where: { id },
       relations: ['project', 'project.user'],
     });
 
-    // Check if the cutting module was found
     if (!packagingModule) {
-      throw new NotFoundException(`packagingModule with ID ${id} not found.`);
+      throw new NotFoundException(`Packaging with ID ${id} not found.`);
     }
 
-    // Access the related project and user
-    const project = packagingModule.project;
-    const user = project?.user;
-
-    if (!user) {
-      throw new NotFoundException(
-        `User related to PackagingModule with ID ${id} not found.`,
-      );
-    }
-
-    const userId = user.user_id;
-    // Create a bid if the status is 'Posted'
-    if (newStatus === 'Posted') {
-      const title = MODULE_TITLES.PACKAGING;
-      const description = DEFAULT_DESCRIPTIONS.EMPTY;
-      const price = packagingModule.cost;
-
-      // Create a new bid using the BidService
-      await this.bidService.createBid(
-        userId,
-        packagingModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.PACKAGING,
-      );
-    }
-
-    // Update the status of the cutting module
+    // Update the status of the packaging module
     packagingModule.status = newStatus;
 
-    // Save the updated cutting module
+    // Save the updated packaging module
     await this.packagingRepository.save(packagingModule);
   }
 

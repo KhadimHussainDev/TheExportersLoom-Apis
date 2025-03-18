@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { UserAuthentication } from '../auth/entities/auth.entity';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { UserAuthentication } from '../auth/entities/auth.entity';
 import { UserProfile } from '../users/entities/user-profile.entity';
 import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 
 interface JwtUserPayload {
   email: string;
@@ -29,20 +28,20 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   // Generates JWT token for a user
   async generateJwt(
     user: JwtUserPayload,
   ): Promise<{ accessToken: string; refreshToken?: string }> {
     const payload = {
-      userId: user.userId,
+      user_id: user.userId,
       username: user.email,
       userType: user.userType,
     };
+
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+    return { accessToken };
   }
 
   // Create user from Google OAuth

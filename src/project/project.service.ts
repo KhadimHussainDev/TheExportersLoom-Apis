@@ -10,6 +10,7 @@ import { DataSource, EntityManager, Not, Repository } from 'typeorm';
 import { MAX_TOTAL_COST, STATUS } from '../common';
 import { CuttingService } from '../modules/cutting module/cutting.service';
 import { FabricPricingService } from '../modules/fabric-price module/fabric-pricing.service';
+import { FabricSizeDetailDto } from '../modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
 import { FabricQuantityService } from '../modules/fabric-quantity-module/fabric-quantity.service';
 import { LogoPrintingService } from '../modules/logo-printing module/logo-printing.service';
 import { PackagingService } from '../modules/packaging module/packaging.service';
@@ -33,6 +34,30 @@ export class ProjectService {
     private dataSource: DataSource,
   ) { }
 
+  /**
+   * Generates a project name based on sizes and shirt type
+   * @param sizes Array of size objects with size and quantity
+   * @param shirtType The type of shirt/product
+   * @returns Generated project name
+   */
+  private generateProjectName(sizes: FabricSizeDetailDto[], shirtType: string): string {
+    let size = '';
+
+    // Try to extract size information from the sizes array
+    if (sizes && sizes.length > 0) {
+      // Format multiple sizes for the name (e.g., "3 XL + 50 S")
+      const sizeText = sizes
+        .filter(sizeObj => sizeObj.size && sizeObj.quantity > 0)
+        .map(sizeObj => `${sizeObj.quantity} ${sizeObj.size}`)
+        .join(' + ');
+
+      size = sizeText;
+    }
+
+    const baseType = shirtType || 'Products';
+    return size ? `${size} ${baseType}` : baseType;
+  }
+
   async createProject(createProjectDto: CreateProjectDto): Promise<Project> {
     const result = await this.dataSource.transaction(async (manager) => {
       try {
@@ -52,9 +77,13 @@ export class ProjectService {
           0,
         );
 
-        // Step 2: Create the project entity with the user linked
+        // Generate project name using the helper method
+        const projectName = this.generateProjectName(createProjectDto.sizes, createProjectDto.shirtType);
+
+        // Step 2: Create the project entity with the user linked and the generated name
         const project = this.projectRepository.create({
           ...createProjectDto,
+          name: projectName,
           user,
           totalEstimatedCost: 0,
         });
@@ -66,7 +95,7 @@ export class ProjectService {
           await this.fabricQuantityService.createFabricQuantityModule(
             {
               projectId: savedProject.id,
-              status: STATUS.DRAFT,
+              status: STATUS.ACTIVE,
               categoryType: createProjectDto.fabricCategory,
               shirtType: createProjectDto.shirtType,
               sizes: createProjectDto.sizes?.map((size) => ({
@@ -236,16 +265,19 @@ export class ProjectService {
         }));
       }
 
-      // Update PackaagingRequired Status
+      // Update packagingRequired
       if (updateProjectDto.packagingRequired !== undefined) {
         project.packagingRequired = updateProjectDto.packagingRequired;
       }
 
-      // Save the updated project entity
-      const updatedProject = await manager.save(Project, project);
+      // Regenerate project name using the helper method
+      project.name = this.generateProjectName(project.sizes, project.shirtType);
 
-      // Step 3: Update related modules
-      // Update Fabric Quantity module
+      // Save the updated project
+      const updatedProject = await manager.save(project);
+      console.log('Updated project:', updatedProject);
+
+      // Update Fabric Quantity Module
       const { totalFabricQuantityCost } = await this.fabricQuantityService.editFabricQuantityModule(
         updatedProject.id,
         {
@@ -466,28 +498,9 @@ export class ProjectService {
 
     // Transform projects to match the format expected by the frontend
     return projects.map(project => {
-      // Calculate or set default values for fields needed by ProjectCard
-      let quantity = 0;
-      let size = '';
 
-      // Try to extract quantity and size from the sizes array
-      if (project.sizes && project.sizes.length > 0) {
-        // Sum up quantities across all sizes for total quantity
-        quantity = project.sizes.reduce((total, sizeObj) => total + (sizeObj.quantity || 0), 0);
-
-        // Format multiple sizes for the name (e.g., "3 XL + 50 S")
-        const sizeText = project.sizes
-          .filter(sizeObj => sizeObj.size && sizeObj.quantity > 0)
-          .map(sizeObj => `${sizeObj.quantity} ${sizeObj.size}`)
-          .join(' + ');
-
-        size = sizeText;
-      }
-
-      const baseType = project.shirtType || 'Products';
-
-      // Create a more unique name with quantity and size info
-      const name = size ? `${size} ${baseType}` : baseType;
+      // Use the stored name or generate a fallback if not available
+      const name = project.name || this.generateProjectName(project.sizes, project.shirtType);
 
       const description = `${project.fabricCategory || ''} (${project.fabricSubCategory || ''}) project`;
       const budget = project.totalEstimatedCost || 0;
@@ -495,8 +508,8 @@ export class ProjectService {
       // Count modules by status
       let completedModulesCount = 0;
       let ongoingModulesCount = 0;
-      let todoModulesCount = 0;
-      let totalModulesCount = 0;
+      let todoModulesCount = -1;
+      let totalModulesCount = -1;
 
       // Helper function to classify and count modules
       const countModuleStatus = (modules) => {

@@ -5,8 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { BidService } from '../../bid/bid.service';
-import { MODULE_TITLES, MODULE_TYPES, STATUS } from '../../common';
+import { STATUS } from '../../common';
 import { FabricPricing } from '../../entities/fabric-pricing.entity';
 import { Project } from '../../project/entities/project.entity';
 import { CreateFabricPricingDto } from './dto/create-fabric-pricing.dto';
@@ -22,7 +21,6 @@ export class FabricPricingService {
     private readonly fabricPricingModuleRepository: Repository<FabricPricingModule>,
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
-    private readonly bidService: BidService,
   ) { }
 
   // Fetch raw prices and calculate total cost.
@@ -93,8 +91,8 @@ export class FabricPricingService {
     manager: EntityManager,
   ): Promise<number> {
     try {
-      console.log(`Starting createFabricPricing for projectId: ${project.id}`);
-      console.log('Received DTO:', dto);
+      // console.log(`Starting createFabricPricing for projectId: ${project.id}`);
+      // console.log('Received DTO:', dto);
 
       if (!project) {
         throw new NotFoundException(`Project not provided.`);
@@ -137,14 +135,14 @@ export class FabricPricingService {
 
       const fabricPricePerUnit = parseFloat(priceMatch[0]);
       const totalCost = fabricPricePerUnit * fabricQuantityCost;
-      console.log('Total cost:', totalCost);
+      // console.log('Total cost:', totalCost);
 
       const fabricPricingModule = manager.create(FabricPricingModule, {
         project,
         category: dto.category,
         subCategory: dto.subCategory,
         price: totalCost,
-        status: STATUS.DRAFT,
+        status: STATUS.ACTIVE,
         description: `Fabric pricing calculated using fabricQuantityCost: ${fabricQuantityCost}`,
       });
 
@@ -167,7 +165,7 @@ export class FabricPricingService {
       });
 
     if (!fabricPricingModule) {
-      console.log('No fabric pricing found for the project.');
+      // console.log('No fabric pricing found for the project.');
       return 0;
     }
 
@@ -269,7 +267,7 @@ export class FabricPricingService {
     }
 
     if (priceUpdated) {
-      existingFabricPricingModule.status = STATUS.DRAFT;
+      existingFabricPricingModule.status = STATUS.ACTIVE;
     }
 
     // update other fields like status if provided in the DTO
@@ -284,48 +282,14 @@ export class FabricPricingService {
   }
 
   async updateFabricPricingStatus(id: number, newStatus: string) {
-    // Retrieve fabricPricingModule and load the project and user relations
+    // Find the fabricPricingModule by ID
     const fabricPricingModule = await this.fabricPricingModuleRepository.findOne({
-      where: { id }, // Use the fabric pricing id to fetch the module
-      relations: ['project', 'project.user'], // Ensure both project and user are loaded
+      where: { id },
+      relations: ['project', 'project.user'],
     });
 
-    console.log(`Updating status for fabricPricingModule ID: ${id}`);
-
-    // Check if fabricPricingModule exists
     if (!fabricPricingModule) {
-      throw new Error(`FabricPricingModule with id ${id} not found`);
-    }
-
-    // Ensure 'project' and 'user' relations are loaded
-    const project = fabricPricingModule.project;
-    const user = project?.user;  // Access user from the project relation
-
-    if (!user) {
-      throw new Error(`User related to FabricPricingModule with id ${id} not found`);
-    }
-
-
-
-    const userId = user.user_id;
-
-    // Perform action only if fabricPricingModule and newStatus are valid
-    if (newStatus === 'Posted') {
-      const title = MODULE_TITLES.FABRIC_PRICING;
-      const description = fabricPricingModule.description || '';
-      const price = fabricPricingModule.price;
-
-      console.log(`Creating bid for fabricPricingModule ID: ${id}, userId: ${userId}`);
-      // Create a new Bid
-      await this.bidService.createBid(
-        userId,
-        fabricPricingModule.id,
-        title,
-        description,
-        price,
-        STATUS.ACTIVE,
-        MODULE_TYPES.FABRIC_PRICING,
-      );
+      throw new NotFoundException(`FabricPricingModule with ID ${id} not found.`);
     }
 
     // Update status
