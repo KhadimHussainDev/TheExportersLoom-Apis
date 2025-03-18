@@ -9,6 +9,6 @@ import { User } from '../users/entities/user.entity';
   imports: [TypeOrmModule.forFeature([Machine, User])],
   providers: [MachineService],
   controllers: [MachineController],
-  exports: [MachineService],
+  exports: [MachineService, TypeOrmModule],
 })
 export class MachineModule {}

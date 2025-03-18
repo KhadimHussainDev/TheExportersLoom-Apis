@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bid } from '../bid/entities/bid.entity';
-import { MODULE_TO_MACHINE_MAP, STATUS } from '../common';
+import { MODULE_TO_MACHINE_MAP, ROLES, STATUS } from '../common';
 import { Machine } from '../machines/entities/machine.entity';
 import { Order } from '../order/entities/order.entity';
 import { Reviews } from '../reviews/entities/reviews.entity';
@@ -33,7 +33,7 @@ export class RecommendationService {
       .createQueryBuilder('m')
       .leftJoin('m.machine_owner', 'u')
       .where('m.machine_type = :machineType', { machineType })
-      .andWhere('u.userType = :type', { type: 'manufacturer' })
+      .andWhere('u.userType = :type', { type: ROLES.MANUFACTURER })
       .andWhere('m.availability_status = :status', { status: 'true' })
       .select(['u.user_id AS userId', 'u.username'])
       .distinctOn(['u.user_id'])
