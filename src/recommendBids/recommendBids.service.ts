@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bid } from '../bid/entities/bid.entity';
-import { Machine } from '../machines/entities/machine.entity'; // Ensure Machine entity is imported
-import { STATUS } from '../common/constants';
+import { Machine } from '../machines/entities/machine.entity';
+import { STATUS, MODULE_TO_MACHINE_MAP } from '../common/constants';
 
 @Injectable()
 export class RecommendBidsService {
@@ -13,9 +13,9 @@ export class RecommendBidsService {
   ) {}
 
   async getRecommendedBids(manufacturerId: number) {
-    // Fetch the machines owned by the manufacturer
+    // 🔹 Fetch all machines owned by the manufacturer
     const machines = await this.machineRepo.find({
-      where: { machine_owner: { user_id: manufacturerId } }, // Correct relation lookup
+      where: { machine_owner: { user_id: manufacturerId } },
       relations: ['machine_owner'],
     });
 
@@ -23,24 +23,31 @@ export class RecommendBidsService {
       throw new NotFoundException('No machines found for this manufacturer');
     }
 
-    // Extract machine types from the manufacturer's machines
-    const machineTypes = machines.map(machine => machine.machine_type);
+    // 🔹 Extract unique machine types
+    const machineTypes = [...new Set(machines.map(machine => machine.machine_type))];
 
     if (!machineTypes.length) {
-      throw new NotFoundException('No machine types found for this manufacturer');
+      throw new NotFoundException('No machine types registered for this manufacturer');
     }
 
-    // Fetch relevant bids where the associated machine type matches
-    const relevantBids = await this.bidRepo
+    // 🔹 Find all possible `module_type` values that match `machine_type`
+    const matchedModuleTypes = Object.entries(MODULE_TO_MACHINE_MAP)
+      .filter(([module, machine]) => machineTypes.includes(machine))
+      .map(([module]) => module); // Get only module types
+
+    if (!matchedModuleTypes.length) {
+      throw new NotFoundException('No matching module types found for registered machines');
+    }
+
+    // 🔹 Fetch all active bids where `module_type` matches the mapped values
+    const recommendedBids = await this.bidRepo
       .createQueryBuilder('bid')
-      .innerJoin('bid.machine', 'machine') // ✅ Join Machine table
       .where('bid.status = :status', { status: STATUS.ACTIVE })
-      .andWhere('bid.user_id != :manufacturerId', { manufacturerId }) // Exclude manufacturer's own bids
-      .andWhere('machine.machine_type IN (:...machineTypes)', { machineTypes }) // ✅ Correct reference
-      .orderBy('bid.createdAt', 'DESC')
-      .take(10) // Limit results
+      .andWhere('bid.user_id != :manufacturerId', { manufacturerId }) // Exclude self-created bids
+      .andWhere('bid.module_type IN (:...matchedModuleTypes)', { matchedModuleTypes }) // Match module type
+      .orderBy('bid.created_at', 'DESC')
       .getMany();
 
-    return relevantBids;
+    return recommendedBids;
   }
 }

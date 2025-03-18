@@ -23,8 +23,7 @@ export class MachineService {
   ) {}
 
   async registerMachine(user: User, createMachineDto: CreateMachineDto): Promise<Machine> {
-    console.log('User received in service:', user);
-    if (user.userType !== 'manufacturer') {
+    if (user.userType.toLowerCase() !==  'manufacturer') {
       throw new UnauthorizedException('Only manufacturers can register machines.');
     }
   
@@ -63,8 +62,6 @@ export class MachineService {
       machine_owner: userEntity, // Assign the valid user entity
     });
   
-    console.log('Machine before save:', machine);
-  
     try {
       const result = await this.machineRepository.save(machine);
       return result; // Return the saved machine
@@ -96,7 +93,6 @@ export class MachineService {
     updateMachineDto: UpdateMachineDto,
     user: User,
   ): Promise<Machine> {
-    // console.log('User object:', user); // Debugging line
   
     if (!user) {
       throw new UnauthorizedException('User is not authenticated.');
@@ -106,7 +102,7 @@ export class MachineService {
       throw new UnauthorizedException('User type is missing.');
     }
   
-    if (user.userType !== 'manufacturer') {
+    if (user.userType.toLowerCase() !== 'manufacturer') {
       throw new UnauthorizedException('Only manufacturers can update machines.');
     }
   
