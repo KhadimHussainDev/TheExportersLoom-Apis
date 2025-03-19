@@ -18,13 +18,14 @@ import { User } from '../users/entities/user.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { MachineService } from './machine.service';
+import { JwtAuthGuard } from 'auth';
 
 @Controller('machines')
+@UseGuards(JwtAuthGuard)
 export class MachineController {
   constructor(private readonly machineService: MachineService) { }
 
   @Post('register')
-  @UseGuards(AuthGuard('jwt'))
   async registerMachine(
     @Req() req,
     @Body() createMachineDto: CreateMachineDto,
@@ -61,7 +62,6 @@ export class MachineController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'))
   async updateMachine(
     @Param('id') id: number,
     @Body() updateMachineDto: UpdateMachineDto,
@@ -77,7 +77,6 @@ export class MachineController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
   async deleteMachine(
     @Req() req,
     @Param('id', ParseIntPipe) id: number

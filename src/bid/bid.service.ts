@@ -349,4 +349,21 @@ export class BidService {
 
     return this.bidResponseRepository.save(response);
   }
+
+  // Find bid by moduleId and moduleType
+  async findBidByModuleId(moduleId: number, moduleType: string): Promise<Bid> {
+    const bid = await this.bidRepository.findOne({
+      where: {
+        module_id: moduleId,
+        module_type: moduleType
+      },
+      relations: ['responses', 'responses.manufacturer'],
+    });
+
+    if (!bid) {
+      throw new NotFoundException(`Bid with moduleId ${moduleId} and type ${moduleType} not found`);
+    }
+
+    return bid;
+  }
 }

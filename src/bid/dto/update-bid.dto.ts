@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDecimal, IsIn, IsNumberString } from 'class-validator';
+import { IsString, IsOptional, IsDecimal, IsIn, IsNumberString, IsNumber } from 'class-validator';
 import { STATUS } from 'common';
 
 export class UpdateBidDto {
@@ -11,7 +11,7 @@ export class UpdateBidDto {
   description?: string;
 
   @IsOptional()
-  @IsNumberString()  // Allowing the price to be sent as a string
+  @IsNumber()
   price?: number;  // Change price to string for validation purposes
 
   @IsOptional()

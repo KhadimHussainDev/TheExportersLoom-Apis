@@ -12,6 +12,7 @@ import { Machine } from './entities/machine.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { User } from '../users/entities/user.entity';
+import { ROLES } from 'common';
 
 @Injectable()
 export class MachineService {
@@ -23,7 +24,8 @@ export class MachineService {
   ) {}
 
   async registerMachine(user: User, createMachineDto: CreateMachineDto): Promise<Machine> {
-    if (user.userType.toLowerCase() !==  'manufacturer') {
+    console.log('User received in service:', user);
+    if (user.userType !== ROLES.MANUFACTURER) {
       throw new UnauthorizedException('Only manufacturers can register machines.');
     }
   
@@ -102,7 +104,7 @@ export class MachineService {
       throw new UnauthorizedException('User type is missing.');
     }
   
-    if (user.userType.toLowerCase() !== 'manufacturer') {
+    if (user.userType !== ROLES.MANUFACTURER) {
       throw new UnauthorizedException('Only manufacturers can update machines.');
     }
   

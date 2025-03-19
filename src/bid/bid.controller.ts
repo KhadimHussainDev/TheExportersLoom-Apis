@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, NotFoundException, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { GetUser, JwtAuthGuard } from '../auth';
 import { STATUS } from '../common';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
@@ -127,5 +127,22 @@ export class BidController {
   ): Promise<ApiResponseDto<BidResponse>> {
     const response = await this.bidService.rejectBidResponse(responseId, user.user_id);
     return ApiResponseDto.success(HttpStatus.OK, 'Bid response rejected successfully', response);
+  }
+
+  // Get bid by moduleId and moduleType
+  @Get('/module/:moduleId')
+  async getBidByModuleId(
+    @Param('moduleId') moduleId: number,
+    @Query('moduleType') moduleType: string
+  ): Promise<ApiResponseDto<Bid>> {
+    try {
+      const bid = await this.bidService.findBidByModuleId(moduleId, moduleType);
+      return ApiResponseDto.success(HttpStatus.OK, 'Bid retrieved successfully', bid);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return ApiResponseDto.error(HttpStatus.NOT_FOUND, error.message, null);
+      }
+      throw error;
+    }
   }
 }
