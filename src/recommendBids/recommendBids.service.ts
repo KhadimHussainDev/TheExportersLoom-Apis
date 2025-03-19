@@ -13,7 +13,7 @@ export class RecommendBidsService {
   ) {}
 
   async getRecommendedBids(manufacturerId: number) {
-    // 🔹 Fetch all machines owned by the manufacturer
+    //Fetch all machines owned by the manufacturer
     const machines = await this.machineRepo.find({
       where: { machine_owner: { user_id: manufacturerId } },
       relations: ['machine_owner'],
@@ -23,23 +23,23 @@ export class RecommendBidsService {
       throw new NotFoundException('No machines found for this manufacturer');
     }
 
-    // 🔹 Extract unique machine types
+    //Extract unique machine types
     const machineTypes = [...new Set(machines.map(machine => machine.machine_type))];
 
     if (!machineTypes.length) {
       throw new NotFoundException('No machine types registered for this manufacturer');
     }
 
-    // 🔹 Find all possible `module_type` values that match `machine_type`
+    //Find all possible `module_type` values that match `machine_type`
     const matchedModuleTypes = Object.entries(MODULE_TO_MACHINE_MAP)
       .filter(([module, machine]) => machineTypes.includes(machine))
-      .map(([module]) => module); // Get only module types
+      .map(([module]) => module); 
 
     if (!matchedModuleTypes.length) {
       throw new NotFoundException('No matching module types found for registered machines');
     }
 
-    // 🔹 Fetch all active bids where `module_type` matches the mapped values
+    //Fetch all active bids where `module_type` matches the mapped values
     const recommendedBids = await this.bidRepo
       .createQueryBuilder('bid')
       .where('bid.status = :status', { status: STATUS.ACTIVE })
