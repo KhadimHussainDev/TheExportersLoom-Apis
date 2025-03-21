@@ -81,18 +81,20 @@ export class RecommendBidsService {
     const exporterRatings = await this.reviewRepo
       .createQueryBuilder('r')
       .select([
-        'r.reviewTakerId AS exporterId',
-        'AVG(r.rating) AS avgRating',
-        'COUNT(r.reviewId) AS totalReviews',
+        'r.reviewTakerId AS "exporterId"',
+        'AVG(r.rating) AS "avgRating"',
+        'COUNT(r.reviewId) AS "totalReviews"',
       ])
       .where('r.reviewTakerId IN (:...exporterIds)', { exporterIds })
       .groupBy('r.reviewTakerId')
       .getRawMany();
 
+    console.log('Exporter Ratings:', exporterRatings); // Debugging: Check fetched data
+
     // Map exporter ratings for quick lookup
     const ratingsMap = new Map(
       exporterRatings.map(r => [
-        r.exporterId,
+        parseInt(r.exporterId, 10),
         { avgRating: parseFloat(r.avgRating) || 0, totalReviews: parseInt(r.totalReviews, 10) || 0 },
       ])
     );
