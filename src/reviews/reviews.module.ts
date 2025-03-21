@@ -16,6 +16,6 @@ import { ReviewsService } from './reviews.service';
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],
-  exports: [ReviewsService]
+  exports: [ReviewsService,TypeOrmModule]
 })
 export class ReviewsModule { }

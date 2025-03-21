@@ -64,8 +64,6 @@ export class MachineService {
       machine_owner: userEntity, // Assign the valid user entity
     });
   
-    console.log('Machine before save:', machine);
-  
     try {
       const result = await this.machineRepository.save(machine);
       return result; // Return the saved machine
@@ -97,7 +95,6 @@ export class MachineService {
     updateMachineDto: UpdateMachineDto,
     user: User,
   ): Promise<Machine> {
-    // console.log('User object:', user); // Debugging line
   
     if (!user) {
       throw new UnauthorizedException('User is not authenticated.');
