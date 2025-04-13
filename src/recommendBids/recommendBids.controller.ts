@@ -14,10 +14,10 @@ import { HttpStatus } from '@nestjs/common';
 export class RecommendBidsController {
   constructor(private readonly recommendBidsService: RecommendBidsService) {}
 
-  @UseGuards(AuthGuard('jwt')) // Ensure authentication is enforced
+  @UseGuards(AuthGuard('jwt'))
   @Get()
   async getRecommendedBids(@Req() req): Promise<ApiResponseDto<any>> {
-    console.log('🔹 Received User:', req.user); // Debug log
+    console.log('🔹 Received User:', req.user);
 
     if (!req.user) {
       throw new UnauthorizedException('Unauthorized request'); 
