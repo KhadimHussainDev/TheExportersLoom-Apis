@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,OneToMany } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
 import { Bid } from '../../../bid/entities/bid.entity';
-import { STATUS } from 'common';
+import { STATUS } from '../../../common';
 
 @Entity('fabric_pricing_module')
 export class FabricPricingModule {

@@ -7,8 +7,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { LogoDetailDto } from 'modules/logo-printing module/dto/logo-details.dto';
-import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
+import { LogoDetailDto } from '../../modules/logo-printing module/dto/logo-details.dto';
+import { FabricSizeDetailDto } from '../../modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
 
 
 

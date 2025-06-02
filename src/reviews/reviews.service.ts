@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MachineService } from 'machines/machine.service';
+import { MachineService } from '../machines/machine.service';
 import { Repository } from 'typeorm';
-import { UsersService } from 'users/users.service';
+import { UsersService } from '../users/users.service';
 import { OrderService } from '../order/order.service';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { Reviews } from './entities/reviews.entity';

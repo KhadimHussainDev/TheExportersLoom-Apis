@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Project } from '../../../project/entities/project.entity';
-import { FabricSizeDetailDto } from 'modules/fabric-quantity-module/dto/fabricSizeDetails.dto';
+import { FabricSizeDetailDto } from '../../fabric-quantity-module/dto/fabricSizeDetails.dto';
 import { LogoDetailDto } from '../dto/logo-details.dto';
 
 @Entity('logo_printing')

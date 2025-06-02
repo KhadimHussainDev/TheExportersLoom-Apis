@@ -15,8 +15,8 @@ import { UserProfile } from './user-profile.entity';
 import { Machine } from '../../machines/entities/machine.entity';
 import { Project } from '../../project/entities/project.entity';
 import { Bid } from '../../bid/entities/bid.entity';  
-import { Order } from 'order/entities/order.entity';
-import { Reviews } from 'reviews/entities/reviews.entity';
+import { Order } from '../../order/entities/order.entity';
+import { Reviews } from '../../reviews/entities/reviews.entity';
 
 @Entity()
 export class User {

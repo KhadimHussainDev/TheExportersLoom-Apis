@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Order } from '../../order/entities/order.entity';
-import { User } from 'users/entities/user.entity';
-import { Machine } from 'machines/entities/machine.entity';
+import { User } from '../../users/entities/user.entity';
+import { Machine } from '../../machines/entities/machine.entity';
 
 @Entity()
 export class Reviews {

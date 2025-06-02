@@ -7,7 +7,8 @@ import { NotificationsGateway } from './notification.gateway';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Notification])],
-  providers: [NotificationsService,NotificationsGateway],
-  controllers: [NotificationsController]
+  providers: [NotificationsService, NotificationsGateway],
+  controllers: [NotificationsController],
+  exports: [NotificationsService]
 })
 export class NotificationsModule { }
