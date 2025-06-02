@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Project } from 'project/entities/project.entity';
+import { Project } from '../../project/entities/project.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { FabricSizeCalculation } from '../../entities/fabric-size-calculation.entity';
 import { CreateFabricQuantityDto } from './dto/create-fabric-quantity.dto';

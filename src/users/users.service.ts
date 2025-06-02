@@ -12,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
-import { ReviewsService } from 'reviews/reviews.service';
+import { ReviewsService } from '../reviews/reviews.service';
 import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 import { UserAuthentication } from '../auth/entities/auth.entity';
 import { VERIFICATION } from '../common';
@@ -403,7 +403,7 @@ export class UsersService {
       });
 
       if (!user) {
-        throw new HttpException(`User with ID ${userId} not found`, HttpStatus.NOT_FOUND);
+        throw new NotFoundException(`User with ID ${userId} not found`);
       }
 
       // Update User fields

@@ -12,7 +12,7 @@ import { Machine } from './entities/machine.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { User } from '../users/entities/user.entity';
-import { ROLES } from 'common';
+import { ROLES } from '../common';
 
 @Injectable()
 export class MachineService {

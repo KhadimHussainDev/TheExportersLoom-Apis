@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsNumber, IsIn, IsNotEmpty, IsDecimal } from 'class-validator';
-import { STATUS } from 'common';
+import { STATUS } from '../../../common';
 
 export class UpdateFabricPricingDto {
   @IsOptional()
