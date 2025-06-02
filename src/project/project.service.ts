@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cutting } from 'modules/cutting module/entities/cutting.entity';
-import { FabricPricingModule } from 'modules/fabric-price module/entities/fabric-pricing-module.entity';
-import { FabricQuantity } from 'modules/fabric-quantity-module/entities/fabric-quantity.entity';
-import { LogoPrinting } from 'modules/logo-printing module/entities/logo-printing.entity';
-import { Packaging } from 'modules/packaging module/entities/packaging.entity';
-import { Stitching } from 'modules/stitching module/entities/stitching.entity';
+import { Cutting } from '../modules/cutting module/entities/cutting.entity';
+import { FabricPricingModule } from '../modules/fabric-price module/entities/fabric-pricing-module.entity';
+import { FabricQuantity } from '../modules/fabric-quantity-module/entities/fabric-quantity.entity';
+import { LogoPrinting } from '../modules/logo-printing module/entities/logo-printing.entity';
+import { Packaging } from '../modules/packaging module/entities/packaging.entity';
+import { Stitching } from '../modules/stitching module/entities/stitching.entity';
 import { DataSource, EntityManager, Not, Repository } from 'typeorm';
 import { MAX_TOTAL_COST, STATUS } from '../common';
 import { CuttingService } from '../modules/cutting module/cutting.service';

@@ -1,5 +1,5 @@
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
-import { STATUS } from 'common';
+import { STATUS } from '../../common';
 
 export class UpdateBidResponseDto {
   @IsOptional()

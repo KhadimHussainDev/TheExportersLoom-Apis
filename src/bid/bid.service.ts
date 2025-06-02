@@ -15,6 +15,9 @@ import { UpdateBidResponseDto } from './dto/update-bid-response.dto';
 import { UpdateBidDto } from './dto/update-bid.dto';
 import { BidResponse } from './entities/bid-response.entity';
 import { Bid } from './entities/bid.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { Machine } from '../machines/entities/machine.entity';
+import { MODULE_TO_MACHINE_MAP } from '../utils/constants';
 
 @Injectable()
 export class BidService {
@@ -32,8 +35,12 @@ export class BidService {
     private readonly packagingService: PackagingService,
     private readonly stitchingService: StitchingService,
     @Inject(forwardRef(() => OrderService))
-    private readonly orderService: OrderService
+    private readonly orderService: OrderService,
+    @InjectRepository(Machine)
+    private readonly machineRepository: Repository<Machine>,
+    private readonly notificationsService: NotificationsService
   ) { }
+
   async findOne(bidId: number): Promise<Bid> {
     // Find the bid by its ID
     const bid = await this.bidRepository.findOne({
@@ -46,6 +53,7 @@ export class BidService {
 
     return bid;
   }
+
   async createBid(
     userId: number,
     moduleId: number,
@@ -91,7 +99,12 @@ export class BidService {
     bid.module_type = module_type;
 
     // Save the bid in the repository
-    return this.bidRepository.save(bid);
+    const savedBid = await this.bidRepository.save(bid);
+
+    // Send notifications to manufacturers with matching machine types
+    await this.notifyRelevantManufacturers(savedBid);
+
+    return savedBid;
   }
 
   async getAllBids(): Promise<Bid[]> {
@@ -365,5 +378,38 @@ export class BidService {
     }
 
     return bid;
+  }
+
+  /**
+   * Notify relevant manufacturers when a new bid is posted
+   * @param bid The newly created bid
+   */
+  private async notifyRelevantManufacturers(bid: Bid): Promise<void> {
+    try {
+      // Get the machine type corresponding to the module type
+      const machineType = MODULE_TO_MACHINE_MAP[bid.module_type] || bid.module_type;
+      
+      // Find manufacturers with matching machine types
+      const relevantManufacturers = await this.userRepository
+        .createQueryBuilder('user')
+        .innerJoin('user.machines', 'machine')
+        .where('user.role = :role', { role: 'manufacturer' })
+        .andWhere('machine.machine_type = :machineType', { machineType })
+        .select(['user.user_id'])
+        .getMany();
+      
+      console.log(`Found ${relevantManufacturers.length} manufacturers with matching machine type: ${machineType}`);
+      
+      // Send notifications to each manufacturer
+      for (const manufacturer of relevantManufacturers) {
+        await this.notificationsService.createNotification({
+          userId: manufacturer.user_id.toString(),
+          message: `New work opportunity available: ${bid.title || 'Work Opportunity'} (${bid.module_type})`,
+          link: `/manufacturer/work/${bid.bid_id}`
+        });
+      }
+    } catch (error) {
+      console.error('Error sending notifications to manufacturers:', error);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Order } from 'order/entities/order.entity';
+import { Order } from '../../order/entities/order.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity'; // Adjust path as per your structure
 import { BidResponse } from './bid-response.entity';
