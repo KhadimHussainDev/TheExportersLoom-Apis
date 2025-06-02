@@ -18,7 +18,7 @@ import { User } from '../users/entities/user.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { MachineService } from './machine.service';
-import { JwtAuthGuard } from 'auth';
+import { JwtAuthGuard } from '../auth';
 
 @Controller('machines')
 @UseGuards(JwtAuthGuard)

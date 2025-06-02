@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne,Unique,JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Order } from 'order/entities/order.entity';
-import { Reviews } from 'reviews/entities/reviews.entity';
+import { Order } from '../../order/entities/order.entity';
+import { Reviews } from '../../reviews/entities/reviews.entity';
 
 @Entity('Machines')
 // @Unique(['machine_type', 'machine_model', 'machine_owner'])

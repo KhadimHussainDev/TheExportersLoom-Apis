@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Bid } from './bid.entity';
-import { STATUS } from 'common';
+import { STATUS } from '../../common';
 
 @Entity()
 export class BidResponse {

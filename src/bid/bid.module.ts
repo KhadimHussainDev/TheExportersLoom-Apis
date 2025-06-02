@@ -15,6 +15,8 @@ import { BidController } from './bid.controller';
 import { BidService } from './bid.service';
 import { BidResponse } from './entities/bid-response.entity';
 import { Bid } from './entities/bid.entity';
+import { Machine } from '../machines/entities/machine.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { Bid } from './entities/bid.entity';
       BidResponse,
       User,
       FabricPricingModuleEntity,
+      Machine,
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => FabricPricingModule),
@@ -33,6 +36,7 @@ import { Bid } from './entities/bid.entity';
     forwardRef(() => StitchingModule),
     forwardRef(() => UsersModule),
     forwardRef(() => OrderModule),
+    NotificationsModule,
   ],
   controllers: [BidController],
   providers: [BidService],
